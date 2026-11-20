@@ -51,7 +51,7 @@ export default function GuidePage() {
       subtitle="How ComForce actually does the work, written down once so it survives staff turnover. Ask in plain English."
       badge={unclaimed}
       me={me.name}
-      actions={<><Btn variant="solid"><Plus size={15} /> New playbook</Btn><Btn>Suggest an edit</Btn></>}
+      actions={<><Btn variant="solid" href="mailto:info@comforcemilwaukee.com?subject=New%20Relay%20playbook"><Plus size={15} /> New playbook</Btn><Btn href="mailto:info@comforcemilwaukee.com?subject=Playbook%20edit%20suggestion">Suggest an edit</Btn></>}
     >
       <div className="grid grid-cols-4 gap-3.5 mb-5">
         <StatCard icon={<BookOpen size={14} />} label="Playbooks" value={playbooks.length} sub="field-tested procedures" />

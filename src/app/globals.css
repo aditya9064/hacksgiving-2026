@@ -86,3 +86,9 @@ html, body {
 .leaflet-container .leaflet-tile-pane { filter: grayscale(1) brightness(1.06) contrast(.9) opacity(.7); }
 .leaflet-control-attribution { display: none; }
 
+
+@media print {
+  aside, .sticky, .print-hide { display: none !important; }
+  main { padding: 0 !important; }
+  body { background: #fff; }
+}

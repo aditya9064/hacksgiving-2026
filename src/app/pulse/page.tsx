@@ -66,7 +66,7 @@ export default function PulsePage() {
       subtitle="Where help is being asked for, by neighborhood and need. Counts only, never names, never addresses."
       badge={unclaimed}
       me={me.name}
-      actions={<><Btn variant="solid"><Download size={15} /> Weekly brief (PDF)</Btn><Btn href="/impact">Full report</Btn></>}
+      actions={<><Btn variant="solid" onClick={() => window.print()} title="Print or save this page as a PDF"><Download size={15} /> Weekly brief (PDF)</Btn><Btn href="/impact">Full report</Btn></>}
     >
       <div className="grid grid-cols-5 gap-3.5 mb-5">
         <StatCard icon={<MapPin size={14} />} label="Neighborhoods Active" value={rows.length} sub="with at least one request" />
