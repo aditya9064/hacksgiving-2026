@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { intake } from "./actions";
+import { sendSms, CODE_TEXT } from "./sms";
 import { redactPII } from "./ai/redact";
 import { summarizeCall, structureIntake } from "./ai";
 import type { CallTurn, HelpRequest } from "./types";
@@ -13,24 +14,26 @@ export interface CallToolInput {
   household_size?: number | string;
   urgency?: "low" | "normal" | "high" | "critical" | string;
   callback_ok?: boolean | string;
+  callback_number?: string;
   language?: string;
 }
 
 const yes = (v: unknown) => v === true || /^(true|yes|y|1)$/i.test(String(v ?? ""));
 
 /** Called by the ElevenLabs agent while the resident is still on the line. Returns a tracking code it can read back. */
-export async function createRequestFromCall(input: CallToolInput): Promise<{ request: HelpRequest; shortCode: string }> {
+export async function createRequestFromCall(input: CallToolInput): Promise<{ request: HelpRequest; shortCode: string; texted: boolean }> {
   const parts = [input.what_they_need];
   if (input.area) parts.push(`We're near ${input.area}.`);
   const hh = Number(input.household_size);
   if (hh > 0) parts.push(`There are ${hh} of us in the household.`);
   const text = parts.join(" ");
+  const contactRef = normalizePhone(input.callback_number) ?? (yes(input.callback_ok) ? normalizePhone(input.caller_id) : undefined);
 
   const { request } = await intake({
     text,
     channel: "voice",
     consentToShare: true,
-    contactRef: yes(input.callback_ok) && input.caller_id ? input.caller_id : undefined,
+    contactRef,
     neighborhoodHint: undefined,
   });
 
@@ -42,8 +45,17 @@ export async function createRequestFromCall(input: CallToolInput): Promise<{ req
   if (input.language) patch.language = input.language;
   if (hh > 0) patch.householdSize = hh;
 
-  const updated = (await db.updateRequest(request.id, patch, { actor: "ai", type: "call", text: "Phone intake in progress — created live during the call" })) ?? request;
-  return { request: updated, shortCode: updated.shortCode };
+  let updated = (await db.updateRequest(request.id, patch, { actor: "ai", type: "call", text: "Phone intake in progress — created live during the call" })) ?? request;
+
+  // Text the code so nobody has to memorize it over the phone; the same number is the reply channel.
+  let texted = false;
+  if (contactRef) {
+    const r = await sendSms(contactRef, CODE_TEXT(updated.shortCode));
+    texted = r.ok;
+    const note = r.ok ? `Tracking code texted to the resident${r.mocked ? " (mock SMS)" : ""}` : `Could not text code: ${r.error}`;
+    updated = (await db.updateRequest(updated.id, {}, { actor: "system", type: "sms_out", text: note })) ?? updated;
+  }
+  return { request: updated, shortCode: updated.shortCode, texted };
 }
 
 export interface PostCallPayload {
@@ -106,4 +118,14 @@ export function fromElevenLabs(data: Record<string, unknown>): PostCallPayload {
       .map((t) => ({ role: t.role === "agent" ? "agent" : "caller", text: String(t.message), t: Number(t.time_in_call_secs ?? 0) })),
     provider_summary: typeof analysis.transcript_summary === "string" ? analysis.transcript_summary : undefined,
   };
+}
+
+/** Accepts "414 555 0123", "(414) 555-0123", "+1 414…", or spoken digits; returns E.164 or undefined. */
+export function normalizePhone(v?: string): string | undefined {
+  if (!v) return undefined;
+  const d = v.replace(/\D/g, "");
+  if (d.length === 10) return `+1${d}`;
+  if (d.length === 11 && d.startsWith("1")) return `+${d}`;
+  if (d.length > 11 && v.trim().startsWith("+")) return `+${d}`;
+  return undefined;
 }

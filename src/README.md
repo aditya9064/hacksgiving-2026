@@ -33,11 +33,11 @@ Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every 
 | `/api/report` | GET / POST | CSV export / AI funder narrative |
 | `/api/playbooks` | GET | Playbook list |
 | `/api/guide` | POST | Question → answer with sources |
-| `/api/sms/inbound` | POST | Twilio webhook (TwiML) |
+| `/api/sms/inbound` | POST | Twilio webhook (TwiML): new request · `R-XXXX` → status update · `1/2/3` → verification |
 | `/api/sms/simulate` | POST | Same pipeline, JSON reply, for the demo |
 | `/api/reset` | POST | Reseed synthetic data |
 | `/api/voice/twiml` | POST | Twilio voice webhook: robotic "may be recorded" notice, then hands the call to the ElevenLabs agent |
-| `/api/voice/tool` | POST | Mid-call tool the agent calls to create the request and get a tracking code |
+| `/api/voice/tool` | POST | Mid-call tool: creates the request, texts the tracking code to the caller, tells the agent whether to spell it out |
 | `/api/voice/elevenlabs` | POST | Post-call webhook (HMAC-verified): transcript → redact → second LLM summarizes → attached to the request |
 
 ## Phone line (AI agent)
