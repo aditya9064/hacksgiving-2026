@@ -26,7 +26,7 @@ Every one of ComForce's eight divisions runs the same loop: **intake → coordin
 | Community Awareness & Decision Support | **Neighborhood Pulse**: map of needs and unmet needs, never people |
 | Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
 
-📄 Product spec → [docs/product/spec.md](docs/product/spec.md) · 🗓 Build schedule → [docs/product/build-schedule.md](docs/product/build-schedule.md) · 🧠 Why this concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
+📕 **Full playbook (PDF, 41 pages):** [docs/Relay-MKE-Playbook.pdf](docs/Relay-MKE-Playbook.pdf) · 📄 Product spec → [docs/product/spec.md](docs/product/spec.md) · 🗓 Build schedule → [docs/product/build-schedule.md](docs/product/build-schedule.md) · 🧠 Why this concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
 
 ## Research behind it
 
@@ -52,6 +52,8 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 │   ├── research/                 ← prior-art analysis (8 topics + lessons learned)
 │   ├── brainstorm/               ← idea longlist, scoring matrix, recommended concept
 │   ├── product/                  ← product spec & build schedule
+│   ├── assets/                   ← diagrams (SVG) and reference screenshots
+│   └── Relay-MKE-Playbook.pdf    ← everything above, as one PDF
 │   └── decisions/                ← architecture decision records (ADRs)
 ├── src/                          ← application code (build phase)
 ├── data/

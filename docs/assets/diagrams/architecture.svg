@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" font-family="Helvetica,Arial,sans-serif">
+<rect width="1200" height="460" fill="#fff"/>
+<text x="600" y="40" text-anchor="middle" font-size="22" font-weight="700" fill="#111">Architecture — all free tier or open source · ≈ $10–25 / month</text>
+<rect x="40" y="90" width="340" height="130" rx="14" fill="#374151"/>
+<text x="210" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">Resident / Volunteer phones</text>
+<text x="210" y="158" text-anchor="middle" font-size="14" fill="#e5e7eb">SMS (Twilio) · QR web form</text>
+<text x="210" y="180" text-anchor="middle" font-size="14" fill="#e5e7eb">voice note · mobile web app</text>
+<rect x="430" y="90" width="340" height="130" rx="14" fill="#0f5132"/>
+<text x="600" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">Next.js app (Vercel)</text>
+<text x="600" y="158" text-anchor="middle" font-size="14" fill="#e5e7eb">coordinator dashboard · volunteer view</text>
+<text x="600" y="180" text-anchor="middle" font-size="14" fill="#e5e7eb">API routes · webhooks</text>
+<rect x="820" y="90" width="340" height="130" rx="14" fill="#1d4ed8"/>
+<text x="990" y="128" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">Supabase</text>
+<text x="990" y="158" text-anchor="middle" font-size="14" fill="#e5e7eb">Postgres · Auth · Row-Level Security</text>
+<text x="990" y="180" text-anchor="middle" font-size="14" fill="#e5e7eb">Realtime (rooms, live dashboard)</text>
+<rect x="430" y="290" width="340" height="130" rx="14" fill="#7c2d12"/>
+<text x="600" y="328" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">AI layer (Groq free tier / Ollama)</text>
+<text x="600" y="358" text-anchor="middle" font-size="14" fill="#e5e7eb">PII redaction → Llama (open source)</text>
+<text x="600" y="380" text-anchor="middle" font-size="14" fill="#e5e7eb">Whisper speech-to-text</text>
+<text x="600" y="402" text-anchor="middle" font-size="14" fill="#e5e7eb">structured extraction · grounded reports</text>
+<rect x="820" y="290" width="340" height="130" rx="14" fill="#4b5563"/>
+<text x="990" y="328" text-anchor="middle" font-size="18" font-weight="700" fill="#fff">Open data (aggregated only)</text>
+<text x="990" y="358" text-anchor="middle" font-size="14" fill="#e5e7eb">Census ACS · 311 · CDC PLACES</text>
+<text x="990" y="380" text-anchor="middle" font-size="14" fill="#e5e7eb">Leaflet + OpenStreetMap</text>
+<line x1="380" y1="155" x2="430" y2="155" stroke="#111" stroke-width="3"/>
+<line x1="770" y1="155" x2="820" y2="155" stroke="#111" stroke-width="3"/>
+<line x1="600" y1="220" x2="600" y2="290" stroke="#111" stroke-width="3"/>
+<line x1="990" y1="220" x2="990" y2="290" stroke="#111" stroke-width="3"/>
+<rect x="40" y="290" width="340" height="130" rx="14" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/><text x="210" y="330" text-anchor="middle" font-size="17" font-weight="700" fill="#dc2626">Privacy boundary</text><text x="210" y="360" text-anchor="middle" font-size="14" fill="#7f1d1d">contact info in separate table</text><text x="210" y="382" text-anchor="middle" font-size="14" fill="#7f1d1d">names/phones stripped before any LLM call</text><text x="210" y="404" text-anchor="middle" font-size="14" fill="#7f1d1d">no law-enforcement feed by default</text>
+</svg>

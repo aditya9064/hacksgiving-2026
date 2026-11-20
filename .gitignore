@@ -21,3 +21,4 @@ build/
 *.sqlite
 *.db
 data/raw/
+docs/assets/playbook.html
