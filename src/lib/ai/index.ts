@@ -2,7 +2,7 @@ import { NEEDS, NEIGHBORHOODS, type Need, type StructuredIntake, type Urgency } 
 import { redactPII } from "./redact";
 
 const KEYWORDS: Record<Need, RegExp> = {
-  food: /\b(food|grocer|hungry|eat|pantry|meal|formula|diapers?)\b/i,
+  food: /\b(food|grocer\w*|hungry|eat|pantry|meals?|formula|diapers?)\b/i,
   rent: /\b(rent|evict|landlord|5[- ]day|notice to (quit|vacate)|behind on)\b/i,
   utilities: /\b(we ?energies|electric|power|gas bill|water bill|shut ?off|disconnect|heat(ing)? (bill|shut))\b/i,
   housing: /\b(homeless|shelter|displaced|fire|flood|staying in (my|our|the) car|nowhere to (stay|go)|no heat|couch)\b/i,
@@ -10,7 +10,7 @@ const KEYWORDS: Record<Need, RegExp> = {
   safety: /\b(threat|gun|shot|shoot|violence|pop off|retaliat|scared|unsafe|weapon|stab|jump(ed)?)\b/i,
   health: /\b(med(s|ication|ical)|doctor|clinic|dialysis|insulin|pharmacy|hospital|pregnan|mental|anxiety|depress)\b/i,
   transport: /\b(ride|bus|transit|car broke|get to work|uber|lyft|voucher)\b/i,
-  youth: /\b(son|daughter|teen|kid|school|youth|15|16|17|my boy|my girl)\b/i,
+  youth: /\b(son|daughter|teens?|kids?|children|school|youth|15|16|17|my boy|my girl)\b/i,
   legal: /\b(court|lawyer|attorney|legal|notice|warrant|custody|id card|identification)\b/i,
   other: /$^/,
 };
@@ -22,23 +22,67 @@ function fallbackStructure(redacted: string): Omit<StructuredIntake, "redactedTe
   if (/\b(tonight|today|now|asap|emergency|weapon|gun|physical|fire|shut ?off (is )?(monday|tomorrow|today)|5[- ]day|baby|infant)\b/i.test(redacted)) urgency = "critical";
   else if (/\b(this week|friday|monday|soon|threat|kids|children|dialysis|behind)\b/i.test(redacted)) urgency = "high";
   const hood = NEIGHBORHOODS.find((h) => redacted.toLowerCase().includes(h.toLowerCase())) ?? guessHoodFromStreets(redacted) ?? "Unknown";
-  const hh = redacted.match(/\b(\d)\s*(kids|children|people|of us)\b/i);
-  const family = redacted.match(/family of (\d)/i);
-  const householdSize = family ? Number(family[1]) : hh ? Number(hh[1]) + 1 : undefined;
+  const householdSize = guessHousehold(redacted);
   const language = /\b(hola|necesito|ayuda|gracias|por favor)\b/i.test(redacted) ? "es" : "en";
-  const summary = cleanSummary(redacted);
-  return { summary, needs: needs.slice(0, 3), urgency, neighborhood: hood, householdSize, language };
+  const summary = looksSpoken(redacted) ? composeHeadline(needs, householdSize, redacted) : cleanSummary(redacted);
+  return { summary, needs: needs.slice(0, 3), urgency, neighborhood: hood, householdSize, language, source: "rules" };
+}
+
+const FILLER = /\b(okay|ok|uh+|um+|hmm+|yeah|so|like|you know)\b/gi;
+
+/** Transcribed speech: long, full of fillers, or multiple sentences — a raw excerpt makes a bad card title. */
+function looksSpoken(t: string): boolean {
+  const fillers = (t.match(FILLER) ?? []).length;
+  return fillers >= 2 || t.length > 160 || (t.match(/[.!?…]/g) ?? []).length >= 3;
+}
+
+const HEADLINE: Record<Need, string> = {
+  food: "Groceries",
+  rent: "Rent assistance",
+  utilities: "Utility shutoff help",
+  housing: "Emergency housing",
+  mediation: "Neighbor mediation",
+  safety: "Safety concern",
+  health: "Medical / medication help",
+  transport: "Transportation",
+  youth: "Support for a young person",
+  legal: "Legal / paperwork help",
+  other: "Request for help",
+};
+
+/** Build a short neutral title from what the rules detected, e.g. "Groceries for a household of 5 · by Friday". */
+function composeHeadline(needs: Need[], householdSize: number | undefined, t: string): string {
+  const primary = needs.find((n) => n !== "youth" && n !== "other") ?? needs[0] ?? "other";
+  let s = HEADLINE[primary];
+  if (householdSize) s += ` for a household of ${householdSize}`;
+  else if (needs.includes("youth") && primary !== "youth") s += " for a family with kids";
+  const when = t.match(/\b(tonight|today|tomorrow|this week(end)?|by (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|until (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|asap)\b/i)?.[0];
+  if (when) s += ` · ${when.toLowerCase().replace(/^until/, "needed by").replace(/\b(mon|tues|wednes|thurs|fri|satur|sun)day\b/, (d) => d[0].toUpperCase() + d.slice(1))}`;
+  return s;
 }
 
 function cleanSummary(t: string): string {
   let s = t.replace(/\[(name|phone|address|email)\]/g, "").replace(/\s+/g, " ").trim();
-  s = s.replace(/^(hi|hello|hey|hola)[,!.]?\s*/i, "");
+  s = s.replace(/^((okay|ok|uh+|um+|so|yeah|hi|hello|hey|hola)[,.!]?\s*)+/i, "");
   s = s.replace(/^(this is|it'?s|i'?m|i am|my name is|me llamo|soy)\s*[,.]?\s*(and\s+)?/i, "");
   s = s.replace(/\b(call|text|reach) me at\s*[,.]?/gi, "").replace(/\s+/g, " ");
   s = s.replace(/^[,.\s]+/, "");
   s = s.charAt(0).toUpperCase() + s.slice(1);
   if (s.length > 90) s = s.slice(0, 87).replace(/\s+\S*$/, "") + "…";
   return s || "Request for help";
+}
+
+const WORD_NUM: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9 };
+const NUM = "(\\d|one|two|three|four|five|six|seven|eight|nine)";
+const toNum = (w: string) => WORD_NUM[w.toLowerCase()] ?? Number(w);
+
+/** "family of 5" / "5 of us" are totals; "four kids" implies at least one adult. */
+function guessHousehold(t: string): number | undefined {
+  const total = t.match(new RegExp(`\\b(?:family of|household of)\\s*${NUM}\\b|\\b${NUM}\\s*(?:of us|people)\\b`, "i"));
+  if (total) return toNum(total[1] ?? total[2]);
+  const kids = t.match(new RegExp(`\\b${NUM}\\s*(?:kids?|children|little ones)\\b`, "i"));
+  if (kids) return toNum(kids[1]) + (/\b(single (mom|dad|parent)|just me and)\b/i.test(t) ? 1 : 2);
+  return undefined;
 }
 
 function guessHoodFromStreets(t: string): string | undefined {
@@ -90,6 +134,7 @@ export async function structureIntake(rawText: string): Promise<StructuredIntake
       neighborhood: typeof parsed.neighborhood === "string" && parsed.neighborhood ? parsed.neighborhood : fallback.neighborhood,
       householdSize: typeof parsed.householdSize === "number" ? parsed.householdSize : fallback.householdSize,
       language: typeof parsed.language === "string" ? parsed.language : fallback.language,
+      source: "llm",
     };
   } catch (err) {
     console.warn("[ai] falling back to rules:", (err as Error).message);
@@ -162,9 +207,10 @@ const CALL_SUMMARY_SYSTEM = `You write a 2-3 sentence handoff note for a communi
 Rules: never include names, phone numbers, or street addresses (they are already replaced with tokens like [name]; keep it that way). Lead with what the resident needs and by when. Mention household size, neighborhood, and anything a responder should know before knocking. Plain, warm, specific. No preamble.`;
 
 /** Second-model pass over a finished call: turns the transcript into a handoff note. */
-export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[]): Promise<string> {
+export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[], providerSummary?: string): Promise<string> {
   const callerText = turns.filter((t) => t.role === "caller").map((t) => t.text).join(" ");
-  const fallback = cleanSummary(callerText.slice(0, 220)) || "Resident called the Relay line; see transcript.";
+  // Prefer the call platform's own summary over a raw excerpt when the second model is unavailable.
+  const fallback = providerSummary?.trim() || cleanSummary(callerText.slice(0, 220)) || "Resident called the Relay line; see transcript.";
   const key = process.env.OPENAI_API_KEY;
   if (!key || !turns.length) return fallback;
   try {
