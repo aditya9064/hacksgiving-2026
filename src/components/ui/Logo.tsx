@@ -1,12 +1,13 @@
 export function Logo({ className = "", light = false }: { className?: string; light?: boolean }) {
+  const fg = light ? "#ffffff" : "var(--ink)";
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden>
-        <rect width="28" height="28" rx="7" fill={light ? "#ffffff" : "var(--brand)"} />
-        <path d="M7 19 L7 9 L13 9 C16 9 17.5 10.5 17.5 12.5 C17.5 14.3 16.4 15.4 14.6 15.8 L18.5 19 M7 14 L13 14" stroke={light ? "#0f5132" : "var(--surface)"} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        <circle cx="21" cy="8" r="2.4" fill="#dc2626" />
+    <span className={`inline-flex items-center gap-2.5 ${className}`}>
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden>
+        <rect x="1" y="1" width="20" height="20" fill="none" stroke={fg} strokeWidth="1.5" />
+        <path d="M6 16 V6 h5.5 a3 3 0 0 1 0 6 H6 M11 12 l5 4" stroke={fg} strokeWidth="1.6" fill="none" strokeLinecap="square" />
+        <circle cx="17" cy="5" r="2" fill="var(--accent)" />
       </svg>
-      <span className={`font-display text-[21px] font-semibold tracking-tight ${light ? "text-white" : "text-ink"}`}>Relay <span className="font-light">MKE</span></span>
+      <span className="font-display text-[22px] leading-none" style={{ color: fg }}>Relay <span className="italic">MKE</span></span>
     </span>
   );
 }
