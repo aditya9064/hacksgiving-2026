@@ -157,6 +157,8 @@ export interface StructuredIntake {
   householdSize?: number;
   language?: string;
   redactions: { kind: "name" | "phone" | "address" | "email" | "other"; placeholder: string }[];
+  /** Whether the LLM produced these fields or the keyword rules did */
+  source?: "llm" | "rules";
 }
 
 export interface Snapshot {

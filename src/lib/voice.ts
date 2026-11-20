@@ -70,7 +70,7 @@ export interface PostCallPayload {
 /** After the call ends: redact the transcript, run the second LLM, attach to the request (or create it if the tool never fired). */
 export async function finalizeCall(p: PostCallPayload): Promise<HelpRequest | undefined> {
   const transcript: CallTurn[] = p.turns.map((t) => ({ role: t.role, t: t.t, text: redactPII(t.text).redactedText }));
-  const summary = await summarizeCall(transcript);
+  const summary = await summarizeCall(transcript, p.provider_summary);
 
   const snap = await db.snapshot();
   let req = snap.requests.find((r) => r.call?.conversationId === p.conversation_id);
@@ -88,7 +88,8 @@ export async function finalizeCall(p: PostCallPayload): Promise<HelpRequest | un
   if (callerText.trim().length > 20) {
     const st = await structureIntake(callerText);
     patch.redactedText = st.redactedText;
-    patch.summary = st.summary;
+    // Only an LLM result beats the agent's own clean "what they need" phrasing; the rules fallback shouldn't overwrite it.
+    if (st.source === "llm" || !req.call) patch.summary = st.summary;
     patch.needs = Array.from(new Set([...st.needs, ...req.needs])).slice(0, 3);
     if (!req.householdSize && st.householdSize) patch.householdSize = st.householdSize;
     if (st.language && st.language !== "en") patch.language = st.language;
