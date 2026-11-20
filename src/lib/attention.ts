@@ -62,6 +62,22 @@ export type AttentionRequest = Pick<
   "status" | "urgency" | "ownerName" | "deliveredAt" | "residentFeedback" | "createdAt" | "updatedAt"
 >;
 
+/**
+ * True once the owner has delivered AGAIN after the resident's partial/no feedback. At that point
+ * the follow-up is resolved and the delivered-waiting / overdue rules take over, so the amber badge
+ * does not get stuck on a case the owner has already re-actioned.
+ */
+function reDeliveredAfterFeedback(events: ActivityEvent[], feedback: "no" | "partial"): boolean {
+  const feedbackType: ActivityType = feedback === "no" ? "reopened" : "partial";
+  let lastFeedback: string | null = null;
+  let lastDelivered: string | null = null;
+  for (const e of events) {
+    if (e.type === feedbackType && (lastFeedback === null || e.at > lastFeedback)) lastFeedback = e.at;
+    if (e.type === "delivered" && (lastDelivered === null || e.at > lastDelivered)) lastDelivered = e.at;
+  }
+  return lastFeedback !== null && lastDelivered !== null && lastDelivered > lastFeedback;
+}
+
 /** ISO-8601 UTC strings (what the app stores) compare correctly as plain strings. */
 function lastMeaningfulAt(events: ActivityEvent[], req: AttentionRequest): string {
   let latest: string | null = null;
@@ -103,11 +119,15 @@ export function evaluateAttention(
   // Resident explicitly said it did not fully work. Flag follow-up immediately, no matter how
   // recent the activity is. ("partial" resets the clock as a meaningful event, but the resident's
   // signal still takes priority over any overdue check.)
-  const nextStep = owner ? `${owner} owns the next step.` : "No owner assigned.";
-  if (req.residentFeedback === "no")
-    return { level: "follow_up", reason: `Resident said help did not arrive. ${nextStep}`, owner, lastMeaningfulAt: lastAt };
-  if (req.residentFeedback === "partial")
-    return { level: "follow_up", reason: `Resident said help only partly arrived. ${nextStep}`, owner, lastMeaningfulAt: lastAt };
+  // A "partial" or "no" reply flags follow-up immediately, no matter how recent the activity is,
+  // UNLESS the owner has since delivered again (reDeliveredAfterFeedback) - then it is resolved and
+  // the delivered-waiting / overdue rules below take over, so the flag does not get stuck amber.
+  const feedback = req.residentFeedback;
+  if ((feedback === "no" || feedback === "partial") && !reDeliveredAfterFeedback(events, feedback)) {
+    const nextStep = owner ? `${owner} owns the next step.` : "No owner assigned.";
+    const said = feedback === "no" ? "Resident said help did not arrive." : "Resident said help only partly arrived.";
+    return { level: "follow_up", reason: `${said} ${nextStep}`, owner, lastMeaningfulAt: lastAt };
+  }
 
   // Delivered and waiting on the resident: only overdue if no reply within the NORMAL window,
   // regardless of the request's own urgency, so we do not nag residents too quickly.
