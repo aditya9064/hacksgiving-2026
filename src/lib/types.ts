@@ -82,6 +82,7 @@ export type ActivityType =
   | "delivered"
   | "verify_sent"
   | "verified"
+  | "partial"
   | "reopened"
   | "sms_out"
   | "sms_in"

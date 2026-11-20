@@ -43,9 +43,9 @@ const SEEDS: SeedReq[] = [
   { text: "Need transit vouchers for two weeks to get to my new job until first check", summary: "Two weeks of transit vouchers until first paycheck", needs: ["transport"], urgency: "normal", hood: "Bay View", status: "delivered", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 1700 },
   { text: "Food pantry bag for family of 5 please, we come every other week", summary: "Regular pantry support, family of 5", needs: ["food"], urgency: "normal", hood: "Sherman Park", status: "verified", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 2600, household: 5, feedback: "yes" },
   { text: "Rent help for November, I'm $400 short", summary: "$400 short on November rent", needs: ["rent"], urgency: "high", hood: "Midtown", status: "verified", owner: ["Keisha R.", "Milwaukee Housing Helpline", "p-housing"], ageMin: 3000, feedback: "yes" },
-  { text: "Landlord won't fix the heat, it's 52 degrees inside with a baby", summary: "No heat with infant in home, landlord unresponsive", needs: ["housing", "legal"], urgency: "critical", hood: "Riverwest", status: "verified", owner: ["Ana G.", "Tenant Legal Aid MKE", "p-legal"], ageMin: 4000, household: 3, feedback: "partial" },
+  { text: "Landlord won't fix the heat, it's 52 degrees inside with a baby", summary: "No heat with infant in home, landlord unresponsive", needs: ["housing", "legal"], urgency: "critical", hood: "Riverwest", status: "in_progress", owner: ["Ana G.", "Tenant Legal Aid MKE", "p-legal"], ageMin: 4000, household: 3, feedback: "partial" },
   { text: "My brother just got out and needs ID, a phone and somewhere to stay or he'll end up back with the old crowd", summary: "Reentry support: ID, phone, housing", needs: ["housing", "other", "safety"], urgency: "high", hood: "Amani", status: "verified", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 5200, feedback: "yes" },
-  { text: "Mediation went well, but the other family still parks in my spot sometimes", summary: "Follow-up after neighbor mediation", needs: ["mediation"], urgency: "low", hood: "Washington Park", status: "verified", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 7000, feedback: "partial" },
+  { text: "Mediation went well, but the other family still parks in my spot sometimes", summary: "Follow-up after neighbor mediation", needs: ["mediation"], urgency: "low", hood: "Washington Park", status: "in_progress", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 7000, feedback: "partial" },
   { text: "Heat shut off, two kids, landlord says it's my bill", summary: "Heat shutoff with two children", needs: ["utilities", "housing"], urgency: "critical", hood: "Metcalfe Park", status: "verified", owner: ["Jamal W.", "Keep the Lights On Fund", "p-energy"], ageMin: 8000, household: 3, feedback: "yes" },
 ];
 
@@ -78,17 +78,26 @@ export function buildSeed(now = new Date()): { requests: HelpRequest[]; activity
     if (idx >= 2 && s.owner) push(40, s.owner[0], "note", "Reached resident, confirmed details, arranging delivery");
     // Realistic time-to-help: 25 min to ~4 h depending on the case.
     const deliverMin = Math.min(s.ageMin * 0.6, 25 + ((i * 37) % 215));
-    if (idx >= 3 && s.owner) {
+    // A partial case was delivered before the resident replied "partly", even though it
+    // ends back at in_progress, so it still gets the delivered + verify-sent history.
+    const wasDelivered = idx >= 3 || s.feedback === "partial";
+    if (wasDelivered && s.owner) {
       push(deliverMin, s.owner[0], "delivered", "Marked delivered");
       deliveredAt = new Date(created.getTime() + deliverMin * 60_000).toISOString();
       push(deliverMin + 1, "system", "verify_sent", "Sent resident: 'Did the help arrive? Reply 1 yes, 2 partly, 3 no'");
     }
-    if (idx >= 4) {
-      const reply = s.feedback === "yes" ? "1" : s.feedback === "partial" ? "2" : "3";
-      const verifyMin = deliverMin + 30 + ((i * 11) % 90);
-      push(verifyMin, "resident", "sms_in", `Resident replied "${reply}"`);
-      push(verifyMin, "system", "verified", `Resident confirmed: ${s.feedback}`);
-      verifiedAt = new Date(created.getTime() + verifyMin * 60_000).toISOString();
+    const replyMin = deliverMin + 30 + ((i * 11) % 90);
+    if (s.feedback === "partial") {
+      // Resident replied "2": case stays open with the same owner and deliveredAt is cleared,
+      // matching classifyResidentReply() in the live app.
+      push(replyMin, "resident", "sms_in", 'Resident replied "2"');
+      push(replyMin, "resident", "partial", "Resident said the help only partly arrived. Case kept open with the same owner for follow-up.");
+      deliveredAt = undefined;
+    } else if (idx >= 4) {
+      const reply = s.feedback === "yes" ? "1" : "3";
+      push(replyMin, "resident", "sms_in", `Resident replied "${reply}"`);
+      push(replyMin, "system", "verified", `Resident confirmed: ${s.feedback}`);
+      verifiedAt = new Date(created.getTime() + replyMin * 60_000).toISOString();
     }
     requests.push({
       id,

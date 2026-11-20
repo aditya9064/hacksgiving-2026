@@ -5,6 +5,7 @@ export interface Stats {
   open: number;
   deliveredOrVerified: number;
   verified: number;
+  partlyHelped: number;
   verifiedPct: number;
   medianMinutes: number;
   topNeeds: { need: Need; count: number }[];
@@ -18,7 +19,10 @@ export interface Stats {
 export function computeStats(requests: HelpRequest[], partners: Partner[]): Stats {
   const open = requests.filter((r) => r.status !== "verified" && r.status !== "delivered").length;
   const done = requests.filter((r) => r.status === "delivered" || r.status === "verified");
-  const verified = requests.filter((r) => r.status === "verified");
+  // A partial delivery is never a success. Guard on feedback as well as status so legacy
+  // rows (or any that predate the partial-help fix) can never inflate the verified count.
+  const verified = requests.filter((r) => r.status === "verified" && r.residentFeedback !== "partial");
+  const partlyHelped = requests.filter((r) => r.residentFeedback === "partial").length;
   const times = done.filter((r) => r.deliveredAt).map((r) => (new Date(r.deliveredAt!).getTime() - new Date(r.createdAt).getTime()) / 60_000).sort((a, b) => a - b);
   const medianMinutes = times.length ? Math.round(times[Math.floor(times.length / 2)]) : 0;
 
@@ -39,7 +43,7 @@ export function computeStats(requests: HelpRequest[], partners: Partner[]): Stat
   const byPartner = partners
     .map((p) => {
       const mine = requests.filter((r) => r.partnerId === p.id);
-      return { partnerId: p.id, name: p.name, handled: mine.length, verified: mine.filter((r) => r.status === "verified").length };
+      return { partnerId: p.id, name: p.name, handled: mine.length, verified: mine.filter((r) => r.status === "verified" && r.residentFeedback !== "partial").length };
     })
     .filter((p) => p.handled > 0)
     .sort((a, b) => b.handled - a.handled);
@@ -52,6 +56,7 @@ export function computeStats(requests: HelpRequest[], partners: Partner[]): Stat
     open,
     deliveredOrVerified: done.length,
     verified: verified.length,
+    partlyHelped,
     verifiedPct: done.length ? Math.round((verified.length / done.length) * 100) : 0,
     medianMinutes,
     topNeeds,

@@ -2,6 +2,7 @@ import { db } from "./db";
 import { structureIntake } from "./ai";
 import { makeShortCode } from "./db/seed";
 import { sendSms, VERIFY_PROMPT } from "./sms";
+import { classifyResidentReply } from "./replyClassifier";
 import type { Channel, HelpRequest, StructuredIntake } from "./types";
 
 export interface IntakeInput {
@@ -62,14 +63,19 @@ export async function markDelivered(id: string, actor: string) {
   return req;
 }
 
-/** Resident reply: "1" yes, "2" partly, "3" no. A "no" reopens the case. */
+/**
+ * Resident reply: "1" yes, "2" partly, "3" no.
+ * Only "1" verifies. "2" (partly) keeps the case open with the same owner; "3" reopens it.
+ * The decision lives in the pure classifyResidentReply() so it is covered by tests and
+ * behaves identically on the board route and the inbound-SMS path.
+ */
 export async function residentReply(id: string, reply: "1" | "2" | "3") {
   const now = new Date().toISOString();
-  if (reply === "3") {
-    return db.updateRequest(id, { status: "claimed", residentFeedback: "no", deliveredAt: undefined }, { actor: "resident", type: "reopened", text: "Resident said help did NOT arrive. Case reopened and returned to owner." });
-  }
-  const fb = reply === "1" ? "yes" : "partial";
-  return db.updateRequest(id, { status: "verified", verifiedAt: now, residentFeedback: fb }, { actor: "resident", type: "verified", text: fb === "yes" ? "Resident confirmed the help arrived." : "Resident says the help partly arrived." });
+  const outcome = classifyResidentReply(reply);
+  const patch: Partial<HelpRequest> = { status: outcome.status, residentFeedback: outcome.residentFeedback };
+  if (outcome.setVerifiedAt) patch.verifiedAt = now;
+  if (outcome.clearDeliveredAt) patch.deliveredAt = undefined;
+  return db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text });
 }
 
 /** Parses an inbound SMS body such as "R-4F2K 1" or just "1" (when only one open verification exists for that number). */
