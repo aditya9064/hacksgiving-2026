@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCcw, Search, LayoutGrid, Table2 } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
 import { Board } from "@/components/board/Board";
+import { RequestTable } from "@/components/board/RequestTable";
 import { RequestDrawer } from "@/components/board/RequestDrawer";
 import { StatBand } from "@/components/board/StatBand";
 import { useSnapshot } from "@/lib/client/useSnapshot";
@@ -19,6 +20,7 @@ export default function BoardPage() {
   const [hood, setHood] = useState("all");
   const [urg, setUrg] = useState("all");
   const [status, setStatus] = useState("all");
+  const [view, setView] = useState<"board" | "table">("board");
   const now = useClock();
 
   // Deep links from the top bar: /board?q=…&status=new
@@ -26,6 +28,7 @@ export default function BoardPage() {
     const sp = new URLSearchParams(window.location.search);
     if (sp.get("q")) setQ(sp.get("q")!);
     if (sp.get("status")) setStatus(sp.get("status")!);
+    if (sp.get("view") === "table") setView("table");
   }, []);
 
   const stats = useMemo(() => (data ? computeStats(data.requests, data.partners) : null), [data]);
@@ -54,8 +57,8 @@ export default function BoardPage() {
       actions={<>
         <Btn href="/r" variant="solid"><Plus size={15} /> New Request</Btn>
         <span className="seg">
-          <span className="seg-item active-blue"><LayoutGrid size={13} /> Board</span>
-          <span className="seg-item"><Table2 size={13} /> Table <span className="text-[10px] text-brand">Soon</span></span>
+          <button onClick={() => setView("board")} className={`seg-item ${view === "board" ? "active-blue" : ""}`}><LayoutGrid size={13} /> Board</button>
+          <button onClick={() => setView("table")} className={`seg-item ${view === "table" ? "active-blue" : ""}`}><Table2 size={13} /> Table</button>
         </span>
         <Btn onClick={async () => { await fetch("/api/reset", { method: "POST" }); reload(); }} title="Reset demo data"><RefreshCcw size={14} /> Reset demo</Btn>
       </>}
@@ -74,7 +77,9 @@ export default function BoardPage() {
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="select"><option value="all">All Statuses</option><option value="new">Unclaimed</option><option value="claimed">Claimed</option><option value="in_progress">In progress</option><option value="delivered">Delivered</option><option value="verified">Verified</option></select>
       </div>
 
-      <div className="mt-4 overflow-x-auto pb-2">{data && <Board requests={filtered} fresh={fresh} onOpen={setOpenId} now={now} />}</div>
+      <div className="mt-4 overflow-x-auto pb-2">
+        {data && (view === "board" ? <Board requests={filtered} fresh={fresh} onOpen={setOpenId} now={now} /> : <RequestTable requests={filtered} onOpen={setOpenId} now={now} />)}
+      </div>
       <RequestDrawer request={open} partners={data?.partners ?? []} onClose={() => setOpenId(null)} me={me} />
     </AppShell>
   );
