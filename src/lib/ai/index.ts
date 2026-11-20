@@ -1,5 +1,6 @@
 import { NEEDS, NEIGHBORHOODS, type Need, type StructuredIntake, type Urgency } from "../types";
 import { redactPII } from "./redact";
+import { complete, llmConfigured, parseJson } from "./llm";
 
 const KEYWORDS: Record<Need, RegExp> = {
   food: /\b(food|grocer\w*|hungry|eat|pantry|meals?|formula|diapers?)\b/i,
@@ -108,22 +109,10 @@ Describe the NEED. Never characterize people as dangerous or as suspects.`;
 export async function structureIntake(rawText: string): Promise<StructuredIntake> {
   const { redactedText, redactions } = redactPII(rawText);
   const fallback = fallbackStructure(redactedText);
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) return { redactedText, redactions, ...fallback };
+  if (!llmConfigured()) return { redactedText, redactions, ...fallback };
 
   try {
-    const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey: key });
-    const res = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      temperature: 0.1,
-      response_format: { type: "json_object" },
-      messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: redactedText },
-      ],
-    });
-    const parsed = JSON.parse(res.choices[0]?.message?.content ?? "{}");
+    const parsed = parseJson(await complete({ system: SYSTEM, user: redactedText, temperature: 0.1, json: true })) as Record<string, any>;
     const needs = (Array.isArray(parsed.needs) ? parsed.needs : []).filter((n: string) => (NEEDS as readonly string[]).includes(n)) as Need[];
     return {
       redactedText,
@@ -152,21 +141,15 @@ export async function transcribeAudio(file: File): Promise<string> {
 }
 
 export async function draftFunderNarrative(stats: Record<string, unknown>): Promise<string> {
-  const key = process.env.OPENAI_API_KEY;
   const fallback = `Over the reporting period, ComForce MKE and ${stats.partnerCount} partner organizations handled ${stats.total} requests for help across ${stats.neighborhoodCount} Milwaukee neighborhoods. ${stats.verifiedPct}% of completed requests were confirmed by the resident themselves, with a median time from first contact to delivered help of ${stats.medianMinutes} minutes. The most common needs were ${stats.topNeeds}. Every figure in this report is drawn from the live Relay record and can be audited request by request.`;
-  if (!key) return fallback;
+  if (!llmConfigured()) return fallback;
   try {
-    const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey: key });
-    const res = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+    const out = await complete({
+      system: "Write a 120-160 word impact narrative for a nonprofit funder report. Plain, concrete, no hype, no names of individuals. Use only the numbers given.",
+      user: JSON.stringify(stats),
       temperature: 0.4,
-      messages: [
-        { role: "system", content: "Write a 120-160 word impact narrative for a nonprofit funder report. Plain, concrete, no hype, no names of individuals. Use only the numbers given." },
-        { role: "user", content: JSON.stringify(stats) },
-      ],
     });
-    return res.choices[0]?.message?.content?.trim() || fallback;
+    return out || fallback;
   } catch {
     return fallback;
   }
@@ -183,20 +166,14 @@ export async function answerFromPlaybooks(question: string, playbooks: { id: str
   const fallback = top.length
     ? `From "${top[0].title}":\n${top[0].body.split("\n").slice(0, 4).join("\n")}${top.length > 1 ? `\n\nSee also: ${top[1].title}.` : ""}`
     : "No playbook covers that yet. Ask the on-call lead, then add what you learn to the Guide so the next volunteer has it.";
-  const key = process.env.OPENAI_API_KEY;
-  if (!key || !top.length) return { answer: fallback, sources };
+  if (!llmConfigured() || !top.length) return { answer: fallback, sources };
   try {
-    const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey: key });
-    const res = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+    const out = await complete({
+      system: "You help community volunteers in Milwaukee. Answer ONLY from the playbooks provided, in 3-6 short numbered steps. If the playbooks do not cover it, say so. Never invent phone numbers or laws.",
+      user: `Playbooks:\n${top.map((p) => `## ${p.title}\n${p.body}`).join("\n\n")}\n\nQuestion: ${question}`,
       temperature: 0.2,
-      messages: [
-        { role: "system", content: "You help community volunteers in Milwaukee. Answer ONLY from the playbooks provided, in 3-6 short numbered steps. If the playbooks do not cover it, say so. Never invent phone numbers or laws." },
-        { role: "user", content: `Playbooks:\n${top.map((p) => `## ${p.title}\n${p.body}`).join("\n\n")}\n\nQuestion: ${question}` },
-      ],
     });
-    return { answer: res.choices[0]?.message?.content?.trim() || fallback, sources };
+    return { answer: out || fallback, sources };
   } catch {
     return { answer: fallback, sources };
   }
@@ -211,21 +188,11 @@ export async function summarizeCall(turns: { role: "agent" | "caller"; text: str
   const callerText = turns.filter((t) => t.role === "caller").map((t) => t.text).join(" ");
   // Prefer the call platform's own summary over a raw excerpt when the second model is unavailable.
   const fallback = providerSummary?.trim() || cleanSummary(callerText.slice(0, 220)) || "Resident called the Relay line; see transcript.";
-  const key = process.env.OPENAI_API_KEY;
-  if (!key || !turns.length) return fallback;
+  if (!llmConfigured() || !turns.length) return fallback;
   try {
-    const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey: key });
     const convo = turns.map((t) => `${t.role === "agent" ? "Assistant" : "Resident"}: ${t.text}`).join("\n");
-    const res = await client.chat.completions.create({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: CALL_SUMMARY_SYSTEM },
-        { role: "user", content: convo },
-      ],
-    });
-    return res.choices[0]?.message?.content?.trim() || fallback;
+    const out = await complete({ system: CALL_SUMMARY_SYSTEM, user: convo, temperature: 0.2 });
+    return out || fallback;
   } catch (err) {
     console.warn("[ai] call summary fell back:", (err as Error).message);
     return fallback;

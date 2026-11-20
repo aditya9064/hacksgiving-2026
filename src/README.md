@@ -8,7 +8,7 @@ npm run dev          # http://localhost:3000
 npx tsc --noEmit     # type check
 ```
 
-Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every integration has a built-in fallback, so the demo never depends on a network key.
+Copy `.env.example` to `.env.local` to enable an LLM (Anthropic or OpenAI), Supabase or Twilio. Every integration has a built-in fallback, so the demo never depends on a network key.
 
 ## Surfaces
 
@@ -44,11 +44,11 @@ Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every 
 
 ## Phone line (AI agent)
 
-A resident calls one number. Twilio plays a short, deliberately robotic notice ("…may be recorded"), then the call is handed to an ElevenLabs agent — "Jordan", a warm neighbor persona (prompt in [`tools/voice/prompt.md`](../tools/voice/prompt.md)). While talking, the agent calls `create_request`; the card appears on the Relay Board **live, marked "Live"**, and the agent reads the tracking code back. When the call ends, the transcript is redacted and a second model (OpenAI) rewrites it into the one-line summary on the card.
+A resident calls one number. Twilio plays a short, deliberately robotic notice ("…may be recorded"), then the call is handed to an ElevenLabs agent — "Jordan", a warm neighbor persona (prompt in [`tools/voice/prompt.md`](../tools/voice/prompt.md)). While talking, the agent calls `create_request`; the card appears on the Relay Board **live, marked "Live"**, and the agent reads the tracking code back. When the call ends, the transcript is redacted and a second model (Claude or OpenAI, via `lib/ai/llm.ts`) rewrites it into the one-line summary on the card.
 
 Setup (≈15 min):
 
-1. `src/.env.local`: `OPENAI_API_KEY`, `ELEVENLABS_API_KEY`, `VOICE_TOOL_SECRET=<any random string>`.
+1. `src/.env.local`: `ANTHROPIC_API_KEY` (or `OPENAI_API_KEY`), `ELEVENLABS_API_KEY`, `VOICE_TOOL_SECRET=<any random string>`.
 2. Expose the dev server: `cloudflared tunnel --url http://localhost:3077` → copy the `https://….trycloudflare.com` URL into `PUBLIC_BASE_URL`.
 3. `node tools/voice/create-agent.mjs` → prints the agent id; put it in `NEXT_PUBLIC_ELEVENLABS_AGENT_ID`. The `/r` page now shows a **Call Relay** web widget — enough for a demo without a phone number.
 4. In [Agents → Settings → Post-call webhooks](https://elevenlabs.io/app/agents/settings) add `${PUBLIC_BASE_URL}/api/voice/elevenlabs`; copy its secret to `ELEVENLABS_WEBHOOK_SECRET`.
@@ -74,7 +74,7 @@ curl -X POST localhost:3077/api/voice/elevenlabs -H 'content-type: application/j
 ```
 app/            routes + API handlers
 components/     AppShell (sidebar/topbar), board/, ui/
-lib/ai/         structuring, redaction, narrative, guide Q&A (OpenAI or rules)
+lib/ai/         structuring, redaction, narrative, guide Q&A (Claude/OpenAI via llm.ts, or rules)
 lib/db/         store + synthetic seed (in-memory or Supabase)
 lib/actions.ts  domain actions shared by web, SMS and phone views
 ```
