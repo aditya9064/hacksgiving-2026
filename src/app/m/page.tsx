@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { HandHelping, CheckCheck, Send, MapPin, Users, Smartphone, MessageSquareText, Wifi, Battery, Signal, ChevronLeft, ShieldCheck } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
 import { SectionCard } from "@/components/ui/StatCard";
-import { NeedChip, UrgencyChip } from "@/components/ui/Chip";
+import { NeedChip, UrgencyChip, AttentionBadge } from "@/components/ui/Chip";
 import { useSnapshot, act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { useMe } from "@/lib/client/me";
 import { timeAgo } from "@/lib/stats";
@@ -58,6 +58,12 @@ export default function MobilePage() {
                     <button key={r.id} onClick={() => setOpenId(r.id)} className={`card w-full text-left p-3 ${r.urgency === "critical" ? "!border-red/40" : ""}`}>
                       <div className="flex items-center gap-1.5 flex-wrap">{r.needs.slice(0, 2).map((n) => <NeedChip key={n} need={n} />)}<UrgencyChip urgency={r.urgency} /></div>
                       <div className="mt-1.5 text-[13.5px] font-semibold leading-snug">{r.summary}</div>
+                      {r.ownerName === me.name && r.attention.level !== "none" && (
+                        <div className="mt-1.5">
+                          <AttentionBadge level={r.attention.level} />
+                          <div className="mt-1 text-[11.5px] text-ink-2 leading-snug">{r.attention.reason}</div>
+                        </div>
+                      )}
                       <div className="mt-1 flex items-center justify-between text-[11.5px] text-muted"><span className="flex items-center gap-1"><MapPin size={11} />{r.neighborhood}</span><span>{timeAgo(r.createdAt, now)}</span></div>
                     </button>
                   ))}
