@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUS_LABEL } from "@/lib/types";
@@ -61,6 +61,8 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                 <p className="text-[14.5px] leading-[1.55] text-ink">{highlight(request.redactedText)}</p>
                 <div className="mt-3 flex items-center gap-1.5 text-[11.5px] text-brand"><ShieldCheck size={13} /> Identifiers removed before AI. Contact details {request.hasContact ? "held in the ComForce-only tier" : "not provided"}.</div>
               </section>
+
+              {request.call && <CallSection call={request.call} />}
 
               <section className="card grid grid-cols-2 gap-3 p-4 text-[13px]">
                 <Field k="Neighborhood" v={request.neighborhood} />
@@ -158,3 +160,31 @@ export function highlight(text: string) {
 }
 
 export { Avatar };
+
+function CallSection({ call }: { call: NonNullable<SafeRequest["call"]> }) {
+  const [open, setOpen] = useState(false);
+  const live = !call.endedAt;
+  const dur = call.durationSec ? `${Math.floor(call.durationSec / 60)}m ${call.durationSec % 60}s` : null;
+  return (
+    <section className="card p-4 !border-brand/30">
+      <div className="flex items-center justify-between">
+        <div className="label flex items-center gap-1.5"><Phone size={12} className="text-brand" /> Phone call{dur ? ` · ${dur}` : ""}</div>
+        {live ? <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-red"><span className="h-2 w-2 rounded-full bg-red blink" /> Live</span> : <span className="text-[11px] text-muted">Summarized by AI after the call</span>}
+      </div>
+      {live && <p className="mt-2 text-[13.5px] text-ink-2">The resident is still on the line. Details and the transcript arrive when the call ends.</p>}
+      {call.summary && <p className="mt-2 text-[14px] leading-[1.55] text-ink">{call.summary}</p>}
+      {call.transcript.length > 0 && (
+        <div className="mt-3">
+          <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:underline"><ChevronDown size={13} className={`transition ${open ? "rotate-180" : ""}`} /> {open ? "Hide" : "Show"} transcript · {call.transcript.length} turns · redacted</button>
+          {open && (
+            <ol className="mt-2 space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+              {call.transcript.map((t, i) => (
+                <li key={i} className="flex gap-2"><span className={`w-[58px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Relay" : "Resident"}</span><span className="text-ink-2">{highlight(t.text)}</span></li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}

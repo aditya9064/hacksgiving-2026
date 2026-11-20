@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ShieldCheck, Send, CheckCircle2, Mic, Square, MessageSquareText, ArrowLeft, ArrowRight } from "lucide-react";
+import { ShieldCheck, Send, CheckCircle2, Mic, Square, MessageSquareText, ArrowLeft, ArrowRight, Phone } from "lucide-react";
+import Script from "next/script";
 import { Logo } from "@/components/ui/Logo";
 import Link from "next/link";
 import { NeedChip, UrgencyDot } from "@/components/ui/Chip";
@@ -9,6 +10,28 @@ import { highlight } from "@/components/board/RequestDrawer";
 import type { StructuredIntake } from "@/lib/types";
 
 type Phase = "write" | "processing" | "done";
+
+const RELAY_PHONE = process.env.NEXT_PUBLIC_RELAY_PHONE;
+const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+
+function CallRelay() {
+  if (!RELAY_PHONE && !AGENT_ID) return null;
+  return (
+    <div className="mt-4 rounded-lg border border-brand/30 bg-brand-soft/40 p-4">
+      <div className="flex items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand text-white"><Phone size={16} /></span>
+        <div className="min-w-0 flex-1">
+          <div className="text-[14.5px] font-semibold">Rather talk than type?</div>
+          <p className="mt-0.5 text-[13px] text-ink-2">Call the Relay line any time. Someone picks up right away, in English or Spanish, and gives you a tracking code before you hang up.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {RELAY_PHONE && <a href={`tel:${RELAY_PHONE.replace(/[^+\d]/g, "")}`} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-[14px] font-semibold text-white hover:bg-brand-2"><Phone size={14} /> Call {RELAY_PHONE}</a>}
+            {AGENT_ID && <span className="text-[12px] text-muted">or use the “Call Relay” button in the corner to talk from this page.</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ResidentIntake() {
   const [text, setText] = useState("");
@@ -64,6 +87,14 @@ export default function ResidentIntake() {
 
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-8">
+      {AGENT_ID && (
+        <>
+          <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed" strategy="afterInteractive" />
+          {/* Web-call fallback: same agent as the phone line, useful for demos without a Twilio number. */}
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {(() => { const W = "elevenlabs-convai" as any; return <W agent-id={AGENT_ID} action-text="Call Relay" start-call-text="Start call" end-call-text="Hang up" listening-text="Listening…" speaking-text="Relay is speaking" />; })()}
+        </>
+      )}
       <div className="w-full max-w-[520px]">
         <div className="flex items-center justify-between mb-6">
           <Link href="/board" className="flex items-center gap-2.5" title="Back to Relay Board"><Logo /><div><div className="text-[14px] font-bold leading-tight">Relay MKE</div><div className="text-[11.5px] text-muted">by ComForce MKE</div></div></Link>
@@ -99,6 +130,7 @@ export default function ResidentIntake() {
                 <span>ComForce MKE may share what I need (not my name or number) with a trusted partner organization so I can get help faster.</span>
               </label>
               <button disabled={text.trim().length < 3} onClick={submit} className="mt-5 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-3.5 text-[16px] font-semibold text-white hover:bg-brand-2 disabled:opacity-40"><Send size={16} /> Send request</button>
+              <CallRelay />
               <div className="mt-4 flex items-center justify-center gap-1.5 text-[12px] text-muted"><MessageSquareText size={12} /> Or text your request to the Relay number. Standard rates apply.</div>
             </motion.div>
           )}

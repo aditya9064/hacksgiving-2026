@@ -84,7 +84,8 @@ export type ActivityType =
   | "verified"
   | "reopened"
   | "sms_out"
-  | "sms_in";
+  | "sms_in"
+  | "call";
 
 export interface ActivityEvent {
   id: string;
@@ -119,6 +120,24 @@ export interface HelpRequest {
   residentFeedback?: "yes" | "no" | "partial";
   /** ComForce-tier only. Never sent to the AI or shown on the board. */
   contactRef?: string;
+  /** Phone-call intake (ElevenLabs agent). Transcript is redacted before storage. */
+  call?: CallRecord;
+}
+
+export interface CallTurn {
+  role: "agent" | "caller";
+  text: string;
+  /** seconds into the call */
+  t: number;
+}
+
+export interface CallRecord {
+  conversationId: string;
+  durationSec?: number;
+  /** Written by the second LLM after the call: 2-3 sentence, name-free summary */
+  summary?: string;
+  transcript: CallTurn[];
+  endedAt?: string;
 }
 
 export interface Playbook {

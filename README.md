@@ -21,7 +21,7 @@ Every one of ComForce's eight divisions runs the same loop: **intake → coordin
 | Hackathon track | Relay module |
 | --- | --- |
 | Information Sharing & Coordination | **Partner Network**: shared directory, live capacity, consent-scoped handoffs |
-| Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web/voice intake, claim-to-own, *resident confirms help arrived* |
+| Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web intake **and a phone line answered by a human-sounding AI agent** that logs the request live and reads back a tracking code; claim-to-own; *resident confirms help arrived* |
 | Data Collection & Impact Measurement | **Field Log + Impact Studio**: voice-note activity logs, live dashboard, one-click funder report, full export |
 | Community Awareness & Decision Support | **Neighborhood Pulse**: map of needs and unmet needs, never people |
 | Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
@@ -72,6 +72,9 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 │   ├── app/                      ← 7 surfaces + API routes
 │   ├── components/               ← AppShell, board, ui
 │   └── lib/                      ← ai (structure/redact/guide), db (store/seed), actions
+├── tools/
+│   ├── build-pdf.sh              ← builds the playbook PDF
+│   └── voice/                    ← phone-agent persona prompt + ElevenLabs agent setup script
 ├── data/
 │   └── synthetic/                ← synthetic demo data only
 └── presentation/                 ← pitch, slides, demo assets

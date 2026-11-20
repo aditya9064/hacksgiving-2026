@@ -32,7 +32,9 @@ function fallbackStructure(redacted: string): Omit<StructuredIntake, "redactedTe
 
 function cleanSummary(t: string): string {
   let s = t.replace(/\[(name|phone|address|email)\]/g, "").replace(/\s+/g, " ").trim();
-  s = s.replace(/^(hi|hello|hey|hola)[,!.]?\s*(this is|it'?s|i'?m|soy)?\s*[,.]?\s*/i, "");
+  s = s.replace(/^(hi|hello|hey|hola)[,!.]?\s*/i, "");
+  s = s.replace(/^(this is|it'?s|i'?m|i am|my name is|me llamo|soy)\s*[,.]?\s*(and\s+)?/i, "");
+  s = s.replace(/\b(call|text|reach) me at\s*[,.]?/gi, "").replace(/\s+/g, " ");
   s = s.replace(/^[,.\s]+/, "");
   s = s.charAt(0).toUpperCase() + s.slice(1);
   if (s.length > 90) s = s.slice(0, 87).replace(/\s+\S*$/, "") + "…";
@@ -155,3 +157,31 @@ export async function answerFromPlaybooks(question: string, playbooks: { id: str
   }
 }
 
+
+const CALL_SUMMARY_SYSTEM = `You write a 2-3 sentence handoff note for a community responder, based on a phone-call transcript between an intake assistant and a resident in Milwaukee.
+Rules: never include names, phone numbers, or street addresses (they are already replaced with tokens like [name]; keep it that way). Lead with what the resident needs and by when. Mention household size, neighborhood, and anything a responder should know before knocking. Plain, warm, specific. No preamble.`;
+
+/** Second-model pass over a finished call: turns the transcript into a handoff note. */
+export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[]): Promise<string> {
+  const callerText = turns.filter((t) => t.role === "caller").map((t) => t.text).join(" ");
+  const fallback = cleanSummary(callerText.slice(0, 220)) || "Resident called the Relay line; see transcript.";
+  const key = process.env.OPENAI_API_KEY;
+  if (!key || !turns.length) return fallback;
+  try {
+    const { default: OpenAI } = await import("openai");
+    const client = new OpenAI({ apiKey: key });
+    const convo = turns.map((t) => `${t.role === "agent" ? "Assistant" : "Resident"}: ${t.text}`).join("\n");
+    const res = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: CALL_SUMMARY_SYSTEM },
+        { role: "user", content: convo },
+      ],
+    });
+    return res.choices[0]?.message?.content?.trim() || fallback;
+  } catch (err) {
+    console.warn("[ai] call summary fell back:", (err as Error).message);
+    return fallback;
+  }
+}
