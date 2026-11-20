@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, AlertTriangle, Clock3 } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUS_LABEL } from "@/lib/types";
+import { timeAgo } from "@/lib/stats";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
 
 const ACTOR_ICON = (actor: string) => (actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />);
@@ -56,6 +57,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {request.attention.level !== "none" && <AttentionAlert attn={request.attention} />}
               <section className="card p-4">
                 <div className="label mb-2">Resident's words · redacted</div>
                 <p className="text-[14.5px] leading-[1.55] text-ink">{highlight(request.redactedText)}</p>
@@ -135,6 +137,23 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function AttentionAlert({ attn }: { attn: SafeRequest["attention"] }) {
+  const overdue = attn.level === "needs_attention";
+  return (
+    <section className={`rounded-lg border p-4 ${overdue ? "border-[#f3c4c4] bg-red-soft" : "border-[#f6dcb0] bg-orange-soft"}`}>
+      <div className="flex items-center gap-2 text-[13.5px] font-semibold">
+        {overdue ? <AlertTriangle size={15} className="text-red" /> : <Clock3 size={15} className="text-[#b45309]" />}
+        <span className={overdue ? "text-red" : "text-[#b45309]"}>{overdue ? "Needs attention" : "Follow-up needed"}</span>
+      </div>
+      <p className="mt-1.5 text-[13.5px] leading-snug text-ink">{attn.reason}</p>
+      <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11.5px] text-ink-2">
+        <span>Owner: <b className="font-semibold text-ink">{attn.owner ?? "Unassigned"}</b></span>
+        <span>Last meaningful update: <b className="font-semibold text-ink">{timeAgo(attn.lastMeaningfulAt)}</b></span>
+      </div>
+    </section>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, RotateCcw, AlertTriangle, Clock, Info } from "lucide-react";
+import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, AlertTriangle, Clock3, Clock, Info } from "lucide-react";
 import type { SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUSES, STATUS_LABEL } from "@/lib/types";
 import { timeAgo } from "@/lib/stats";
@@ -19,16 +19,24 @@ function Row({ Icon, k, v, vClass = "text-ink" }: { Icon: typeof MapPin; k: stri
 }
 
 export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh: boolean; onClick: () => void; now: number }) {
-  const reopened = r.residentFeedback === "no" && r.status !== "verified";
+  const attn = r.attention;
+  const flagged = attn.level !== "none";
+  const overdue = attn.level === "needs_attention";
   const [chLabel, ChIcon] = CHANNEL[r.channel];
-  const border = reopened || r.urgency === "critical" ? "!border-[#f0a3a3]" : r.urgency === "high" ? "!border-[#f3cf95]" : fresh ? "!border-brand" : "";
-  const next = r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? "Verification text sent · awaiting resident reply" : r.residentFeedback === "partial" ? "Resident: partly helped" : "Closed the loop · resident confirmed";
+  const border = overdue || r.urgency === "critical" ? "!border-[#f0a3a3]" : flagged || r.urgency === "high" ? "!border-[#f3cf95]" : fresh ? "!border-brand" : "";
+  const next = r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? "Verification text sent · awaiting resident reply" : "Closed the loop · resident confirmed";
   return (
     <motion.button layout layoutId={r.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 400, damping: 34 }} onClick={onClick}
       className={`card w-full text-left overflow-hidden hover:shadow-[0_2px_8px_rgba(0,0,0,.06)] ${border}`}>
-      {reopened && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><RotateCcw size={11} /> Reopened by resident</div>}
-      {!reopened && r.urgency === "critical" && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>}
-      {fresh && r.urgency !== "critical" && r.urgency !== "high" && !reopened && <div className="flex items-center gap-1.5 bg-brand-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-brand"><Info size={11} /> Just arrived</div>}
+      {flagged ? (
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide ${overdue ? "bg-red-soft text-red" : "bg-orange-soft text-[#b45309]"}`}>
+          {overdue ? <AlertTriangle size={11} /> : <Clock3 size={11} />} {overdue ? "Needs attention" : "Follow-up needed"}
+        </div>
+      ) : r.urgency === "critical" ? (
+        <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>
+      ) : fresh && r.urgency !== "high" ? (
+        <div className="flex items-center gap-1.5 bg-brand-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-brand"><Info size={11} /> Just arrived</div>
+      ) : null}
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
@@ -49,8 +57,8 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
           {r.householdSize ? <Row Icon={Home} k="Household" v={`${r.householdSize} people`} /> : <Row Icon={Clock} k="Opened" v={timeAgo(r.createdAt, now)} />}
           <Row Icon={UserCheck} k="Owner" v={r.ownerName ?? "Unassigned"} vClass={r.ownerName ? "text-green" : "text-[#b45309]"} />
         </div>
-        <div className={`mt-2 rounded-md border px-2.5 py-1.5 text-[11.5px] font-medium ${r.status === "verified" && r.residentFeedback !== "partial" ? "border-[#bfe7cf] bg-green-soft text-green" : "border-[#bfe0f3] bg-brand-soft text-brand"}`}>
-          {r.status === "verified" && r.residentFeedback !== "partial" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : next}
+        <div className={`mt-2 rounded-md border px-2.5 py-1.5 text-[11.5px] font-medium ${r.status === "verified" ? "border-[#bfe7cf] bg-green-soft text-green" : "border-[#bfe0f3] bg-brand-soft text-brand"}`}>
+          {r.status === "verified" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : next}
         </div>
         <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
           <span>Opened {timeAgo(r.createdAt, now)}</span>

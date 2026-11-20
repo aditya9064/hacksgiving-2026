@@ -138,3 +138,29 @@ export function evaluateAttention(
 
   return { level: "none", reason: "", owner, lastMeaningfulAt: lastAt };
 }
+
+const LEVEL_RANK: Record<AttentionLevel, number> = { needs_attention: 0, follow_up: 1, none: 2 };
+const URGENCY_RANK: Record<Urgency, number> = { critical: 0, high: 1, normal: 2, low: 3 };
+
+export interface AttentionSortable {
+  urgency: Urgency;
+  attention: Attention;
+}
+
+/**
+ * Board sort order: needs_attention before follow_up; within each, by urgency
+ * (critical > high > normal > low); then longest idle first. Returns 0 for two
+ * non-flagged requests so a secondary comparator (the table's column sort) can decide.
+ */
+export function compareAttention(a: AttentionSortable, b: AttentionSortable, now: number): number {
+  const la = LEVEL_RANK[a.attention.level];
+  const lb = LEVEL_RANK[b.attention.level];
+  if (la !== lb) return la - lb;
+  if (a.attention.level === "none") return 0;
+  const ua = URGENCY_RANK[a.urgency];
+  const ub = URGENCY_RANK[b.urgency];
+  if (ua !== ub) return ua - ub;
+  const idleA = now - new Date(a.attention.lastMeaningfulAt).getTime();
+  const idleB = now - new Date(b.attention.lastMeaningfulAt).getTime();
+  return idleB - idleA; // longest idle first
+}
