@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" font-family="Helvetica,Arial,sans-serif">
+<rect width="1200" height="320" fill="#ffffff"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0f5132"/></marker></defs>
+<text x="600" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#111">The Relay Loop — every ComForce division runs this</text>
+<rect x="40.0" y="70" width="190" height="170" rx="14" fill="#0f5132"/>
+<text x="135.0" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">INTAKE</text>
+<text x="135.0" y="148" text-anchor="middle" font-size="15" fill="#d1fae5">text · QR · voice</text>
+<text x="135.0" y="170" text-anchor="middle" font-size="15" fill="#d1fae5">AI structures,</text>
+<text x="135.0" y="192" text-anchor="middle" font-size="15" fill="#d1fae5">human confirms</text>
+<line x1="236.0" y1="155" x2="266.5" y2="155" stroke="#0f5132" stroke-width="4" marker-end="url(#a)"/>
+<rect x="272.5" y="70" width="190" height="170" rx="14" fill="#0f5132"/>
+<text x="367.5" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">COORDINATE</text>
+<text x="367.5" y="148" text-anchor="middle" font-size="15" fill="#d1fae5">claimable alerts</text>
+<text x="367.5" y="170" text-anchor="middle" font-size="15" fill="#d1fae5">partner capacity</text>
+<text x="367.5" y="192" text-anchor="middle" font-size="15" fill="#d1fae5">response rooms</text>
+<line x1="468.5" y1="155" x2="499.0" y2="155" stroke="#0f5132" stroke-width="4" marker-end="url(#a)"/>
+<rect x="505.0" y="70" width="190" height="170" rx="14" fill="#0f5132"/>
+<text x="600.0" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">DELIVER</text>
+<text x="600.0" y="148" text-anchor="middle" font-size="15" fill="#d1fae5">who did it,</text>
+<text x="600.0" y="170" text-anchor="middle" font-size="15" fill="#d1fae5">when, what</text>
+<line x1="701.0" y1="155" x2="731.5" y2="155" stroke="#0f5132" stroke-width="4" marker-end="url(#a)"/>
+<rect x="737.5" y="70" width="190" height="170" rx="14" fill="#0f5132"/>
+<text x="832.5" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">VERIFY</text>
+<text x="832.5" y="148" text-anchor="middle" font-size="15" fill="#d1fae5">resident texts</text>
+<text x="832.5" y="170" text-anchor="middle" font-size="15" fill="#d1fae5">back: did help</text>
+<text x="832.5" y="192" text-anchor="middle" font-size="15" fill="#d1fae5">arrive?</text>
+<line x1="933.5" y1="155" x2="964.0" y2="155" stroke="#0f5132" stroke-width="4" marker-end="url(#a)"/>
+<rect x="970.0" y="70" width="190" height="170" rx="14" fill="#0f5132"/>
+<text x="1065.0" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">REPORT</text>
+<text x="1065.0" y="148" text-anchor="middle" font-size="15" fill="#d1fae5">live dashboard</text>
+<text x="1065.0" y="170" text-anchor="middle" font-size="15" fill="#d1fae5">funder report</text>
+<text x="1065.0" y="192" text-anchor="middle" font-size="15" fill="#d1fae5">needs map</text>
+<path d="M 1110 240 Q 1110 295 600 295 Q 90 295 90 240" fill="none" stroke="#dc2626" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#a)"/>
+<text x="600" y="312" text-anchor="middle" font-size="14" fill="#dc2626">a "No" from the resident reopens the case</text>
+</svg>

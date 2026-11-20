@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" font-family="Helvetica,Arial,sans-serif">
+<rect width="1200" height="520" fill="#fff"/>
+<text x="600" y="36" text-anchor="middle" font-size="22" font-weight="700" fill="#111">One spine, five surfaces — each hackathon track is a view on the same data</text>
+<rect x="350" y="70" width="500" height="120" rx="16" fill="#111827"/>
+<text x="600" y="110" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">THE SPINE (one Postgres database)</text>
+<text x="600" y="140" text-anchor="middle" font-size="15" fill="#9ca3af">requests · partner orgs · activity log · messages · consent · playbooks</text>
+<text x="600" y="165" text-anchor="middle" font-size="15" fill="#9ca3af">row-level security → public / partners / ComForce-only tiers</text>
+<text x="160" y="130" text-anchor="middle" font-size="15" fill="#374151">Residents &amp; partners</text><text x="160" y="150" text-anchor="middle" font-size="13" fill="#6b7280">SMS · QR web · voice</text>
+<line x1="260" y1="130" x2="345" y2="130" stroke="#374151" stroke-width="3"/>
+<text x="1040" y="130" text-anchor="middle" font-size="15" fill="#374151">Volunteers</text><text x="1040" y="150" text-anchor="middle" font-size="13" fill="#6b7280">phone-first web app</text>
+<line x1="855" y1="130" x2="950" y2="130" stroke="#374151" stroke-width="3"/>
+<line x1="600" y1="190" x2="135.0" y2="260" stroke="#0f5132" stroke-width="2.5"/>
+<rect x="30.0" y="260" width="210" height="230" rx="14" fill="#ecfdf5" stroke="#0f5132" stroke-width="2"/>
+<text x="135.0" y="294" text-anchor="middle" font-size="16" font-weight="700" fill="#0f5132">① Partner Network</text>
+<text x="135.0" y="328" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Information Sharing</text>
+<text x="135.0" y="348" text-anchor="middle" font-size="14" font-weight="600" fill="#111">&amp; Coordination</text>
+<line x1="60.0" y1="378" x2="210.0" y2="378" stroke="#dc2626" stroke-width="3"/>
+<text x="135.0" y="410" text-anchor="middle" font-size="14" fill="#374151">directory + live capacity</text>
+<text x="135.0" y="432" text-anchor="middle" font-size="14" fill="#374151">consent-scoped handoffs</text>
+<line x1="600" y1="190" x2="367.5" y2="260" stroke="#0f5132" stroke-width="2.5"/>
+<rect x="262.5" y="260" width="210" height="230" rx="14" fill="#ecfdf5" stroke="#0f5132" stroke-width="2"/>
+<text x="367.5" y="294" text-anchor="middle" font-size="16" font-weight="700" fill="#0f5132">② Board + Verified Loop</text>
+<text x="367.5" y="328" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Community Requests</text>
+<text x="367.5" y="348" text-anchor="middle" font-size="14" font-weight="600" fill="#111">&amp; Referrals</text>
+<line x1="292.5" y1="378" x2="442.5" y2="378" stroke="#dc2626" stroke-width="3"/>
+<text x="367.5" y="410" text-anchor="middle" font-size="14" fill="#374151">intake → claim → deliver</text>
+<text x="367.5" y="432" text-anchor="middle" font-size="14" fill="#374151">resident confirms</text>
+<line x1="600" y1="190" x2="600.0" y2="260" stroke="#0f5132" stroke-width="2.5"/>
+<rect x="495.0" y="260" width="210" height="230" rx="14" fill="#ecfdf5" stroke="#0f5132" stroke-width="2"/>
+<text x="600.0" y="294" text-anchor="middle" font-size="16" font-weight="700" fill="#0f5132">③ Field Log + Impact Studio</text>
+<text x="600.0" y="328" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Data Collection &amp;</text>
+<text x="600.0" y="348" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Impact Measurement</text>
+<line x1="525.0" y1="378" x2="675.0" y2="378" stroke="#dc2626" stroke-width="3"/>
+<text x="600.0" y="410" text-anchor="middle" font-size="14" fill="#374151">voice-note logs, dashboard</text>
+<text x="600.0" y="432" text-anchor="middle" font-size="14" fill="#374151">funder report, export</text>
+<line x1="600" y1="190" x2="832.5" y2="260" stroke="#0f5132" stroke-width="2.5"/>
+<rect x="727.5" y="260" width="210" height="230" rx="14" fill="#ecfdf5" stroke="#0f5132" stroke-width="2"/>
+<text x="832.5" y="294" text-anchor="middle" font-size="16" font-weight="700" fill="#0f5132">④ Neighborhood Pulse</text>
+<text x="832.5" y="328" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Awareness &amp;</text>
+<text x="832.5" y="348" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Decision Support</text>
+<line x1="757.5" y1="378" x2="907.5" y2="378" stroke="#dc2626" stroke-width="3"/>
+<text x="832.5" y="410" text-anchor="middle" font-size="14" fill="#374151">needs map, weekly brief</text>
+<text x="832.5" y="432" text-anchor="middle" font-size="14" fill="#374151">never people</text>
+<line x1="600" y1="190" x2="1065.0" y2="260" stroke="#0f5132" stroke-width="2.5"/>
+<rect x="960.0" y="260" width="210" height="230" rx="14" fill="#ecfdf5" stroke="#0f5132" stroke-width="2"/>
+<text x="1065.0" y="294" text-anchor="middle" font-size="16" font-weight="700" fill="#0f5132">⑤ Rooms + Field Guide</text>
+<text x="1065.0" y="328" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Training &amp;</text>
+<text x="1065.0" y="348" text-anchor="middle" font-size="14" font-weight="600" fill="#111">Knowledge Sharing</text>
+<line x1="990.0" y1="378" x2="1140.0" y2="378" stroke="#dc2626" stroke-width="3"/>
+<text x="1065.0" y="410" text-anchor="middle" font-size="14" fill="#374151">per-case chat, direct asks</text>
+<text x="1065.0" y="432" text-anchor="middle" font-size="14" fill="#374151">AI over playbooks</text>
+</svg>
