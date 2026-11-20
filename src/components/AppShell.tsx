@@ -2,15 +2,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Activity, BookOpen, Handshake, KanbanSquare, MoonStar, PieChart, QrCode, Smartphone, SunMedium } from "lucide-react";
+import { MoonStar, SunMedium } from "lucide-react";
 import { Logo } from "./ui/Logo";
 
 const NAV = [
-  { href: "/board", label: "Board", sub: "Requests & referrals", icon: KanbanSquare },
-  { href: "/partners", label: "Partners", sub: "Information sharing", icon: Handshake },
-  { href: "/impact", label: "Impact", sub: "Data & measurement", icon: PieChart },
-  { href: "/pulse", label: "Pulse", sub: "Awareness & decisions", icon: Activity },
-  { href: "/guide", label: "Guide", sub: "Training & knowledge", icon: BookOpen },
+  { href: "/board", label: "Board", n: "01" },
+  { href: "/partners", label: "Partners", n: "02" },
+  { href: "/impact", label: "Impact", n: "03" },
+  { href: "/pulse", label: "Pulse", n: "04" },
+  { href: "/guide", label: "Guide", n: "05" },
 ];
 
 export function useLiveOps() {
@@ -29,50 +29,86 @@ export function useLiveOps() {
   return { dark, toggle };
 }
 
-export function AppShell({ children, title, subtitle, actions }: { children: React.ReactNode; title: string; subtitle?: string; actions?: React.ReactNode }) {
+export function useClock() {
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 10_000);
+    return () => clearInterval(t);
+  }, []);
+  return now;
+}
+
+export function Ticker({ items }: { items: string[] }) {
+  if (!items.length) return null;
+  const row = items.map((t, i) => (
+    <span key={i} className="mono inline-flex items-center gap-3 pr-10 text-[11px] text-ink-2">
+      <span className="h-1 w-1 bg-brand" />
+      {t}
+    </span>
+  ));
+  return (
+    <div className="overflow-hidden border-b border-line bg-surface-2 py-1.5">
+      <div className="ticker flex w-max whitespace-nowrap">{row}{row}</div>
+    </div>
+  );
+}
+
+export function AppShell({ children, title, titleAccent, kicker, subtitle, actions, aside, ticker }: { children: React.ReactNode; title: string; titleAccent?: string; kicker?: string; subtitle?: string; actions?: React.ReactNode; aside?: React.ReactNode; ticker?: string[] }) {
   const path = usePathname();
   const { dark, toggle } = useLiveOps();
+  const now = useClock();
+  const clock = now ? new Date(now).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "--:--";
+
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden md:flex w-[232px] shrink-0 flex-col bg-[#0f5132] dark:bg-[#0d1411] text-white dark:border-r dark:border-line">
-        <div className="px-5 pt-5 pb-4">
-          <Logo light />
-        </div>
-        <nav className="flex-1 px-3 space-y-0.5">
-          {NAV.map(({ href, label, sub, icon: Icon }) => {
-            const active = path.startsWith(href);
-            return (
-              <Link key={href} href={href} className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors ${active ? "bg-white/15 dark:bg-brand/15" : "hover:bg-white/8"}`}>
-                <Icon size={18} className={active ? "text-white dark:text-brand" : "text-white/70"} />
-                <span className="flex flex-col leading-tight">
-                  <span className={`text-[14px] font-medium ${active ? "text-white" : "text-white/85"}`}>{label}</span>
-                  <span className="text-[10.5px] text-white/45 group-hover:text-white/60">{sub}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="px-3 pb-3 space-y-0.5 border-t border-white/10 pt-3">
-          <Link href="/m" className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/8"><Smartphone size={16} /> Volunteer phone view</Link>
-          <Link href="/r" className="flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/8"><QrCode size={16} /> Resident intake</Link>
-          <button onClick={toggle} className="w-full flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-white/75 hover:bg-white/8">
-            {dark ? <SunMedium size={16} /> : <MoonStar size={16} />} {dark ? "Exit Live Ops mode" : "Live Ops mode"}
-          </button>
-        </div>
-        <div className="px-5 pb-5 text-[10.5px] leading-snug text-white/40">
-          Stronger neighbors.<br />A healthier Milwaukee.
-        </div>
-      </aside>
-      <div className="flex-1 min-w-0 flex flex-col grid-bg">
-        <header className="flex items-start justify-between gap-4 px-6 md:px-8 pt-6 pb-3">
-          <div>
-            <h1 className="font-display text-[34px] md:text-[40px] leading-none font-semibold text-ink rule-accent">{title}</h1>
-            {subtitle && <p className="mt-3 text-[13.5px] text-ink-2">{subtitle}</p>}
+    <div className="min-h-screen flex flex-col">
+      <div className="h-[3px] bg-brand" />
+      <nav className="sticky top-0 z-30 bg-surface border-b border-line">
+        <div className="flex h-12 items-center px-6">
+          <Link href="/board"><Logo /></Link>
+          <div className="hidden md:flex items-stretch h-full ml-10">
+            {NAV.map(({ href, label, n }) => {
+              const active = path.startsWith(href);
+              return (
+                <Link key={href} href={href} className={`relative inline-flex items-center gap-2 px-4 text-[13px] font-medium transition-colors ${active ? "text-ink" : "text-muted hover:text-ink"}`}>
+                  <span className="mono text-[10px] text-muted">{n}</span> {label}
+                  {active && <span className="absolute inset-x-4 -bottom-px h-[2px] bg-ink" />}
+                </Link>
+              );
+            })}
           </div>
-          <div className="flex items-center gap-2 pt-1">{actions}</div>
-        </header>
-        <main className="flex-1 px-6 md:px-8 pb-8">{children}</main>
-      </div>
+          <div className="ml-auto flex items-center gap-5">
+            <span className="mono inline-flex items-center gap-2 text-[11px] text-ink-2"><span className="h-1.5 w-1.5 rounded-full bg-accent blink" /> LIVE · {clock}</span>
+            <Link href="/m" className="mono text-[11px] text-muted hover:text-ink">PHONE</Link>
+            <Link href="/r" className="mono text-[11px] text-muted hover:text-ink">INTAKE</Link>
+            <button onClick={toggle} className="inline-flex items-center gap-1.5 text-muted hover:text-ink" title="Toggle Live Ops mode">{dark ? <SunMedium size={15} /> : <MoonStar size={15} />}</button>
+          </div>
+        </div>
+      </nav>
+      {ticker && <Ticker items={ticker} />}
+
+      <header className="px-6 pt-10 pb-6 border-b-2 border-line-strong">
+        <div className="flex flex-col xl:flex-row xl:items-end gap-8">
+          <div className="flex-1 min-w-0">
+            {kicker && <div className="label mb-3">{kicker}</div>}
+            <h1 className="font-display text-[64px] md:text-[84px] leading-[0.9] text-ink">
+              {title}{titleAccent && <> <span className="italic text-brand">{titleAccent}</span></>}
+            </h1>
+            {subtitle && <p className="mt-4 max-w-[560px] text-[14.5px] leading-relaxed text-ink-2">{subtitle}</p>}
+            {actions && <div className="mt-5 flex items-center gap-2">{actions}</div>}
+          </div>
+          {aside && <div className="shrink-0">{aside}</div>}
+        </div>
+      </header>
+
+      <main className="flex-1">{children}</main>
     </div>
+  );
+}
+
+export function Btn({ children, onClick, variant = "ghost", className = "", disabled, title }: { children: React.ReactNode; onClick?: () => void; variant?: "ghost" | "solid" | "danger"; className?: string; disabled?: boolean; title?: string }) {
+  const v = variant === "solid" ? "bg-ink text-bg hover:bg-brand border-ink hover:border-brand" : variant === "danger" ? "border-accent text-accent hover:bg-accent hover:text-white" : "border-line text-ink hover:border-ink";
+  return (
+    <button onClick={onClick} disabled={disabled} title={title} className={`inline-flex items-center justify-center gap-2 border px-3.5 py-2 text-[12.5px] font-medium transition-colors disabled:opacity-40 ${v} ${className}`}>{children}</button>
   );
 }
