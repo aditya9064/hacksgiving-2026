@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCcw, Search, LayoutGrid, Table2 } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
 import { Board } from "@/components/board/Board";
@@ -18,7 +18,15 @@ export default function BoardPage() {
   const [q, setQ] = useState("");
   const [hood, setHood] = useState("all");
   const [urg, setUrg] = useState("all");
+  const [status, setStatus] = useState("all");
   const now = useClock();
+
+  // Deep links from the top bar: /board?q=…&status=new
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.get("q")) setQ(sp.get("q")!);
+    if (sp.get("status")) setStatus(sp.get("status")!);
+  }, []);
 
   const stats = useMemo(() => (data ? computeStats(data.requests, data.partners) : null), [data]);
   const all = data?.requests ?? [];
@@ -29,6 +37,7 @@ export default function BoardPage() {
     (need === "all" || r.needs.includes(need)) &&
     (hood === "all" || r.neighborhood === hood) &&
     (urg === "all" || r.urgency === urg) &&
+    (status === "all" || r.status === status) &&
     (!q || `${r.summary} ${r.redactedText} ${r.neighborhood} ${r.shortCode}`.toLowerCase().includes(q.toLowerCase()))
   );
   const open = all.find((r) => r.id === openId) ?? null;
@@ -62,6 +71,7 @@ export default function BoardPage() {
         <div className="relative flex-1"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} className="input" placeholder="Search requests, neighborhoods, codes..." /></div>
         <select value={hood} onChange={(e) => setHood(e.target.value)} className="select"><option value="all">All Neighborhoods</option>{NEIGHBORHOODS.map((h) => <option key={h}>{h}</option>)}</select>
         <select value={urg} onChange={(e) => setUrg(e.target.value)} className="select"><option value="all">All Urgencies</option><option value="critical">Critical</option><option value="high">Urgent</option><option value="normal">Normal</option><option value="low">Low</option></select>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="select"><option value="all">All Statuses</option><option value="new">Unclaimed</option><option value="claimed">Claimed</option><option value="in_progress">In progress</option><option value="delivered">Delivered</option><option value="verified">Verified</option></select>
       </div>
 
       <div className="mt-4 overflow-x-auto pb-2">{data && <Board requests={filtered} fresh={fresh} onOpen={setOpenId} now={now} />}</div>

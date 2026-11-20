@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ShieldCheck, Send, CheckCircle2, Mic, Square, MessageSquareText } from "lucide-react";
+import { ShieldCheck, Send, CheckCircle2, Mic, Square, MessageSquareText, ArrowLeft, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
+import Link from "next/link";
 import { NeedChip, UrgencyDot } from "@/components/ui/Chip";
 import { highlight } from "@/components/board/RequestDrawer";
 import type { StructuredIntake } from "@/lib/types";
@@ -65,8 +66,11 @@ export default function ResidentIntake() {
     <div className="min-h-screen bg-bg flex flex-col items-center px-4 py-8">
       <div className="w-full max-w-[520px]">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2.5"><Logo /><div><div className="text-[14px] font-bold leading-tight">Relay MKE</div><div className="text-[11.5px] text-muted">by ComForce MKE</div></div></div>
-          <span className="chip chip-soft bg-brand-soft text-brand">Free · Confidential</span>
+          <Link href="/board" className="flex items-center gap-2.5" title="Back to Relay Board"><Logo /><div><div className="text-[14px] font-bold leading-tight">Relay MKE</div><div className="text-[11.5px] text-muted">by ComForce MKE</div></div></Link>
+          <div className="flex items-center gap-2">
+            <span className="chip chip-soft bg-brand-soft text-brand">Free · Confidential</span>
+            <Link href="/board" className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface px-2.5 py-1.5 text-[12.5px] font-medium text-ink-2 hover:bg-surface-2" title="Staff: back to the Relay Board"><ArrowLeft size={13} /> Board</Link>
+          </div>
         </div>
 
         <AnimatePresence mode="wait">
@@ -131,7 +135,10 @@ export default function ResidentIntake() {
                 </div>
                 <div className="mt-4 text-[12px] text-muted">{result.structured.redactions.length} identifier{result.structured.redactions.length === 1 ? "" : "s"} removed before any AI saw your message. Your phone number is only visible to ComForce staff.</div>
               </div>
-              <button onClick={() => { setText(""); setPhone(""); setResult(null); setPhase("write"); }} className="w-full rounded-lg border border-line bg-surface py-3 text-[14px] font-medium hover:bg-surface-2">Send another request</button>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => { setText(""); setPhone(""); setResult(null); setPhase("write"); }} className="rounded-lg border border-line bg-surface py-3 text-[14px] font-medium hover:bg-surface-2">Send another request</button>
+                <Link href="/board" className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand py-3 text-[14px] font-semibold text-white hover:bg-brand-2">See it on the board <ArrowRight size={15} /></Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

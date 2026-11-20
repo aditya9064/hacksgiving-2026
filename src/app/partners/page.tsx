@@ -47,7 +47,7 @@ export default function PartnersPage() {
       subtitle="Who can take what, right now. Capacity is self-reported weekly and shown to the whole network."
       badge={unclaimed}
       me={me.name}
-      actions={<><Btn variant="solid"><Plus size={15} /> Invite partner</Btn><Btn href="/impact">View outcomes</Btn></>}
+      actions={<><Btn variant="solid" href="mailto:?subject=Join%20Relay%20MKE%20as%20a%20partner&body=ComForce%20MKE%20invites%20your%20organization%20to%20the%20Relay%20MKE%20partner%20network."><Plus size={15} /> Invite partner</Btn><Btn href="/impact">View outcomes</Btn></>}
     >
       <div className="grid grid-cols-5 gap-3.5 mb-5">
         <StatCard icon={<Users size={14} />} label="Verified Partners" value={partners.length} sub="MOU signed, contact verified" />
@@ -102,7 +102,7 @@ export default function PartnersPage() {
 
             <div className="mt-3 flex gap-2">
               <Btn className="flex-1 !h-[34px]" href="/board">View requests</Btn>
-              <Btn className="!h-[34px] !px-3" title="Call partner"><Phone size={14} /></Btn>
+              {p.phone && <Btn className="!h-[34px] !px-3" title={`Call ${p.phone}`} href={`tel:${p.phone}`}><Phone size={14} /></Btn>}
             </div>
           </div>
         ))}
