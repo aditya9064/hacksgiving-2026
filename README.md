@@ -33,7 +33,7 @@ Read the full concept → [docs/brainstorm/recommended-concept.md](docs/brainsto
 
 ## Research behind it
 
-We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI Chicago, Oakland Ceasefire, Glasgow VRU, the Cardiff Model, Unite Us, findhelp, CAHOOTS, Denver STAR, Ushahidi, Crisis Cleanup, and others). The analysis covers what they got right and where they failed.
+We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI Chicago, Oakland Ceasefire, Glasgow VRU, the Cardiff Model, Unite Us, findhelp, CAHOOTS, Denver STAR, Ushahidi, Crisis Cleanup, and others), as well as police systems: NYPD CompStat, CAD/RMS, ShotSpotter, and Chicago's discontinued "heat list." The analysis covers what they got right and where they failed.
 
 → [docs/research/](docs/research/README.md) · **[Consolidated lessons](docs/research/lessons-learned.md)**
 
@@ -52,7 +52,7 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 ├── README.md                     ← you are here
 ├── docs/
 │   ├── challenge/                ← official brief, ComForce profile, judging criteria
-│   ├── research/                 ← prior-art analysis (7 topics + lessons learned)
+│   ├── research/                 ← prior-art analysis (8 topics + lessons learned)
 │   ├── brainstorm/               ← idea longlist, scoring matrix, recommended concept
 │   └── decisions/                ← architecture decision records (ADRs)
 ├── src/                          ← application code (build phase)
