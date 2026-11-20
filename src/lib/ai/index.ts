@@ -103,7 +103,8 @@ function guessHoodFromStreets(t: string): string | undefined {
 const SYSTEM = `You structure incoming requests for help for a Milwaukee community organization.
 The text has already had personal identifiers replaced with [name], [phone], [address], [email]. Never try to guess them back.
 Return strict JSON: {"summary": string (<= 12 words, neutral, no names), "needs": string[] (1-3 from ${JSON.stringify(NEEDS)}), "urgency": "low"|"normal"|"high"|"critical", "neighborhood": one of ${JSON.stringify(NEIGHBORHOODS)} or "Unknown", "householdSize": number|null, "language": "en"|"es"|"hmn"|"other"}.
-Urgency rules: critical = risk to life/safety, shutoff/eviction within 72h, infant without heat; high = within a week or involves kids/health; normal otherwise.
+Urgency rules: critical = risk to life/safety, shutoff/eviction within 72h, infant without heat; high = needed within a week, or food/housing/utilities when children are in the home, or health; normal otherwise.
+Neighborhood: only pick one if the text names it or names streets you are sure of (35th/Burleigh/Sherman = Sherman Park; Holton/Locust/MLK = Harambee; 27th/Center = Metcalfe Park; Fond du Lac/North Ave = Lindsay Heights; Cesar Chavez/National = Clarke Square; Mitchell St = Historic Mitchell St; KK/Bay View = Bay View; Humboldt/Riverwest = Riverwest). Otherwise "Unknown".
 Describe the NEED. Never characterize people as dangerous or as suspects.`;
 
 export async function structureIntake(rawText: string): Promise<StructuredIntake> {
@@ -120,7 +121,8 @@ export async function structureIntake(rawText: string): Promise<StructuredIntake
       summary: typeof parsed.summary === "string" && parsed.summary ? parsed.summary : fallback.summary,
       needs: needs.length ? needs : fallback.needs,
       urgency: (["low", "normal", "high", "critical"] as const).includes(parsed.urgency) ? parsed.urgency : fallback.urgency,
-      neighborhood: typeof parsed.neighborhood === "string" && parsed.neighborhood ? parsed.neighborhood : fallback.neighborhood,
+      // Street-name rules are deterministic; trust them over a model guess when they matched.
+      neighborhood: fallback.neighborhood !== "Unknown" ? fallback.neighborhood : typeof parsed.neighborhood === "string" && parsed.neighborhood ? parsed.neighborhood : fallback.neighborhood,
       householdSize: typeof parsed.householdSize === "number" ? parsed.householdSize : fallback.householdSize,
       language: typeof parsed.language === "string" ? parsed.language : fallback.language,
       source: "llm",
@@ -181,7 +183,7 @@ export async function answerFromPlaybooks(question: string, playbooks: { id: str
 
 
 const CALL_SUMMARY_SYSTEM = `You write a 2-3 sentence handoff note for a community responder, based on a phone-call transcript between an intake assistant and a resident in Milwaukee.
-Rules: never include names, phone numbers, or street addresses (they are already replaced with tokens like [name]; keep it that way). Lead with what the resident needs and by when. Mention household size, neighborhood, and anything a responder should know before knocking. Plain, warm, specific. No preamble.`;
+Rules: never include names, phone numbers, or street addresses (they are already replaced with tokens like [name]; keep it that way). Lead with what the resident needs and by when. Mention household size, neighborhood, and anything a responder should know before knocking. Plain, warm, specific. Output only the note itself: no heading, no label, no markdown.`;
 
 /** Second-model pass over a finished call: turns the transcript into a handoff note. */
 export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[], providerSummary?: string): Promise<string> {
@@ -191,7 +193,9 @@ export async function summarizeCall(turns: { role: "agent" | "caller"; text: str
   if (!llmConfigured() || !turns.length) return fallback;
   try {
     const convo = turns.map((t) => `${t.role === "agent" ? "Assistant" : "Resident"}: ${t.text}`).join("\n");
-    const out = await complete({ system: CALL_SUMMARY_SYSTEM, user: convo, temperature: 0.2 });
+    const out = (await complete({ system: CALL_SUMMARY_SYSTEM, user: convo, temperature: 0.2 }))
+      ?.replace(/^\s*(\*\*|#+\s*)?[\w\s/-]{0,30}(note|summary)[\w\s/-]{0,10}(\*\*)?:?\s*\n+/i, "")
+      .trim();
     return out || fallback;
   } catch (err) {
     console.warn("[ai] call summary fell back:", (err as Error).message);
