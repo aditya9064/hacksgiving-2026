@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ActivityEvent, HelpRequest, Partner } from "../types";
+import type { Attention } from "../attention";
 
-export type SafeRequest = Omit<HelpRequest, "contactRef"> & { hasContact: boolean };
+export type SafeRequest = Omit<HelpRequest, "contactRef"> & { hasContact: boolean; attention: Attention };
 export interface SnapshotData {
   requests: SafeRequest[];
   partners: Partner[];
