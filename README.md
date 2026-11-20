@@ -4,7 +4,7 @@
 > A near-free, privacy-first system that helps [ComForce MKE](https://comforcemilwaukee.com/) and its partners turn scattered requests for help into coordinated action and **resident-verified, funder-ready impact**.
 
 **Event:** [Hacksgiving 2026: AI for Good](https://msoe-maic.com/library/?nav=Competitions&article=HacksGiving-ComForce-MKE-2026) · MSOE AI Club × ComForce MKE · Nov 19–22, 2026
-**Status:** 📐 Concept and spec finalized, build starting
+**Status:** 🚀 Working prototype — all seven surfaces built on synthetic data ([run it](src/README.md))
 
 ---
 
@@ -27,6 +27,19 @@ Every one of ComForce's eight divisions runs the same loop: **intake → coordin
 | Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
 
 📕 **Full playbook (PDF, 41 pages):** [docs/Relay-MKE-Playbook.pdf](docs/Relay-MKE-Playbook.pdf) · 📄 Product spec → [docs/product/spec.md](docs/product/spec.md) · 🗓 Build schedule → [docs/product/build-schedule.md](docs/product/build-schedule.md) · 🧠 Why this concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
+
+## The product
+
+Light, fast, one design system across every surface. Live data polls every two seconds, so a request texted in on stage appears on the board before the sentence is finished.
+
+| | |
+| --- | --- |
+| **Relay Board** — queue, claim-to-own, verified loop<br>![Board](docs/assets/screenshots/board.png) | **Request detail** — redacted intake, timeline, actions<br>![Drawer](docs/assets/screenshots/board-drawer.png) |
+| **Partner Network** — capacity and load, live<br>![Partners](docs/assets/screenshots/partners.png) | **Impact Studio** — KPIs and one-click funder narrative<br>![Impact](docs/assets/screenshots/impact.png) |
+| **Neighborhood Pulse** — needs by area, never people<br>![Pulse](docs/assets/screenshots/pulse.png) | **Field Guide** — playbooks + grounded Q&A<br>![Guide](docs/assets/screenshots/guide.png) |
+| **Phone view + SMS** — responders in the field<br>![Mobile](docs/assets/screenshots/mobile.png) | **Resident intake** — text or voice, get a code<br>![Intake](docs/assets/screenshots/intake.png) |
+
+Run locally: `cd src && npm install && npm run dev`. No keys required; OpenAI, Supabase and Twilio are optional upgrades (see [src/README.md](src/README.md)).
 
 ## Research behind it
 
@@ -52,10 +65,13 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 │   ├── research/                 ← prior-art analysis (8 topics + lessons learned)
 │   ├── brainstorm/               ← idea longlist, scoring matrix, recommended concept
 │   ├── product/                  ← product spec & build schedule
-│   ├── assets/                   ← diagrams (SVG) and reference screenshots
+│   ├── assets/                   ← diagrams (SVG) and app screenshots
+│   ├── decisions/                ← architecture decision records (ADRs)
 │   └── Relay-MKE-Playbook.pdf    ← everything above, as one PDF
-│   └── decisions/                ← architecture decision records (ADRs)
-├── src/                          ← application code (build phase)
+├── src/                          ← Next.js app (see src/README.md)
+│   ├── app/                      ← 7 surfaces + API routes
+│   ├── components/               ← AppShell, board, ui
+│   └── lib/                      ← ai (structure/redact/guide), db (store/seed), actions
 ├── data/
 │   └── synthetic/                ← synthetic demo data only
 └── presentation/                 ← pitch, slides, demo assets
