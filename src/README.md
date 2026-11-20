@@ -20,7 +20,8 @@ Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every 
 | `/pulse` | Community / city | Neighborhood Pulse: aggregated density map, ranked neighborhoods, emerging signals. Counts only, never people |
 | `/guide` | Responders | Field Guide: ComForce playbooks + "Ask the Guide" Q&A grounded in them |
 | `/m` | Responders (phone) | Phone view: claim and close requests, plus an SMS simulator for the demo |
-| `/r` | Residents | Public intake: text/voice request, get a tracking code |
+| `/r` | Residents | Public intake: text/voice request, call Relay, get a tracking code |
+| `/phone` | Demo | Resident's phone simulator: every SMS the system sends appears live; replies go through the real inbound handler |
 
 ## API
 
@@ -35,6 +36,7 @@ Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every 
 | `/api/guide` | POST | Question → answer with sources |
 | `/api/sms/inbound` | POST | Twilio webhook (TwiML): new request · `R-XXXX` → status update · `1/2/3` → verification |
 | `/api/sms/simulate` | POST | Same pipeline, JSON reply, for the demo |
+| `/api/sms/log` | GET / DELETE | Message log behind `/phone` (both directions, in-memory) |
 | `/api/reset` | POST | Reseed synthetic data |
 | `/api/voice/twiml` | POST | Twilio voice webhook: robotic "may be recorded" notice, then hands the call to the ElevenLabs agent |
 | `/api/voice/tool` | POST | Mid-call tool: creates the request, texts the tracking code to the caller, tells the agent whether to spell it out |
@@ -51,6 +53,8 @@ Setup (≈15 min):
 3. `node tools/voice/create-agent.mjs` → prints the agent id; put it in `NEXT_PUBLIC_ELEVENLABS_AGENT_ID`. The `/r` page now shows a **Call Relay** web widget — enough for a demo without a phone number.
 4. In [Agents → Settings → Post-call webhooks](https://elevenlabs.io/app/agents/settings) add `${PUBLIC_BASE_URL}/api/voice/elevenlabs`; copy its secret to `ELEVENLABS_WEBHOOK_SECRET`.
 5. Real phone number (optional): import the Twilio number in [Agents → Phone numbers](https://elevenlabs.io/app/agents/phone-numbers) and assign the agent. Then in the Twilio console open the number → **Voice → A call comes in**: copy the URL ElevenLabs set there into `ELEVENLABS_TWILIO_INBOUND_URL`, and replace it with `${PUBLIC_BASE_URL}/api/voice/twiml` (POST). Set `NEXT_PUBLIC_RELAY_PHONE` so `/r` shows the number. Skip this step to let ElevenLabs own the number directly (no robotic notice).
+
+**Why SMS is simulated for the demo.** US carriers require A2P 10DLC registration before a business number can send custom texts (≈5 business days; trial accounts can't register). Voice has no such gate: an upgraded Twilio account + purchased number works immediately. So the phone line can be real while texts are shown on `/phone`; the moment `TWILIO_*` is set, `sendSms` delivers for real and `/phone` keeps mirroring the log.
 
 Simulate without any account:
 
