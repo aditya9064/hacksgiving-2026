@@ -4,7 +4,7 @@
 > A near-free, privacy-first system that helps [ComForce MKE](https://comforcemilwaukee.com/) and its partners turn scattered requests for help into coordinated action and **resident-verified, funder-ready impact**.
 
 **Event:** [Hacksgiving 2026: AI for Good](https://msoe-maic.com/library/?nav=Competitions&article=HacksGiving-ComForce-MKE-2026) · MSOE AI Club × ComForce MKE · Nov 19–22, 2026
-**Status:** 🧠 Brainstorm complete, concept proposed, build not started
+**Status:** 📐 Concept and spec finalized, build starting
 
 ---
 
@@ -14,22 +14,19 @@
 
 Full brief: [docs/challenge/original-brief.md](docs/challenge/original-brief.md) · Judging decoded: [docs/challenge/judging-criteria.md](docs/challenge/judging-criteria.md)
 
-## Our approach (proposed)
+## Our approach: one spine, five tracks
 
-Every one of ComForce's eight divisions runs the same loop. Every platform we studied breaks at one of its stages.
+Every one of ComForce's eight divisions runs the same loop: **intake → coordinate → deliver → verify → report**. Relay MKE is one shared record of that work, with a module for each hackathon track:
 
-```
-INTAKE  →  COORDINATE  →  DELIVER  →  VERIFY  →  REPORT
-```
-
-| Module | What it does |
+| Hackathon track | Relay module |
 | --- | --- |
-| **Smart Intake** | SMS, web, or voice. AI structures the request (after PII redaction). A human confirms it. |
-| **Relay Board** | One front door. Claimable alerts to volunteers and partners, so no duplicated effort. |
-| **Verified Loop** | Logs who delivered and when. The *resident* confirms by text whether help arrived. |
-| **Impact Studio** | Live dashboard, neighborhood needs map, one-click funder report, full data export |
+| Information Sharing & Coordination | **Partner Network**: shared directory, live capacity, consent-scoped handoffs |
+| Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web/voice intake, claim-to-own, *resident confirms help arrived* |
+| Data Collection & Impact Measurement | **Field Log + Impact Studio**: voice-note activity logs, live dashboard, one-click funder report, full export |
+| Community Awareness & Decision Support | **Neighborhood Pulse**: map of needs and unmet needs, never people |
+| Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
 
-Read the full concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
+📄 Product spec → [docs/product/spec.md](docs/product/spec.md) · 🗓 Build schedule → [docs/product/build-schedule.md](docs/product/build-schedule.md) · 🧠 Why this concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
 
 ## Research behind it
 
@@ -54,6 +51,7 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 │   ├── challenge/                ← official brief, ComForce profile, judging criteria
 │   ├── research/                 ← prior-art analysis (8 topics + lessons learned)
 │   ├── brainstorm/               ← idea longlist, scoring matrix, recommended concept
+│   ├── product/                  ← product spec & build schedule
 │   └── decisions/                ← architecture decision records (ADRs)
 ├── src/                          ← application code (build phase)
 ├── data/
