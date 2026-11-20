@@ -35,7 +35,7 @@ const toolConfig = {
   type: "webhook",
   name: "create_request",
   description:
-    "Log the caller's request on the Relay Board. Call exactly once, as soon as you know what they need and roughly where they are. Returns a tracking code to read back letter by letter.",
+    "Log the caller's request on the Relay Board. Call exactly once, after you know what they need, roughly where they are, and have asked for a number to text. If the response says texted=true, tell them the code is in their messages; only spell it out if texted=false.",
   execution_mode: "immediate",
   pre_tool_speech: "force",
   response_timeout_secs: 20,
@@ -52,7 +52,8 @@ const toolConfig = {
         household_size: { type: "integer", description: "Number of people in the home, if mentioned." },
         urgency: { type: "string", enum: ["critical", "high", "normal", "low"], description: "critical = tonight / safety, high = within a day or two, normal = this week, low = whenever." },
         language: { type: "string", enum: ["en", "es"], description: "Language the caller is speaking." },
-        callback_ok: { type: "boolean", description: "True if the caller said it's okay to text or call them back on this number." },
+        callback_ok: { type: "boolean", description: "True if the caller said the number they are calling from is fine to text back." },
+        callback_number: { type: "string", description: "A phone number the caller gave to be texted at, digits as spoken, e.g. '414 555 0123'. Omit if they want the number they're calling from." },
         conversation_id: { type: "string", dynamic_variable: "system__conversation_id" },
         caller_id: { type: "string", dynamic_variable: "system__caller_id" },
       },

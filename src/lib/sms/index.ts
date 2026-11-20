@@ -24,3 +24,6 @@ export async function sendSms(to: string, body: string): Promise<SmsResult> {
 
 export const VERIFY_PROMPT = (code: string) =>
   `Relay MKE: Did the help for request ${code} arrive? Reply 1 = yes, 2 = partly, 3 = no. Reply STOP to opt out.`;
+
+export const CODE_TEXT = (code: string) =>
+  `Relay MKE: your request is logged as ${code}. Text ${code} to this number any time for an update. We'll text you when help is on the way. Reply STOP to opt out.`;

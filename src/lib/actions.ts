@@ -91,7 +91,20 @@ export async function handleInboundSms(fromNumber: string, body: string): Promis
       return replyMatch[1] === "3" ? "Thank you. We've reopened your request and the team has been notified." : "Thank you for letting us know.";
     }
   }
+  if (codeMatch) {
+    const req = await db.findByShortCode(codeMatch[0]);
+    if (!req) return `Relay MKE: we couldn't find request ${codeMatch[0]}. Double-check the code or text us what you need.`;
+    return `Relay MKE ${req.shortCode}: ${STATUS_TEXT[req.status](req)}`;
+  }
   // Anything else is a new request for help.
   const { request } = await intake({ text: body, channel: "sms", contactRef: fromNumber, consentToShare: true });
   return `Relay MKE: got it. Your request number is ${request.shortCode}. A community responder will reach out. Reply STOP to opt out.`;
 }
+
+const STATUS_TEXT: Record<HelpRequest["status"], (r: HelpRequest) => string> = {
+  new: () => "we have it and are finding the right partner. You'll hear from someone soon.",
+  claimed: (r) => `${r.ownerName ?? "a community responder"} has picked this up and will reach out.`,
+  in_progress: (r) => `${r.ownerName ?? "a responder"} is working on it right now.`,
+  delivered: () => "we marked this delivered. Reply 1 = yes it arrived, 2 = partly, 3 = no.",
+  verified: () => "this one is closed — you told us help arrived. Text us anytime you need something.",
+};
