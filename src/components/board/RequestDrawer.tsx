@@ -43,26 +43,26 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
       {request && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[2px]" />
-          <motion.aside initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 40, opacity: 0 }} transition={{ type: "spring", stiffness: 380, damping: 36 }} className="fixed right-0 top-0 z-50 h-full w-full max-w-[500px] bg-surface border-l border-line-strong flex flex-col">
-            <div className="flex items-start justify-between p-5 border-b border-line">
+          <motion.aside initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 40, opacity: 0 }} transition={{ type: "spring", stiffness: 380, damping: 36 }} className="fixed right-0 top-0 z-50 h-full w-full max-w-[500px] bg-bg border-l border-line flex flex-col">
+            <div className="flex items-start justify-between p-5 border-b border-line bg-surface">
               <div>
-                <div className="mono flex items-center gap-2 text-[10.5px] uppercase tracking-wider text-muted">
+                <div className="flex items-center gap-2 text-[11.5px] text-muted">
                   <span>{request.shortCode}</span>·<span className="uppercase">{STATUS_LABEL[request.status]}</span>·<UrgencyDot urgency={request.urgency} withLabel />
                 </div>
-                <h2 className="font-display text-[30px] leading-[1.05] mt-2">{request.summary}</h2>
+                <h2 className="text-[19px] font-bold leading-snug mt-1.5">{request.summary}</h2>
                 <div className="mt-2 flex flex-wrap gap-1">{request.needs.map((n) => <NeedChip key={n} need={n} />)}</div>
               </div>
               <button onClick={onClose} className="p-1.5 text-muted hover:text-ink"><X size={18} /></button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
-              <section className="border-l-2 border-ink pl-4 py-1">
+              <section className="card p-4">
                 <div className="label mb-2">Resident's words · redacted</div>
-                <p className="font-display text-[19px] leading-[1.35] text-ink">{highlight(request.redactedText)}</p>
-                <div className="mono mt-3 flex items-center gap-1.5 text-[10.5px] text-brand"><ShieldCheck size={13} /> Identifiers removed before AI. Contact details {request.hasContact ? "held in the ComForce-only tier" : "not provided"}.</div>
+                <p className="text-[14.5px] leading-[1.55] text-ink">{highlight(request.redactedText)}</p>
+                <div className="mt-3 flex items-center gap-1.5 text-[11.5px] text-brand"><ShieldCheck size={13} /> Identifiers removed before AI. Contact details {request.hasContact ? "held in the ComForce-only tier" : "not provided"}.</div>
               </section>
 
-              <section className="grid grid-cols-2 gap-3 text-[13px]">
+              <section className="card grid grid-cols-2 gap-3 p-4 text-[13px]">
                 <Field k="Neighborhood" v={request.neighborhood} />
                 <Field k="Household" v={request.householdSize ? `${request.householdSize} people` : "—"} />
                 <Field k="Channel" v={request.channel.toUpperCase()} />
@@ -73,15 +73,15 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
 
               {request.status === "new" && suggested.length > 0 && (
                 <section>
-                  <div className="label mb-2 border-b border-line pb-2">Partners with capacity</div>
+                  <div className="text-[13.5px] font-semibold mb-2">Partners with capacity</div>
                   <div className="space-y-2">
                     {suggested.map((p) => (
-                      <div key={p.id} className="flex items-center justify-between border border-line p-3">
+                      <div key={p.id} className="card flex items-center justify-between p-3">
                         <div>
                           <div className="text-[13.5px] font-semibold">{p.name}</div>
-                          <div className="mono text-[10.5px] text-muted">{p.hours} · {p.capacity} open slots</div>
+                          <div className="text-[11.5px] text-muted">{p.hours} · {p.capacity} open slots</div>
                         </div>
-                        <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: p.name, partnerId: p.id })} className="border border-ink bg-ink px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-brand hover:border-brand disabled:opacity-50">Route here</button>
+                        <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: p.name, partnerId: p.id })} className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-medium text-white hover:bg-brand-2 disabled:opacity-50">Route here</button>
                       </div>
                     ))}
                   </div>
@@ -89,44 +89,44 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
               )}
 
               <section>
-                <div className="label mb-3 border-b border-line pb-2">Timeline</div>
+                <div className="text-[13.5px] font-semibold mb-3">Timeline</div>
                 <ol className="relative border-l border-line ml-2 space-y-3">
                   {activity.map((a) => (
                     <li key={a.id} className="ml-4">
-                      <span className={`absolute -left-[9px] mt-0.5 flex h-[18px] w-[18px] items-center justify-center border ${a.type === "verified" ? "bg-brand border-brand text-white" : a.type === "reopened" ? "bg-accent border-accent text-white" : "bg-surface border-line text-muted"}`}>{ACTOR_ICON(a.actor)}</span>
+                      <span className={`absolute -left-[9px] mt-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border ${a.type === "verified" ? "bg-green border-green text-white" : a.type === "reopened" ? "bg-red border-red text-white" : "bg-surface border-line text-muted"}`}>{ACTOR_ICON(a.actor)}</span>
                       <div className="text-[12.5px] leading-snug">{a.text}</div>
-                      <div className="mono text-[10px] text-muted">{a.actor} · {new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
+                      <div className="text-[11px] text-muted">{a.actor} · {new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
                     </li>
                   ))}
                 </ol>
               </section>
             </div>
 
-            <div className="border-t border-line-strong p-4 space-y-2.5 bg-surface">
+            <div className="border-t border-line p-4 space-y-2.5 bg-bg">
               {request.status === "new" && (
-                <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: me.org, partnerId: me.partnerId })} className="w-full inline-flex items-center justify-center gap-2 bg-ink py-3 text-[13.5px] font-medium text-bg hover:bg-brand disabled:opacity-50"><HandHelping size={16} /> Claim as {me.name}</button>
+                <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: me.org, partnerId: me.partnerId })} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13.5px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><HandHelping size={16} /> Claim as {me.name}</button>
               )}
               {(request.status === "claimed" || request.status === "in_progress") && (
                 <>
                   <div className="flex gap-2">
-                    <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add an update…" className="flex-1 border border-line bg-surface px-3 py-2.5 text-[13.5px] outline-none focus:border-ink" />
-                    <button disabled={busy || !note} onClick={() => { run({ action: "note", actor: me.name, text: note }); setNote(""); }} className="border border-line px-3 hover:border-ink disabled:opacity-50"><Send size={16} /></button>
+                    <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add an update…" className="flex-1 rounded-lg border border-line bg-surface px-3 py-2.5 text-[13.5px] outline-none focus:border-brand" />
+                    <button disabled={busy || !note} onClick={() => { run({ action: "note", actor: me.name, text: note }); setNote(""); }} className="rounded-lg border border-line bg-surface px-3 hover:bg-surface-2 disabled:opacity-50"><Send size={16} /></button>
                   </div>
-                  <button disabled={busy} onClick={() => run({ action: "delivered", actor: me.name })} className="w-full inline-flex items-center justify-center gap-2 bg-ink py-3 text-[13.5px] font-medium text-bg hover:bg-brand disabled:opacity-50"><CheckCheck size={16} /> Mark delivered &amp; ask resident to confirm</button>
+                  <button disabled={busy} onClick={() => run({ action: "delivered", actor: me.name })} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-green py-2.5 text-[13.5px] font-medium text-white hover:opacity-90 disabled:opacity-50"><CheckCheck size={16} /> Mark delivered &amp; ask resident to confirm</button>
                 </>
               )}
               {request.status === "delivered" && (
-                <div className="border border-line p-3">
+                <div className="card p-3">
                   <div className="label mb-2">Awaiting resident reply · simulate</div>
                   <div className="grid grid-cols-3 gap-2">
-                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "1" })} className="border border-brand text-brand py-2 text-[12px] font-medium hover:bg-brand hover:text-white">1 · Yes</button>
-                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "2" })} className="border border-amber text-amber py-2 text-[12px] font-medium hover:bg-amber hover:text-white">2 · Partly</button>
-                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "3" })} className="border border-accent text-accent py-2 text-[12px] font-medium inline-flex items-center justify-center gap-1 hover:bg-accent hover:text-white"><RotateCcw size={12} /> 3 · No</button>
+                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "1" })} className="rounded-lg border border-green text-green py-2 text-[12px] font-medium hover:bg-green hover:text-white">1 · Yes</button>
+                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "2" })} className="rounded-lg border border-amber-500 text-amber-600 py-2 text-[12px] font-medium hover:bg-amber-500 hover:text-white">2 · Partly</button>
+                    <button disabled={busy} onClick={() => run({ action: "resident_reply", reply: "3" })} className="rounded-lg border border-red text-red py-2 text-[12px] font-medium inline-flex items-center justify-center gap-1 hover:bg-red hover:text-white"><RotateCcw size={12} /> 3 · No</button>
                   </div>
                 </div>
               )}
               {request.status === "verified" && (
-                <div className="flex items-center gap-2 border border-brand bg-brand-soft p-3 text-[13px] font-medium text-brand"><ShieldCheck size={16} /> Loop closed. Confirmed by the resident, credited to {request.ownerOrg}.</div>
+                <div className="flex items-center gap-2 rounded-lg border border-[#bfe7cf] bg-green-soft p-3 text-[13px] font-medium text-green"><ShieldCheck size={16} /> Loop closed. Confirmed by the resident, credited to {request.ownerOrg}.</div>
               )}
             </div>
           </motion.aside>
@@ -150,7 +150,7 @@ export function highlight(text: string) {
   const parts = text.split(/(\[(?:name|phone|address|email)\])/g);
   return parts.map((p, i) =>
     /^\[(name|phone|address|email)\]$/.test(p) ? (
-      <span key={i} className="mono inline-block bg-ink text-bg px-1.5 text-[11px] align-middle mx-0.5 not-italic">{p}</span>
+      <span key={i} className="inline-block rounded bg-surface-3 text-ink-2 px-1.5 text-[11px] font-medium align-middle mx-0.5">{p}</span>
     ) : (
       <span key={i}>{p}</span>
     ),

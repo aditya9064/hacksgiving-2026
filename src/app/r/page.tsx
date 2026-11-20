@@ -72,7 +72,7 @@ export default function ResidentIntake() {
         <AnimatePresence mode="wait">
           {phase === "write" && (
             <motion.div key="write" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="card p-6">
-              <h1 className="font-display text-[30px] leading-tight font-semibold">What do you need help with?</h1>
+              <h1 className="display text-[30px] leading-tight font-semibold">What do you need help with?</h1>
               <p className="mt-2 text-[14px] text-ink-2">Tell us in your own words, like you'd text a friend. A real person from the community will follow up.</p>
               <textarea
                 value={text}
@@ -101,7 +101,7 @@ export default function ResidentIntake() {
 
           {phase === "processing" && (
             <motion.div key="proc" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="card p-6">
-              <h2 className="font-display text-[24px] font-semibold">Protecting your privacy…</h2>
+              <h2 className="display text-[24px] font-semibold">Protecting your privacy…</h2>
               <ol className="mt-5 space-y-3">
                 {["Removing names, phone numbers and addresses", "Understanding what you need", "Finding partners with capacity nearby", "Creating your request"].map((label, i) => (
                   <li key={label} className="flex items-center gap-3 text-[15px]">
@@ -117,7 +117,7 @@ export default function ResidentIntake() {
             <motion.div key="done" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <div className="card p-6 border-brand/40">
                 <div className="flex items-center gap-2 text-brand font-semibold"><CheckCircle2 size={20} /> Request received</div>
-                <h2 className="font-display text-[30px] font-semibold mt-1">Your number is <span className="font-mono text-brand">{result.shortCode}</span></h2>
+                <h2 className="display text-[30px] font-semibold mt-1">Your number is <span className="font-mono text-brand">{result.shortCode}</span></h2>
                 <p className="mt-2 text-[14px] text-ink-2">A community responder will reach out. {phone ? "After help arrives, we'll text you once to ask if it actually came. One tap closes the loop." : "Save this number in case you need to follow up."}</p>
               </div>
               <div className="card p-5">
