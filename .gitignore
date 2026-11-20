@@ -1,0 +1,23 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Node / Python
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+.next/
+
+# Local data (never commit real data)
+*.sqlite
+*.db
+data/raw/
