@@ -26,8 +26,17 @@ function fallbackStructure(redacted: string): Omit<StructuredIntake, "redactedTe
   const family = redacted.match(/family of (\d)/i);
   const householdSize = family ? Number(family[1]) : hh ? Number(hh[1]) + 1 : undefined;
   const language = /\b(hola|necesito|ayuda|gracias|por favor)\b/i.test(redacted) ? "es" : "en";
-  const summary = redacted.replace(/\[(name|phone|address|email)\]/g, "").replace(/\s+/g, " ").trim().slice(0, 90);
+  const summary = cleanSummary(redacted);
   return { summary, needs: needs.slice(0, 3), urgency, neighborhood: hood, householdSize, language };
+}
+
+function cleanSummary(t: string): string {
+  let s = t.replace(/\[(name|phone|address|email)\]/g, "").replace(/\s+/g, " ").trim();
+  s = s.replace(/^(hi|hello|hey|hola)[,!.]?\s*(this is|it'?s|i'?m|soy)?\s*[,.]?\s*/i, "");
+  s = s.replace(/^[,.\s]+/, "");
+  s = s.charAt(0).toUpperCase() + s.slice(1);
+  if (s.length > 90) s = s.slice(0, 87).replace(/\s+\S*$/, "") + "…";
+  return s || "Request for help";
 }
 
 function guessHoodFromStreets(t: string): string | undefined {
@@ -115,3 +124,34 @@ export async function draftFunderNarrative(stats: Record<string, unknown>): Prom
     return fallback;
   }
 }
+
+/** Answers a volunteer's question from the organization's own playbooks. Falls back to keyword retrieval. */
+export async function answerFromPlaybooks(question: string, playbooks: { id: string; title: string; body: string; tags: string[] }[]): Promise<{ answer: string; sources: string[] }> {
+  const q = question.toLowerCase();
+  const scored = playbooks
+    .map((p) => ({ p, score: (p.title + " " + p.body + " " + p.tags.join(" ")).toLowerCase().split(/\W+/).filter((w) => w.length > 3 && q.includes(w)).length }))
+    .sort((a, b) => b.score - a.score);
+  const top = scored.filter((s) => s.score > 0).slice(0, 2).map((s) => s.p);
+  const sources = top.map((p) => p.id);
+  const fallback = top.length
+    ? `From "${top[0].title}":\n${top[0].body.split("\n").slice(0, 4).join("\n")}${top.length > 1 ? `\n\nSee also: ${top[1].title}.` : ""}`
+    : "No playbook covers that yet. Ask the on-call lead, then add what you learn to the Guide so the next volunteer has it.";
+  const key = process.env.OPENAI_API_KEY;
+  if (!key || !top.length) return { answer: fallback, sources };
+  try {
+    const { default: OpenAI } = await import("openai");
+    const client = new OpenAI({ apiKey: key });
+    const res = await client.chat.completions.create({
+      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: "You help community volunteers in Milwaukee. Answer ONLY from the playbooks provided, in 3-6 short numbered steps. If the playbooks do not cover it, say so. Never invent phone numbers or laws." },
+        { role: "user", content: `Playbooks:\n${top.map((p) => `## ${p.title}\n${p.body}`).join("\n\n")}\n\nQuestion: ${question}` },
+      ],
+    });
+    return { answer: res.choices[0]?.message?.content?.trim() || fallback, sources };
+  } catch {
+    return { answer: fallback, sources };
+  }
+}
+

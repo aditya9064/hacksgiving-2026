@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relay MKE — app
 
-## Getting Started
-
-First, run the development server:
+Next.js 16 (App Router, Turbopack) · React 19 · Tailwind 4 · Leaflet. Runs with **zero configuration** on synthetic data.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
+npx tsc --noEmit     # type check
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every integration has a built-in fallback, so the demo never depends on a network key.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Surfaces
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Route | Who | What |
+| --- | --- | --- |
+| `/board` | Coordinators | Relay Board: live request queue, claim-to-own, notes, mark delivered, resident verification timeline |
+| `/partners` | Coordinators | Partner Network: capacity, needs served, load, verified dates |
+| `/impact` | Directors / funders | Impact Studio: KPIs, needs breakdown, pipeline, partner outcomes, one-click funder narrative, CSV export |
+| `/pulse` | Community / city | Neighborhood Pulse: aggregated density map, ranked neighborhoods, emerging signals. Counts only, never people |
+| `/guide` | Responders | Field Guide: ComForce playbooks + "Ask the Guide" Q&A grounded in them |
+| `/m` | Responders (phone) | Phone view: claim and close requests, plus an SMS simulator for the demo |
+| `/r` | Residents | Public intake: text/voice request, get a tracking code |
 
-## Learn More
+## API
 
-To learn more about Next.js, take a look at the following resources:
+| Route | Method | Purpose |
+| --- | --- | --- |
+| `/api/intake` | POST | Create request (redact → structure → route) |
+| `/api/transcribe` | POST | Voice note → text |
+| `/api/requests/[id]` | POST | `claim` · `note` · `delivered` · `resident_reply` |
+| `/api/snapshot` | GET | Full state for the UI (polled every 2s) |
+| `/api/report` | GET / POST | CSV export / AI funder narrative |
+| `/api/playbooks` | GET | Playbook list |
+| `/api/guide` | POST | Question → answer with sources |
+| `/api/sms/inbound` | POST | Twilio webhook (TwiML) |
+| `/api/sms/simulate` | POST | Same pipeline, JSON reply, for the demo |
+| `/api/reset` | POST | Reseed synthetic data |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Privacy by construction
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+`lib/ai/redact.ts` strips names, phones, addresses and emails **before** any text reaches an AI model. Contact info lives apart from case data. Pulse only ever receives aggregates.
 
-## Deploy on Vercel
+## Layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/            routes + API handlers
+components/     AppShell (sidebar/topbar), board/, ui/
+lib/ai/         structuring, redaction, narrative, guide Q&A (OpenAI or rules)
+lib/db/         store + synthetic seed (in-memory or Supabase)
+lib/actions.ts  domain actions shared by web, SMS and phone views
+```
