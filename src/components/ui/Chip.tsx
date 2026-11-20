@@ -1,5 +1,7 @@
+import { AlertTriangle, Clock3 } from "lucide-react";
 import type { Need, Urgency } from "@/lib/types";
 import { NEED_LABEL } from "@/lib/types";
+import type { AttentionLevel } from "@/lib/attention";
 
 export const NEED_COLOR: Record<Need, string> = {
   food: "#f59e0b", rent: "#0b93d5", utilities: "#0891b2", housing: "#0b93d5", mediation: "#7c3aed",
@@ -20,6 +22,18 @@ export function UrgencyChip({ urgency }: { urgency: Urgency }) {
   if (urgency === "critical") return <span className="chip chip-soft bg-red text-white font-semibold">⚠ Critical</span>;
   if (urgency === "high") return <span className="chip chip-soft bg-orange-soft text-[#b45309] font-semibold">⚠ Urgent</span>;
   return null;
+}
+
+/** Red "Needs attention" (overdue) or amber "Follow-up needed" (resident flagged it). */
+export function AttentionBadge({ level, className = "" }: { level: AttentionLevel; className?: string }) {
+  if (level === "none") return null;
+  const red = level === "needs_attention";
+  const Icon = red ? AlertTriangle : Clock3;
+  return (
+    <span className={`chip chip-soft font-semibold ${red ? "bg-red-soft text-red" : "bg-orange-soft text-[#b45309]"} ${className}`}>
+      <Icon size={10} /> {red ? "Needs attention" : "Follow-up needed"}
+    </span>
+  );
 }
 
 export function UrgencyDot({ urgency, withLabel = false }: { urgency: Urgency; withLabel?: boolean }) {
