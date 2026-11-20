@@ -14,7 +14,7 @@ Copy `.env.example` to `.env.local` to enable OpenAI, Supabase or Twilio. Every 
 
 | Route | Who | What |
 | --- | --- | --- |
-| `/board` | Coordinators | Relay Board: live request queue, claim-to-own, notes, mark delivered, resident verification timeline |
+| `/board` | Coordinators | Relay Board: live request queue (kanban or sortable table), claim-to-own, notes, mark delivered, resident verification timeline |
 | `/partners` | Coordinators | Partner Network: capacity, needs served, load, verified dates |
 | `/impact` | Directors / funders | Impact Studio: KPIs, needs breakdown, pipeline, partner outcomes, one-click funder narrative, CSV export |
 | `/pulse` | Community / city | Neighborhood Pulse: aggregated density map, ranked neighborhoods, emerging signals. Counts only, never people |
