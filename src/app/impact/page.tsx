@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { BarChart3, CheckCircle2, Clock, Download, FileText, MapPin, Sparkles, Users, Inbox, RotateCcw, Copy, Check } from "lucide-react";
+import { BarChart3, CheckCircle2, Clock, Download, FileText, MapPin, Sparkles, Users, Inbox, RotateCcw, Copy, Check, CircleDashed } from "lucide-react";
 import { AppShell, Btn } from "@/components/AppShell";
 import { StatCard, SectionCard } from "@/components/ui/StatCard";
 import { NeedChip, Avatar } from "@/components/ui/Chip";
@@ -56,11 +56,12 @@ export default function ImpactPage() {
       me={me.name}
       actions={<><Btn variant="solid" onClick={generate} disabled={busy}><Sparkles size={15} /> {busy ? "Drafting…" : "Generate funder report"}</Btn><Btn href="/api/report"><Download size={15} /> Export CSV</Btn></>}
     >
-      <div className="grid grid-cols-6 gap-3.5 mb-5">
+      <div className="grid grid-cols-7 gap-3.5 mb-5">
         <StatCard icon={<Inbox size={14} />} label="Total Requests" value={s.total} sub="all time, all channels" />
         <StatCard icon={<CheckCircle2 size={14} />} label="Help Delivered" value={s.deliveredOrVerified} sub="delivered or verified" tint="blue" />
         <StatCard icon={<CheckCircle2 size={14} />} label="Resident-Verified" value={`${s.verifiedPct}%`} bar={s.verifiedPct} tint="green" />
-        <StatCard icon={<Clock size={14} />} label="Median Response" value={s.medianMinutes ? fmtMinutes(s.medianMinutes) : "—"} sub="first text → delivered" />
+        <StatCard icon={<CircleDashed size={14} />} label="Partly Helped" value={s.partlyHelped} sub="still open for follow-up" tint={s.partlyHelped ? "orange" : "none"} />
+        <StatCard icon={<Clock size={14} />} label="Median Response" value={s.medianMinutes ? fmtMinutes(s.medianMinutes) : "—"} sub="first text to delivered" />
         <StatCard icon={<RotateCcw size={14} />} label="Reopened" value={reopened} sub="resident said not helped" tint={reopened ? "red" : "none"} />
         <StatCard icon={<Users size={14} />} label="Partners Active" value={s.partnerCount} sub={`across ${s.neighborhoodCount} neighborhoods`} tint="purple" />
       </div>
