@@ -22,7 +22,7 @@ Copy `.env.example` to `.env.local` to enable an LLM (Anthropic or OpenAI), Supa
 | `/m` | Responders (phone) | Phone view: claim and close requests, plus an SMS simulator for the demo |
 | `/r` | Residents | Public intake: text/voice request, call Relay, get a tracking code |
 | `/phone` | Demo | Resident's phone simulator: every SMS the system sends appears live; replies go through the real inbound handler |
-| `/partner-line` | Demo / partner | The pantry's side of a handoff: Jordan's incoming call (answer it in the browser), the emailed brief in an inbox, and what the call is about |
+| `/partner-line` | Demo / partner | The pantry's side of a handoff: Jordan's incoming call plays out live on the phone mock-up (ring → pickup → conversation → accepted), the emailed brief in an inbox, and what the call is about |
 | `/route/[id]` | Volunteer (phone) | Run sheet after a partner accepts: live GPS map you → pickup → resident, turn-by-turn, Picked up / Delivered, Google Maps handoff |
 
 ## API
@@ -63,7 +63,7 @@ Setup (≈15 min):
 On the Board a volunteer opens a request → **Connect** → picks a partner → confirms. Three things happen at once:
 
 1. The request is claimed by the volunteer and a **name-free brief** is emailed to the partner (`lib/email` — Resend if `RESEND_API_KEY` is set, otherwise logged and shown in the `/partner-line` inbox).
-2. A **second ElevenLabs agent** (prompt in [`tools/voice/dispatch-prompt.md`](../tools/voice/dispatch-prompt.md)) calls the partner: it introduces itself, explains the need, asks when it'll be ready, and calls `partner_response` mid-call. The Board flips to **Accepted · ready in 20 min · side door** while the call is still going. With `ELEVENLABS_PHONE_NUMBER_ID` + a partner phone it's a real outbound call; otherwise the call rings on `/partner-line` and whoever plays the pantry answers in the browser.
+2. A **second ElevenLabs agent** (prompt in [`tools/voice/dispatch-prompt.md`](../tools/voice/dispatch-prompt.md)) calls the partner: it introduces itself, explains the need, asks when it'll be ready, and calls `partner_response` mid-call. The Board flips to **Accepted · ready in 20 min · side door** while the call is still going. With `ELEVENLABS_PHONE_NUMBER_ID` + a partner phone it's a real outbound call. Otherwise the call is **simulated end-to-end with no human in the loop**: it rings for ~2.5 s, the pantry picks up, a scripted 7-turn conversation streams to the Board drawer and `/partner-line` at ~1.7 s per turn, the partner accepts mid-call, and the call ends with a summary (≈16 s total; tune with `DISPATCH_SIM_RING_MS` / `DISPATCH_SIM_TURN_MS`).
 3. When the call ends, the webhook attaches the partner transcript + a summary to the request.
 
 Then **Ready to go** opens `/route/[id]`: a live map from the volunteer's location to the pickup and on to the resident's (approximate) location, with OSRM turn-by-turn, a QR to open it on a phone, and Picked up / Delivered buttons that advance the same request.

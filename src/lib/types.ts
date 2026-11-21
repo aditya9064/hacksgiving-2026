@@ -143,6 +143,7 @@ export interface Dispatch {
   /** live = real outbound phone call via ElevenLabs+Twilio; simulated = partner answers on the /partner-line page */
   mode: "live" | "simulated";
   conversationId?: string;
+  answeredAt?: string;
   outcome?: { accepted: boolean; readyBy?: string; notes?: string; contactName?: string; at: string };
   call?: CallRecord;
   emailSentAt?: string;

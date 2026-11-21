@@ -79,6 +79,7 @@ export async function startDispatch(requestId: string, partnerId: string, actor:
     cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "ai", type: "call", text: `Jordan is calling ${partner.contactName ?? partner.name} at ${partner.phone}` })) ?? cur;
   } else {
     cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "ai", type: "call", text: `Jordan is ringing ${partner.name}'s line (partner answers on /partner-line)` })) ?? cur;
+    await scheduleSimulatedCall(requestId);
   }
   return cur;
 }
@@ -102,6 +103,81 @@ async function placeOutboundCall(req: HelpRequest, partner: Partner): Promise<{ 
     return null;
   }
 }
+
+// ---- Simulated calls: the partner picks up on its own and a scripted conversation streams in live. ----
+const SIM_RING_MS = Number(process.env.DISPATCH_SIM_RING_MS ?? 2500);
+const SIM_TURN_MS = Number(process.env.DISPATCH_SIM_TURN_MS ?? 1700);
+const timers: Map<string, ReturnType<typeof setTimeout>[]> = ((globalThis as unknown as { __relayDispatchTimers?: Map<string, ReturnType<typeof setTimeout>[]> }).__relayDispatchTimers ??= new Map());
+
+function cancelSim(requestId: string) {
+  (timers.get(requestId) ?? []).forEach(clearTimeout);
+  timers.delete(requestId);
+}
+
+/** Schedules the whole simulated call: pickup, each turn appended live, mid-call acceptance, hang-up. */
+async function scheduleSimulatedCall(requestId: string) {
+  cancelSim(requestId);
+  const req = await db.getRequest(requestId);
+  const partner = req?.dispatch && (await db.listPartners()).find((p) => p.id === req.dispatch!.partnerId);
+  if (!req?.dispatch || !partner) return;
+  const script = partnerScript(req, partner);
+  const conversationId = `sim-${req.id}-${Date.now().toString(36)}`;
+  const list: ReturnType<typeof setTimeout>[] = [];
+  const at = (ms: number, fn: () => Promise<unknown>) => list.push(setTimeout(() => { fn().catch(() => {}); }, ms));
+
+  at(SIM_RING_MS, async () => {
+    const cur = await db.getRequest(requestId);
+    if (!cur?.dispatch || cur.dispatch.status !== "calling") return;
+    await db.updateRequest(requestId, { dispatch: { ...cur.dispatch, answeredAt: new Date().toISOString(), conversationId, call: { conversationId, transcript: [] } } }, { actor: "ai", type: "call", text: `${script.first} picked up at ${partner.name} · Jordan is briefing them` });
+  });
+
+  script.turns.forEach((turn, i) => {
+    at(SIM_RING_MS + SIM_TURN_MS * (i + 1), async () => {
+      const cur = await db.getRequest(requestId);
+      if (!cur?.dispatch?.call || cur.dispatch.call.endedAt) return;
+      const transcript = [...cur.dispatch.call.transcript, { role: turn.role, t: SIM_TURN_MS * (i + 1) / 1000, text: turn.text }];
+      await db.updateRequest(requestId, { dispatch: { ...cur.dispatch, call: { ...cur.dispatch.call, transcript } } });
+      if (i === script.acceptAfter) {
+        await recordPartnerResponse({ request_id: requestId, conversation_id: conversationId, accepted: true, ready_by: script.readyBy, notes: script.notes, contact_name: script.first });
+      }
+    });
+  });
+
+  const endMs = SIM_RING_MS + SIM_TURN_MS * (script.turns.length + 1);
+  at(endMs, async () => {
+    const cur = await db.getRequest(requestId);
+    if (!cur?.dispatch?.call || cur.dispatch.call.endedAt) return;
+    const durationSec = Math.round(SIM_TURN_MS * script.turns.length / 1000) + 30;
+    await db.updateRequest(requestId, { dispatch: { ...cur.dispatch, call: { ...cur.dispatch.call, summary: script.summary, durationSec, endedAt: new Date().toISOString() } } }, { actor: "ai", type: "call", text: `Partner call ended · ${Math.floor(durationSec / 60)}m ${durationSec % 60}s · ${script.summary}` });
+    timers.delete(requestId);
+  });
+  timers.set(requestId, list);
+}
+
+function partnerScript(req: HelpRequest, partner: Partner) {
+  const v = dispatchVariables(req, partner);
+  const first = partner.contactName && !/desk|office|line|staff|lead|on-call|team|coordinator|intake/i.test(partner.contactName) ? partner.contactName : pickName(req.id);
+  const readyBy = `in about ${15 + (hash(req.id) % 4) * 5} minutes`;
+  const door = /pantry|food|kitchen|church|meal/i.test(partner.name) ? "side door" : "front desk";
+  const street = streetOf(partner.address);
+  const notes = `${door} on ${street} · ask for ${first}`;
+  const turns: { role: "agent" | "caller"; text: string }[] = [
+    { role: "caller", text: `${partner.name}, this is ${first}.` },
+    { role: "agent", text: `Hi ${first}, this is Jordan calling from ComForce Milwaukee. We've got a household in ${v.neighborhood} that needs help — ${v.needs.toLowerCase()}, ${v.household}, ${v.urgency} urgency. ${v.need_summary}. Could you put something together for them today?` },
+    { role: "caller", text: `Yeah, we can do that. Give us ${readyBy.replace("in about", "about")} to pull it together.` },
+    { role: "agent", text: `That's great, thank you. Our volunteer ${v.volunteer} will come by to pick it up — where should they go and who should they ask for?` },
+    { role: "caller", text: `Come to the ${door} on ${street} and ask for me, ${first}.` },
+    { role: "agent", text: `Perfect — ${door} on ${street}, ask for ${first}, ready ${readyBy}. I've noted it so ${v.volunteer} has it. Thanks so much, ${first}.` },
+    { role: "caller", text: "No problem, see you soon." },
+  ];
+  const summary = `${partner.name} (${first}) accepted and will have it ready ${readyBy}; pickup at the ${door} on ${street}.`;
+  return { first, readyBy, notes, turns, acceptAfter: 4, summary };
+}
+
+const NAMES = ["Maya", "Denise", "Luis", "Tasha", "Rob", "Keisha", "Andre", "Pat"];
+const hash = (s: string) => [...s].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const pickName = (seed: string) => NAMES[hash(seed) % NAMES.length];
+const streetOf = (address?: string) => (address ?? "").replace(/^\d+\s*/, "").split(",")[0].trim() || "the main entrance";
 
 export interface PartnerResponseInput {
   request_id?: string;
