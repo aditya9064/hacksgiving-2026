@@ -52,6 +52,14 @@ function publicBase() {
   return (process.env.PUBLIC_BASE_URL ?? process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3077").replace(/\/$/, "");
 }
 
+/**
+ * HARD BLOCK: a real organization (isReal) is never emailed or called from the demo, whatever
+ * API keys are configured. Its handoff runs only as the simulated call on /partner-line.
+ */
+export function liveContactAllowed(partner: Pick<Partner, "isReal">): boolean {
+  return partner.isReal !== true;
+}
+
 /** Start a handoff: claim if needed, email the partner, and have Jordan call them. */
 export async function startDispatch(requestId: string, partnerId: string, actor: { name: string; org: string }) {
   const req = await db.getRequest(requestId);
@@ -64,7 +72,7 @@ export async function startDispatch(requestId: string, partnerId: string, actor:
 
   let cur = (await db.updateRequest(requestId, { ...claimPatch, partnerId, dispatch }, { actor: actor.name, type: "dispatch", text: `${actor.name} connected this request to ${partner.name}` })) ?? req;
 
-  if (partner.email) {
+  if (partner.email && liveContactAllowed(partner)) {
     const mail = partnerEmail(cur, partner, publicBase());
     const r = await sendEmail({ to: partner.email, requestId, ...mail });
     dispatch.emailSentAt = new Date().toISOString();
@@ -72,13 +80,16 @@ export async function startDispatch(requestId: string, partnerId: string, actor:
     cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "system", type: "email_out", text: r.ok ? `Brief emailed to ${partner.name} (${partner.email})${r.mocked ? " · delivered to partner inbox view" : ""}` : `Email to ${partner.name} failed: ${r.error}` })) ?? cur;
   }
 
-  const live = await placeOutboundCall(cur, partner);
+  const live = liveContactAllowed(partner) ? await placeOutboundCall(cur, partner) : null;
   if (live) {
     dispatch.mode = "live";
     dispatch.conversationId = live.conversationId;
     cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "ai", type: "call", text: `Jordan is calling ${partner.contactName ?? partner.name} at ${partner.phone}` })) ?? cur;
   } else {
-    cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "ai", type: "call", text: `Jordan is ringing ${partner.name}'s line (partner answers on /partner-line)` })) ?? cur;
+    const text = partner.isReal
+      ? `Simulated call to ${partner.name}. Real organization: never contacted from the demo (answers on /partner-line)`
+      : `Jordan is ringing ${partner.name}'s line (partner answers on /partner-line)`;
+    cur = (await db.updateRequest(requestId, { dispatch: { ...dispatch } }, { actor: "ai", type: "call", text })) ?? cur;
     await scheduleSimulatedCall(requestId);
   }
   return cur;
@@ -89,6 +100,7 @@ async function placeOutboundCall(req: HelpRequest, partner: Partner): Promise<{ 
   const key = process.env.ELEVENLABS_API_KEY;
   const agentId = process.env.ELEVENLABS_DISPATCH_AGENT_ID ?? process.env.NEXT_PUBLIC_ELEVENLABS_DISPATCH_AGENT_ID;
   const phoneId = process.env.ELEVENLABS_PHONE_NUMBER_ID;
+  if (!liveContactAllowed(partner)) return null; // second guard: never call a real organization
   if (!key || !agentId || !phoneId || !partner.phone) return null;
   try {
     const r = await fetch(`${process.env.ELEVENLABS_API_BASE ?? "https://api.elevenlabs.io"}/v1/convai/twilio/outbound-call`, {
@@ -156,6 +168,18 @@ async function scheduleSimulatedCall(requestId: string) {
 
 function partnerScript(req: HelpRequest, partner: Partner) {
   const v = dispatchVariables(req, partner);
+  if (partner.isReal) {
+    // Real organization: no invented staff names or pickup locations. A labeled stand-in plays the call.
+    const first = "Simulated contact";
+    const readyBy = "at a time ComForce staff confirm directly";
+    const turns: { role: "agent" | "caller"; text: string }[] = [
+      { role: "caller", text: `(Simulated demo call. ${partner.name} is a real organization and was not contacted.)` },
+      { role: "agent", text: `Hi, this is Jordan from ComForce Milwaukee. We have a household in ${v.neighborhood} that needs ${v.needs.toLowerCase()}, ${v.household}, ${v.urgency} urgency. ${v.need_summary}. Can your team help?` },
+      { role: "caller", text: "Yes, we can help. Have ComForce staff confirm the details with us directly." },
+      { role: "agent", text: `Thank you. ${v.volunteer} will follow up through ComForce's usual channel.` },
+    ];
+    return { first, readyBy, notes: "Simulated: confirm the real pickup details with the organization directly", turns, acceptAfter: 2, summary: `Simulated handoff to ${partner.name}. Real details must be confirmed by ComForce staff directly.` };
+  }
   const first = partner.contactName && !/desk|office|line|staff|lead|on-call|team|coordinator|intake/i.test(partner.contactName) ? partner.contactName : pickName(req.id);
   const readyBy = `in about ${15 + (hash(req.id) % 4) * 5} minutes`;
   const door = /pantry|food|kitchen|church|meal/i.test(partner.name) ? "side door" : "front desk";
