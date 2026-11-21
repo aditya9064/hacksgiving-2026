@@ -47,6 +47,7 @@ export function kpiRows(r: Report): [string, string][] {
     ["Total requests", String(k.total)],
     ["Help delivered", String(k.delivered)],
     ["Resident-verified", `${k.verifiedPct}%`],
+    ["Partly helped (open for follow-up)", String(k.partlyHelped)],
     ["Median response", k.medianMinutes ? fmtMinutes(k.medianMinutes) : "n/a"],
     ["Reopened (resident said not helped)", String(k.reopened)],
     ["Still open", String(k.open)],

@@ -4,6 +4,8 @@ import { makeShortCode } from "./db/seed";
 import { sendSms, VERIFY_PROMPT, THANKS_TEXT } from "./sms";
 import { detectSafety, resourcesFor, resourcesSms, SAFETY_RESOURCES } from "./safety";
 import { scheduleFollowUpCall, cancelFollowUp } from "./followup";
+import { classifyResidentReply } from "./replyClassifier";
+import { nudgeCooldownRemainingMs } from "./nudge";
 import type { Channel, HelpRequest, StructuredIntake } from "./types";
 
 export interface IntakeInput {
@@ -91,18 +93,79 @@ export async function markDelivered(id: string, actor: string) {
   return req;
 }
 
-/** Resident reply: "1" yes, "2" partly, "3" no. A "no" reopens the case. */
+/**
+ * Resident reply: "1" yes, "2" partly, "3" no — by text or on Jordan's call-back.
+ * Only "1" verifies. "2" (partly) keeps the case open with the same owner; "3" reopens it.
+ * The decision lives in the pure classifyResidentReply() so it is covered by tests and
+ * behaves identically on the board route, the inbound-SMS path and the voice follow-up tool.
+ */
 export async function residentReply(id: string, reply: "1" | "2" | "3", via: "sms" | "call" = "sms") {
   const now = new Date().toISOString();
   cancelFollowUp(id);
   const cur = await db.getRequest(id);
+  const outcome = classifyResidentReply(reply);
   const how = via === "call" ? " on Jordan's call-back" : " by text";
-  const fu = (status: "confirmed" | "partial" | "reopened") => (cur?.followUp ? { followUp: { ...cur.followUp, status } } : {});
-  if (reply === "3") {
-    return db.updateRequest(id, { status: "claimed", residentFeedback: "no", deliveredAt: undefined, ...fu("reopened") }, { actor: "resident", type: "reopened", text: `Resident said${how} that help did NOT arrive. Case reopened and returned to owner.` });
-  }
-  const fb = reply === "1" ? "yes" : "partial";
-  return db.updateRequest(id, { status: "verified", verifiedAt: now, residentFeedback: fb, ...fu(fb === "yes" ? "confirmed" : "partial") }, { actor: "resident", type: "verified", text: fb === "yes" ? `Resident confirmed${how} that the help arrived.` : `Resident says${how} the help partly arrived.` });
+  const patch: Partial<HelpRequest> = { status: outcome.status, residentFeedback: outcome.residentFeedback };
+  if (outcome.setVerifiedAt) patch.verifiedAt = now;
+  if (outcome.clearDeliveredAt) patch.deliveredAt = undefined;
+  if (cur?.followUp) patch.followUp = { ...cur.followUp, status: reply === "1" ? "confirmed" : reply === "2" ? "partial" : "reopened" };
+  return db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text.replace(/^(Resident \w+)/, `$1${how}`) });
+}
+
+export type NudgeResult =
+  | { ok: true; request: HelpRequest }
+  | { ok: false; code: "no_owner" }
+  | { ok: false; code: "cooldown"; retryAfterSec: number };
+
+/**
+ * Nudge the current owner to follow up. Records an auditable timeline event and uses the existing
+ * SMS helper (which mocks when Twilio is not configured). NEVER sends automatically and never puts a
+ * phone number in the timeline. Owners have no phone on the request, so we fall back to the partner's
+ * phone if present, otherwise log a simulated nudge. A nudge is NOT a meaningful event, so it does
+ * not reset the attention clock (see lib/attention.ts). A 30 minute cooldown (NUDGE_COOLDOWN_MS)
+ * prevents nudge spam and is enforced here on the server, not just hidden in the UI.
+ */
+export async function nudgeOwner(id: string, actor: string): Promise<NudgeResult | undefined> {
+  const req = await db.getRequest(id);
+  if (!req) return undefined;
+  if (!req.ownerName) return { ok: false, code: "no_owner" };
+  const events = await db.listActivity(id);
+  const remaining = nudgeCooldownRemainingMs(events, Date.now());
+  if (remaining > 0) return { ok: false, code: "cooldown", retryAfterSec: Math.ceil(remaining / 1000) };
+  const partner = (await db.listPartners()).find((p) => p.id === req.partnerId);
+  const message = `Relay MKE: a coordinator flagged request ${req.shortCode} for follow-up. Please update the case when you can.`;
+  const result = partner?.phone ? await sendSms(partner.phone, message) : { ok: true, mocked: true };
+  const how = result.mocked ? " SMS simulated (not configured)." : " Text sent.";
+  const updated = await db.updateRequest(id, {}, { actor, type: "nudge", text: `${actor} nudged ${req.ownerName} to follow up.${how}` });
+  return updated ? { ok: true, request: updated } : undefined;
+}
+
+export interface ReassignInput {
+  actorName: string;
+  newOwnerName?: string;
+  newOwnerOrg?: string;
+  newPartnerId?: string;
+  reason: string;
+}
+
+/**
+ * Reassign a request to a new owner, or release it back to the unclaimed queue. Records the previous
+ * owner, the new owner (if any), the reason, and who authorized it, using the dedicated "reassigned"
+ * event type (not "reopened"). Authorization is enforced in the route via canReassign(); this mutator
+ * assumes the caller already passed that check.
+ */
+export async function reassign(id: string, input: ReassignInput) {
+  const req = await db.getRequest(id);
+  if (!req) return undefined;
+  const prevOwner = req.ownerName ? `${req.ownerName}${req.ownerOrg ? ` (${req.ownerOrg})` : ""}` : "no owner";
+  const toNewOwner = Boolean(input.newOwnerName);
+  const patch: Partial<HelpRequest> = toNewOwner
+    ? { status: "claimed", ownerName: input.newOwnerName, ownerOrg: input.newOwnerOrg, partnerId: input.newPartnerId }
+    : { status: "new", ownerName: undefined, ownerOrg: undefined, partnerId: undefined };
+  const text = toNewOwner
+    ? `Reassigned from ${prevOwner} to ${input.newOwnerName}${input.newOwnerOrg ? ` (${input.newOwnerOrg})` : ""} by ${input.actorName}. Reason: ${input.reason}`
+    : `Released from ${prevOwner} to the unclaimed queue by ${input.actorName}. Reason: ${input.reason}`;
+  return db.updateRequest(id, patch, { actor: input.actorName, type: "reassigned", text });
 }
 
 /** Parses an inbound SMS body such as "R-4F2K 1" or just "1" (when only one open verification exists for that number). */

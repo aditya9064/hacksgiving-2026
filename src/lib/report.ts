@@ -47,6 +47,7 @@ export interface Report {
     delivered: number;
     verified: number;
     verifiedPct: number;
+    partlyHelped: number;
     medianMinutes: number;
     reopened: number;
     open: number;
@@ -138,6 +139,7 @@ export function buildReport(all: ReportRequest[], partners: Partner[], period: P
       delivered: s.deliveredOrVerified,
       verified: s.verified,
       verifiedPct: s.verifiedPct,
+      partlyHelped: s.partlyHelped,
       medianMinutes: s.medianMinutes,
       reopened: rows.filter((r) => r.residentFeedback === "no").length,
       open: rows.filter((r) => r.status !== "delivered" && r.status !== "verified").length,

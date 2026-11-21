@@ -123,7 +123,8 @@ export function buildHistory(now = new Date(), cutoffDays = 6): HelpRequest[] {
       const deliveredAt = new Date(d.getTime() + mins * 60_000);
       const roll = r();
       const feedback: HelpRequest["residentFeedback"] = roll < 0.7 ? "yes" : roll < 0.86 ? "partial" : roll < 0.93 ? "no" : undefined;
-      const verifiedAt = feedback && feedback !== "no" ? new Date(deliveredAt.getTime() + (30 + r() * 600) * 60_000) : undefined;
+      // Only a "yes" closes the loop; "partly" stays open for follow-up (same rule as lib/stats.ts).
+      const verifiedAt = feedback === "yes" ? new Date(deliveredAt.getTime() + (30 + r() * 600) * 60_000) : undefined;
       const ch = r();
       const channel: Channel = ch < 0.42 ? "sms" : ch < 0.72 ? "web" : "voice";
       const lang = r();
