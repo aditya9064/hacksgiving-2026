@@ -2,13 +2,14 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LayoutGrid, Users, BarChart3, Activity, BookOpen, Settings, LogOut, Search, Bell, Smartphone, MessageSquare, MessagesSquare, RotateCcw, Check, PhoneForwarded } from "lucide-react";
+import { LayoutGrid, Users, BarChart3, Activity, BookOpen, Settings, LogOut, Search, Bell, Smartphone, MessageSquare, MessagesSquare, RotateCcw, Check, PhoneForwarded, Landmark } from "lucide-react";
 import { Logo } from "./ui/Logo";
 
 const NAV = [
   { href: "/board", label: "Board", Icon: LayoutGrid },
   { href: "/partners", label: "Partners", Icon: Users },
   { href: "/impact", label: "Impact", Icon: BarChart3 },
+  { href: "/grants", label: "Grants", Icon: Landmark },
   { href: "/pulse", label: "Pulse", Icon: Activity },
   { href: "/guide", label: "Guide", Icon: BookOpen },
 ];

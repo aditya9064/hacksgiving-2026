@@ -218,3 +218,39 @@ export async function summarizeCall(turns: { role: "agent" | "caller"; text: str
     return fallback;
   }
 }
+
+/** Drafts three grant-application sections in the funder's own language. Only the numbers given may be used. */
+export async function draftApplication(input: import("../grants").DraftInput): Promise<import("../grants").ApplicationDraft> {
+  const { templateDraft } = await import("../grants");
+  const fallback = templateDraft(input);
+  if (!llmConfigured()) return fallback;
+  const { funder, report, clusters, logic, story } = input;
+  const facts = {
+    period: report.period.label,
+    kpis: report.kpis,
+    topNeeds: report.needs.slice(0, 4).map((n) => `${n.label}: ${n.value}`),
+    topNeighborhoods: report.neighborhoods.slice(0, 5).map((h) => `${h.neighborhood}: ${h.total}`),
+    partners: report.partners.slice(0, 6).map((p) => `${p.name}: ${p.handled} handled, ${p.verified} verified`),
+    clusters: { pctInClusters: clusters.pctInClusters, clustersReached: clusters.clustersReached, verifiedInClusters: clusters.verifiedInClusters, top: clusters.rows.slice(0, 5).map((r) => `Cluster ${r.cluster.n} (${r.cluster.name}): ${r.total} requests, ${r.verified} verified`) },
+    logicModel: logic,
+    story: story?.body ?? null,
+    funder: { name: funder.name, program: funder.program, priorities: funder.priorities, metricsLanguage: funder.metricsLanguage },
+  };
+  try {
+    const out = await complete({
+      system: `You draft grant application sections for ComForce MKE, a resident-led violence-prevention and crisis-response organization in Milwaukee, using Relay MKE (its intake, dispatch and resident-verification system).
+Write for the specific funder named. Use their vocabulary (metricsLanguage) and speak to their stated priorities.
+Rules: use ONLY the numbers in the facts; never invent statistics, names, quotes or dollar amounts; no individuals' names; plain and concrete, no hype; do not mention AI models by brand.
+Return strict JSON: {"need": string, "outcomes": string, "evaluation": string}. Each 140-200 words, one or two paragraphs, no headings.`,
+      user: JSON.stringify(facts),
+      temperature: 0.3,
+      json: true,
+      maxTokens: 1800,
+    });
+    const j = parseJson(out);
+    if (typeof j.need === "string" && typeof j.outcomes === "string" && typeof j.evaluation === "string") return { need: j.need, outcomes: j.outcomes, evaluation: j.evaluation, source: "llm" };
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}

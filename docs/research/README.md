@@ -10,4 +10,5 @@
 | 06 | Milwaukee context, judges & open data | [06-milwaukee-context.md](06-milwaukee-context.md) |
 | 07 | Past HacksGiving & MAIC winners | [07-past-hacksgiving-winners.md](07-past-hacksgiving-winners.md) |
 | 08 | Police systems: CompStat, CAD, ShotSpotter, predictive policing, B-HEARD | [08-police-systems.md](08-police-systems.md) |
+| 09 | How ComForce MKE is funded: DCWS contract, Countdown clusters, open opportunities | [09-comforce-funding.md](09-comforce-funding.md) |
 | ★ | **Consolidated lessons: do / don't** | [lessons-learned.md](lessons-learned.md) |
