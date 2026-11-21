@@ -1,30 +1,54 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { computeStats } from "@/lib/stats";
+import { buildHistory } from "@/lib/db/history";
 import { draftFunderNarrative } from "@/lib/ai";
-import { NEED_LABEL } from "@/lib/types";
+import { buildReport, ROW_HEADERS, rowValues, type Period } from "@/lib/report";
+import { fmtMinutes } from "@/lib/stats";
 
-
-export async function POST() {
+/** Live record + synthetic archive of past months, without the contact tier. */
+async function allRequests() {
   const snap = await db.snapshot();
-  const s = computeStats(snap.requests, snap.partners);
-  const narrative = await draftFunderNarrative({
-    total: s.total,
-    verifiedPct: s.verifiedPct,
-    medianMinutes: s.medianMinutes,
-    neighborhoodCount: s.neighborhoodCount,
-    partnerCount: s.partnerCount,
-    topNeeds: s.topNeeds.slice(0, 3).map((n) => NEED_LABEL[n.need].toLowerCase()).join(", "),
-    partners: s.byPartner.map((p) => `${p.name}: ${p.handled} handled, ${p.verified} verified`),
-  });
-  return NextResponse.json({ stats: s, narrative });
+  const live = snap.requests.map((r) => ({ ...r, contactRef: undefined }));
+  return { requests: [...buildHistory(), ...live], partners: snap.partners };
 }
 
-/** CSV export: the organization's own data, always portable. */
-export async function GET() {
-  const snap = await db.snapshot();
-  const header = ["id", "short_code", "created_at", "status", "channel", "needs", "urgency", "neighborhood", "household_size", "owner_org", "delivered_at", "verified_at", "resident_feedback", "summary"];
+function parsePeriod(year: unknown, month: unknown): Period {
+  const y = year === null || year === undefined || year === "" || year === "all" ? null : Number(year);
+  const m = y === null || month === null || month === undefined || month === "" || month === "all" ? null : Number(month);
+  return { year: Number.isFinite(y) ? y : null, month: Number.isFinite(m) ? m : null };
+}
+
+/** Funder narrative for a period, drafted from the same report the page and exports use. */
+export async function POST(req: Request) {
+  const body = (await req.json().catch(() => ({}))) as { year?: unknown; month?: unknown };
+  const { requests, partners } = await allRequests();
+  const report = buildReport(requests, partners, parsePeriod(body.year, body.month));
+  const k = report.kpis;
+  const narrative = await draftFunderNarrative({
+    reportingPeriod: report.period.label,
+    total: k.total,
+    delivered: k.delivered,
+    verifiedPct: k.verifiedPct,
+    medianMinutes: k.medianMinutes,
+    medianResponse: k.medianMinutes ? fmtMinutes(k.medianMinutes) : "n/a",
+    reopened: k.reopened,
+    householdsReached: k.households,
+    neighborhoodCount: k.neighborhoods,
+    partnerCount: k.partnersActive,
+    topNeeds: report.needs.slice(0, 3).map((n) => n.label.toLowerCase()).join(", "),
+    topNeighborhoods: report.neighborhoods.slice(0, 3).map((h) => h.neighborhood).join(", "),
+    partners: report.partners.map((p) => `${p.name}: ${p.handled} handled, ${p.verified} verified`),
+  });
+  return NextResponse.json({ report, narrative });
+}
+
+/** CSV export of a period (default: everything). The organization's own data, always portable. */
+export async function GET(req: Request) {
+  const sp = new URL(req.url).searchParams;
+  const { requests, partners } = await allRequests();
+  const report = buildReport(requests, partners, parsePeriod(sp.get("year"), sp.get("month")));
   const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const lines = snap.requests.map((r) => [r.id, r.shortCode, r.createdAt, r.status, r.channel, r.needs.join("|"), r.urgency, r.neighborhood, r.householdSize, r.ownerOrg, r.deliveredAt, r.verifiedAt, r.residentFeedback, r.summary].map(esc).join(","));
-  return new Response([header.join(","), ...lines].join("\n"), { headers: { "Content-Type": "text/csv", "Content-Disposition": 'attachment; filename="relay-mke-export.csv"' } });
+  const lines = report.rows.map((r) => rowValues(r).map(esc).join(","));
+  const name = `relay-mke-${report.period.label.toLowerCase().replace(/\s+/g, "-")}.csv`;
+  return new Response([ROW_HEADERS.map(esc).join(","), ...lines].join("\n"), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}"` } });
 }
