@@ -1,0 +1,15 @@
+{
+  "total": 40,
+  "files": {
+    "app/board/page.tsx": 1,
+    "app/m/page.tsx": 4,
+    "app/partner-line/page.tsx": 9,
+    "app/phone/page.tsx": 8,
+    "app/r/page.tsx": 1,
+    "app/route/[id]/RouteClient.tsx": 3,
+    "components/AppShell.tsx": 2,
+    "components/board/RequestDrawer.tsx": 10,
+    "lib/ai/index.ts": 1,
+    "lib/client/me.ts": 1
+  }
+}
