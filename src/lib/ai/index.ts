@@ -185,15 +185,19 @@ export async function answerFromPlaybooks(question: string, playbooks: { id: str
 const CALL_SUMMARY_SYSTEM = `You write a 2-3 sentence handoff note for a community responder, based on a phone-call transcript between an intake assistant and a resident in Milwaukee.
 Rules: never include names, phone numbers, or street addresses (they are already replaced with tokens like [name]; keep it that way). Lead with what the resident needs and by when. Mention household size, neighborhood, and anything a responder should know before knocking. Plain, warm, specific. Output only the note itself: no heading, no label, no markdown.`;
 
+const PARTNER_CALL_SYSTEM = `You write a 1-2 sentence status line for a community volunteer, based on a phone call where an intake assistant asked a partner organization (a pantry, clinic, etc.) to take a request.
+Say clearly whether they accepted, when the items/service will be ready, who to ask for, and any condition they mentioned. No names of residents. No preamble, no heading, no markdown.`;
+
 /** Second-model pass over a finished call: turns the transcript into a handoff note. */
-export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[], providerSummary?: string): Promise<string> {
+export async function summarizeCall(turns: { role: "agent" | "caller"; text: string }[], providerSummary?: string, kind: "resident" | "partner" = "resident"): Promise<string> {
   const callerText = turns.filter((t) => t.role === "caller").map((t) => t.text).join(" ");
   // Prefer the call platform's own summary over a raw excerpt when the second model is unavailable.
-  const fallback = providerSummary?.trim() || cleanSummary(callerText.slice(0, 220)) || "Resident called the Relay line; see transcript.";
+  const fallback = providerSummary?.trim() || cleanSummary(callerText.slice(0, 220)) || (kind === "partner" ? "Partner call ended; see transcript." : "Resident called the Relay line; see transcript.");
   if (!llmConfigured() || !turns.length) return fallback;
   try {
-    const convo = turns.map((t) => `${t.role === "agent" ? "Assistant" : "Resident"}: ${t.text}`).join("\n");
-    const out = (await complete({ system: CALL_SUMMARY_SYSTEM, user: convo, temperature: 0.2 }))
+    const other = kind === "partner" ? "Partner" : "Resident";
+    const convo = turns.map((t) => `${t.role === "agent" ? "Assistant" : other}: ${t.text}`).join("\n");
+    const out = (await complete({ system: kind === "partner" ? PARTNER_CALL_SYSTEM : CALL_SUMMARY_SYSTEM, user: convo, temperature: 0.2 }))
       ?.replace(/^\s*(\*\*|#+\s*)?[\w\s/-]{0,30}(note|summary)[\w\s/-]{0,10}(\*\*)?:?\s*\n+/i, "")
       .trim();
     return out || fallback;
