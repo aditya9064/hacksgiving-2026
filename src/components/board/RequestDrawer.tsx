@@ -80,7 +80,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                 <Field k="Consent to share" v={request.consentToShare ? "Yes, with partners" : "ComForce only"} />
               </section>
 
-              {request.dispatch && <DispatchSection request={request} partner={partners.find((p) => p.id === request.dispatch!.partnerId)} me={me} busy={busy} run={run} />}
+              {request.dispatch && <DispatchSection request={request} partner={partners.find((p) => p.id === request.dispatch!.partnerId)} />}
 
               {(!request.dispatch || request.dispatch.status === "declined" || request.dispatch.status === "no_answer") && (request.status === "new" || request.status === "claimed") && suggested.length > 0 && (
                 <section>
@@ -222,7 +222,7 @@ function CallSection({ call }: { call: NonNullable<SafeRequest["call"]> }) {
 
 const DISPATCH_STEPS = ["calling", "accepted", "ready", "picked_up"] as const;
 
-function DispatchSection({ request, partner, me, busy, run }: { request: SafeRequest; partner?: Partner; me: { name: string }; busy: boolean; run: (b: Record<string, unknown>) => Promise<void> }) {
+function DispatchSection({ request, partner }: { request: SafeRequest; partner?: Partner }) {
   const d = request.dispatch!;
   const [open, setOpen] = useState(false);
   const declined = d.status === "declined" || d.status === "no_answer";
