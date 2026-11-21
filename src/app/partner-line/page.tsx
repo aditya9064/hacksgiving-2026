@@ -1,14 +1,12 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, Battery, Check, Clock, Inbox, Mail, Phone, PhoneIncoming, PhoneOff, Signal, Wifi, XCircle } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
-import { useSnapshot, type SafeRequest } from "@/lib/client/useSnapshot";
+import { useSnapshot } from "@/lib/client/useSnapshot";
 import { NEED_LABEL, type Partner } from "@/lib/types";
 
-const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_DISPATCH_AGENT_ID;
 type Email = { id: string; at: string; to: string; subject: string; text: string; mocked: boolean; requestId?: string };
 
 /**
@@ -37,13 +35,11 @@ export default function PartnerLine() {
   const current = dispatched[0];
   const partner: Partner | undefined = data?.partners.find((p) => p.id === (current?.dispatch?.partnerId ?? "p-pantry")) ?? data?.partners.find((p) => p.id === "p-pantry");
   const inbox = emails.filter((e) => !partner?.email || e.to.toLowerCase() === partner.email.toLowerCase()).slice().reverse();
-  const ringing = current?.dispatch?.status === "calling" && current.dispatch.mode === "simulated";
-
-  const vars = current && partner ? dynamicVars(current, partner) : null;
+  const inCall = !!current?.dispatch?.answeredAt && !current.dispatch.call?.endedAt;
+  const ringing = (current?.dispatch?.status === "calling" && !current.dispatch.answeredAt) || inCall;
 
   return (
     <div className="min-h-screen bg-bg">
-      {AGENT_ID && <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed" strategy="afterInteractive" />}
       <div className="mx-auto flex max-w-[1100px] items-center justify-between px-6 py-5">
         <Link href="/board" className="flex items-center gap-2.5" title="Back to Relay Board"><Logo /><div><div className="text-[14px] font-bold leading-tight">Relay MKE</div><div className="text-[11.5px] text-muted">Partner line · {partner?.name ?? "partner"}</div></div></Link>
         <div className="flex items-center gap-2">
@@ -65,8 +61,22 @@ export default function PartnerLine() {
                   </div>
                   <div className="text-[22px] font-bold">ComForce MKE</div>
                   <div className="mt-1 text-[13.5px] text-ink-2">Jordan · Relay dispatch</div>
-                  <div className="mt-6 inline-flex items-center gap-2 text-[13px] text-muted"><PhoneIncoming size={14} className="text-brand" /> Incoming call…</div>
-                  <div className="mt-10 text-[12px] text-muted">Tap <b className="text-ink">Answer</b> in the corner to pick up as {partner?.contactName?.toLowerCase() ?? "the front desk"}.</div>
+                  {!inCall && <div className="mt-6 inline-flex items-center gap-2 text-[13px] text-muted"><PhoneIncoming size={14} className="text-brand" /> Incoming call…</div>}
+                  {inCall ? (
+                    <div className="mt-6 w-full text-left">
+                      <div className="mb-2 flex items-center justify-between text-[11.5px] text-muted"><span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> On the line</span><span>{current.dispatch?.call?.transcript.at(-1) ? `${Math.floor((30 + current.dispatch.call.transcript.at(-1)!.t) / 60)}:${String(Math.floor((30 + current.dispatch.call.transcript.at(-1)!.t) % 60)).padStart(2, "0")}` : "0:30"}</span></div>
+                      <div className="max-h-[300px] space-y-2 overflow-y-auto pr-1 text-[12.5px] leading-snug">
+                        {current.dispatch?.call?.transcript.map((t, i) => (
+                          <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${t.role === "agent" ? "justify-start" : "justify-end"}`}>
+                            <div className={`max-w-[88%] rounded-2xl px-3 py-2 ${t.role === "agent" ? "rounded-bl-md bg-surface-2 text-ink" : "rounded-br-md bg-brand text-white"}`}>{t.text}</div>
+                          </motion.div>
+                        ))}
+                        <div className="text-[11px] text-muted blink">…</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-10 text-[12px] text-muted">Front desk is picking up…</div>
+                  )}
                 </motion.div>
               ) : current?.dispatch?.outcome ? (
                 <motion.div key="done" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
@@ -143,31 +153,10 @@ export default function PartnerLine() {
         </div>
       </div>
 
-      {AGENT_ID && vars && ringing && (() => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const W = "elevenlabs-convai" as any;
-        return <W key={current!.id} agent-id={AGENT_ID} dynamic-variables={JSON.stringify(vars)} action-text="Incoming call · ComForce" start-call-text="Answer" end-call-text="Hang up" />;
-      })()}
     </div>
   );
 }
 
-/** Mirrors lib/dispatch.ts dispatchVariables, built client-side from the safe snapshot. */
-function dynamicVars(r: SafeRequest, p: Partner) {
-  return {
-    request_id: r.id,
-    request_code: r.shortCode,
-    partner_name: p.name,
-    contact_name: p.contactName ?? "the front desk",
-    need_summary: r.summary,
-    needs: r.needs.map((n) => NEED_LABEL[n]).join(", "),
-    household: r.householdSize ? `${r.householdSize} people` : "not stated",
-    neighborhood: r.neighborhood,
-    urgency: r.urgency,
-    details: r.redactedText.slice(0, 400),
-    volunteer: r.ownerName ?? "a ComForce volunteer",
-  };
-}
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (

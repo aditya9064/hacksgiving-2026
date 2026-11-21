@@ -38,7 +38,12 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
     }
   };
 
-  const suggested = request ? partners.filter((p) => p.needs.some((n) => request.needs.includes(n)) && p.capacity > 0).slice(0, 3) : [];
+  const suggested = request
+    ? partners
+        .filter((p) => p.id !== me.partnerId && p.name !== me.org && p.capacity > 0 && p.needs.some((n) => request.needs.includes(n)))
+        .sort((a, b) => b.needs.filter((n) => request.needs.includes(n)).length - a.needs.filter((n) => request.needs.includes(n)).length || b.capacity - a.capacity)
+        .slice(0, 3)
+    : [];
 
   return (
     <AnimatePresence>
@@ -249,7 +254,16 @@ function DispatchSection({ request, partner, me, busy, run }: { request: SafeReq
 
       <div className="mt-3 space-y-2 text-[13px]">
         {d.emailSentAt && <div className="flex items-center gap-2 text-ink-2"><Mail size={13} className="text-brand" /> Brief emailed to {partner?.email ?? "partner"}{d.emailMocked ? <span className="text-[11px] text-muted">· shown in partner inbox</span> : null}</div>}
-        {calling && <p className="text-ink-2">Jordan is briefing {partner?.contactName ?? "the front desk"}: what's needed, household, area, urgency — and asking when it'll be ready. {d.mode === "simulated" && <>Partner answers on <a className="text-brand underline" href="/partner-line" target="_blank" rel="noreferrer">/partner-line</a>.</>}</p>}
+        {calling && !d.answeredAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> Ringing {partner?.name}{partner?.phone ? ` · ${partner.phone}` : ""}…</p>}
+        {d.answeredAt && !d.call?.endedAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> <span><b className="text-ink">{d.outcome?.contactName ?? partner?.contactName ?? "Partner"}</b> picked up · Jordan is briefing them live</span></p>}
+        {d.call && !d.call.endedAt && d.call.transcript.length > 0 && (
+          <ol className="space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+            {d.call.transcript.map((t, i) => (
+              <li key={i} className="flex gap-2"><span className={`w-[58px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Jordan" : (d.outcome?.contactName ?? "Partner")}</span><span className="text-ink-2">{t.text}</span></li>
+            ))}
+            <li className="flex gap-2 text-muted"><span className="w-[58px] shrink-0" /><span className="blink">…</span></li>
+          </ol>
+        )}
         {d.outcome && (
           <div className={`rounded-lg p-3 ${d.outcome.accepted ? "bg-green-soft" : "bg-red/5"}`}>
             <div className={`flex items-center gap-1.5 text-[13px] font-semibold ${d.outcome.accepted ? "text-green" : "text-red"}`}>{d.outcome.accepted ? <Check size={14} /> : <XCircle size={14} />} {partner?.name} {d.outcome.accepted ? "accepted" : "can't take this right now"}{d.outcome.contactName ? ` · spoke with ${d.outcome.contactName}` : ""}</div>
@@ -258,7 +272,7 @@ function DispatchSection({ request, partner, me, busy, run }: { request: SafeReq
           </div>
         )}
         {d.call?.summary && <p className="text-[13.5px] leading-[1.5] text-ink">{d.call.summary}</p>}
-        {d.call && d.call.transcript.length > 0 && (
+        {d.call?.endedAt && d.call.transcript.length > 0 && (
           <div>
             <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:underline"><ChevronDown size={13} className={`transition ${open ? "rotate-180" : ""}`} /> {open ? "Hide" : "Show"} partner call · {d.call.transcript.length} turns</button>
             {open && (
