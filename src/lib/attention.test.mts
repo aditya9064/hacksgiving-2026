@@ -82,6 +82,23 @@ test("a nudge does not reset the clock", () => {
   assert.equal(evaluateAttention(r, events, NOW).level, "needs_attention");
 });
 
+test("a resident call (chasing an update) does not reset the clock", () => {
+  const r = req({ urgency: "critical", status: "claimed" });
+  const events = [ev("claimed", agoMin(200)), ev("call", agoMin(5))];
+  assert.equal(evaluateAttention(r, events, NOW).level, "needs_attention");
+});
+
+test("every urgency: just UNDER its limit is fine, just OVER is flagged", () => {
+  const cases: Array<AttentionRequest["urgency"]> = ["critical", "high", "normal", "low"];
+  for (const urgency of cases) {
+    const limitMin = ATTENTION_LIMITS[urgency] / MIN;
+    const under = evaluateAttention(req({ urgency, status: "claimed" }), [ev("claimed", agoMin(limitMin - 1))], NOW);
+    const over = evaluateAttention(req({ urgency, status: "claimed" }), [ev("claimed", agoMin(limitMin + 1))], NOW);
+    assert.equal(under.level, "none", `${urgency}: 1 min under the limit must be fine`);
+    assert.equal(over.level, "needs_attention", `${urgency}: 1 min over the limit must flag`);
+  }
+});
+
 test("missing event timestamps: falls back to updatedAt then createdAt, no throw", () => {
   const r = req({ urgency: "critical", status: "claimed", updatedAt: agoMin(200), createdAt: agoMin(400) });
   assert.equal(evaluateAttention(r, [], NOW).level, "needs_attention"); // uses updatedAt 200 min

@@ -54,7 +54,7 @@ const SEEDS: SeedReq[] = [
   // D1 (req-021): critical claimed ~3h ago, no progress since -> NEEDS ATTENTION (overdue).
   { text: "My ex showed up at my job today, there's a restraining order. I'm scared to go home tonight.", summary: "Protective-order violation, resident afraid to go home", needs: ["safety"], urgency: "critical", hood: "Metcalfe Park", status: "claimed", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 192 },
   // D2 (req-022): resident said help only partly arrived -> FOLLOW-UP (amber), same owner owns next step.
-  { text: "The pantry box came but it was only enough for a couple days and I've got five mouths to feed.", summary: "Pantry delivery arrived but not enough for the household", needs: ["food"], urgency: "high", hood: "Garden Homes", status: "in_progress", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 150, household: 5, feedback: "partial" },
+  { text: "The pantry box came but it was only enough for a couple days and I've got five mouths to feed.", summary: "Pantry delivery arrived but not enough for the household", needs: ["food"], urgency: "high", hood: "Garden Homes", status: "in_progress", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 240, household: 5, feedback: "partial" },
   // D3 (req-023): high urgency, unclaimed ~14h -> NEEDS ATTENTION (overdue, nobody owns it).
   { text: "Got an eviction summons taped to my door, court date is in two weeks and I don't know what to do.", summary: "Eviction summons received, no legal help yet", needs: ["rent", "legal"], urgency: "high", hood: "Clarke Square", status: "new", ageMin: 840, household: 4 },
   // D4 (req-024): critical but actively worked minutes ago -> HEALTHY (no flag), the contrast case.

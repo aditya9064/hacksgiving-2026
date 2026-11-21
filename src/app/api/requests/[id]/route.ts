@@ -49,7 +49,7 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
     const check = canReassign({ actorOrg: a.actorOrg, urgency: current.urgency, newOwnerName: a.newOwnerName, confirmUnownedUrgent: a.confirmUnownedUrgent });
     if (!check.ok) return NextResponse.json({ error: check.message, code: check.code }, { status: check.code === "not_coordinator" ? 403 : 409 });
-    const reassigned = await reassign(id, { actorName: a.actorName, newOwnerName: a.newOwnerName, newOwnerOrg: a.newOwnerOrg, newPartnerId: a.newPartnerId, reason: a.reason });
+    const reassigned = await reassign(id, { actorName: a.actorName, newOwnerName: a.newOwnerName, newOwnerOrg: a.newOwnerOrg, newPartnerId: a.newPartnerId, reason: a.reason.trim() });
     if (!reassigned) return NextResponse.json({ error: "not found" }, { status: 404 });
     const { contactRef, ...safe } = reassigned;
     return NextResponse.json({ request: { ...safe, hasContact: Boolean(contactRef) } });
