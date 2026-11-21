@@ -60,8 +60,7 @@ export default function BoardPage() {
 
   return (
     <AppShell
-      title={<>Live Ops <span className="chip chip-soft bg-brand-soft text-brand !text-[11px]">AI-Powered</span></>}
-      subtitle="Every request for help, from first text to resident-confirmed · Milwaukee"
+      title="ComForce MKE"
       badge={unclaimed}
       me={me.name}
       actions={<>
