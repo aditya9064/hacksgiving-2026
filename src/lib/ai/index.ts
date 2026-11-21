@@ -91,9 +91,12 @@ function guessHoodFromStreets(t: string): string | undefined {
     [/\b(35th|burleigh|sherman)\b/i, "Sherman Park"],
     [/\b(holton|locust|mlk|king dr)\b/i, "Harambee"],
     [/\b(center st|27th|metcalfe)\b/i, "Metcalfe Park"],
-    [/\b(fond du lac|north ave|lindsay)\b/i, "Lindsay Heights"],
+    [/\b(fond du lac|north ave|lindsay)\b/i, "Amani"], // Lindsay Heights core sits in the city's Amani polygon
+    [/\b(teutonia|villard|hampton ave)\b/i, "Old North Milwaukee"],
+    [/\b(good hope)\b/i, "Thurston Woods"],
+    [/\b(capitol dr|capitol drive)\b/i, "Roosevelt Grove"],
     [/\b(cesar chavez|national ave|clarke)\b/i, "Clarke Square"],
-    [/\b(mitchell st|mitchell street)\b/i, "Historic Mitchell St"],
+    [/\b(mitchell st|mitchell street)\b/i, "Historic Mitchell Street"],
     [/\b(kinnickinnic|kk ave|bay view)\b/i, "Bay View"],
     [/\b(humboldt|riverwest|center and holton)\b/i, "Riverwest"],
   ];
@@ -104,7 +107,7 @@ const SYSTEM = `You structure incoming requests for help for a Milwaukee communi
 The text has already had personal identifiers replaced with [name], [phone], [address], [email]. Never try to guess them back.
 Return strict JSON: {"summary": string (<= 12 words, neutral, no names), "needs": string[] (1-3 from ${JSON.stringify(NEEDS)}), "urgency": "low"|"normal"|"high"|"critical", "neighborhood": one of ${JSON.stringify(NEIGHBORHOODS)} or "Unknown", "householdSize": number|null, "language": "en"|"es"|"hmn"|"other"}.
 Urgency rules: critical = risk to life/safety, shutoff/eviction within 72h, infant without heat; high = needed within a week, or food/housing/utilities when children are in the home, or health; normal otherwise.
-Neighborhood: only pick one if the text names it or names streets you are sure of (35th/Burleigh/Sherman = Sherman Park; Holton/Locust/MLK = Harambee; 27th/Center = Metcalfe Park; Fond du Lac/North Ave = Lindsay Heights; Cesar Chavez/National = Clarke Square; Mitchell St = Historic Mitchell St; KK/Bay View = Bay View; Humboldt/Riverwest = Riverwest). Otherwise "Unknown".
+Neighborhood: only pick one if the text names it or names streets you are sure of (35th/Burleigh/Sherman = Sherman Park; Holton/Locust/MLK = Harambee; 27th/Center = Metcalfe Park; Fond du Lac/North Ave = Amani; Teutonia/Villard/Hampton Ave = Old North Milwaukee; Good Hope = Thurston Woods; Capitol Dr = Roosevelt Grove; Cesar Chavez/National = Clarke Square; Mitchell St = Historic Mitchell Street; KK/Bay View = Bay View; Humboldt/Riverwest = Riverwest). Otherwise "Unknown".
 Describe the NEED. Never characterize people as dangerous or as suspects.`;
 
 export async function structureIntake(rawText: string): Promise<StructuredIntake> {

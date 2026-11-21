@@ -44,22 +44,37 @@ export type Urgency = (typeof URGENCIES)[number];
 export const CHANNELS = ["sms", "web", "voice", "partner"] as const;
 export type Channel = (typeof CHANNELS)[number];
 
+// Names match City of Milwaukee neighborhood polygons (data.milwaukee.gov, Neighborhood Identification Project).
 export const NEIGHBORHOODS = [
   "Sherman Park",
   "Harambee",
   "Metcalfe Park",
   "Amani",
-  "Lindsay Heights",
   "Riverwest",
   "Clarke Square",
   "Walker's Point",
   "Washington Park",
   "Garden Homes",
   "Bay View",
-  "Historic Mitchell St",
+  "Historic Mitchell Street",
   "Concordia",
   "Silver City",
   "Midtown",
+  "Old North Milwaukee",
+  "Silver Spring",
+  "Hampton Heights",
+  "Franklin Heights",
+  "Lincoln Creek",
+  "Rufus King",
+  "Thurston Woods",
+  "Roosevelt Grove",
+  "Dineen Park",
+  "Uptown",
+  "Arlington Heights",
+  "McGovern Park",
+  "Fairfield",
+  "North Division",
+  "Lincoln Village",
 ] as const;
 
 export interface Partner {
