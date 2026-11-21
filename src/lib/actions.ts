@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { structureIntake } from "./ai";
 import { makeShortCode } from "./db/seed";
-import { sendSms, VERIFY_PROMPT, THANKS_TEXT } from "./sms";
+import { sendSms, VERIFY_PROMPT, THANKS_TEXT, CALL_CLOSE_TEXT } from "./sms";
 import { detectSafety, resourcesFor, resourcesSms, SAFETY_RESOURCES } from "./safety";
 import { scheduleFollowUpCall, cancelFollowUp } from "./followup";
 import { classifyResidentReply } from "./replyClassifier";
@@ -109,7 +109,13 @@ export async function residentReply(id: string, reply: "1" | "2" | "3", via: "sm
   if (outcome.setVerifiedAt) patch.verifiedAt = now;
   if (outcome.clearDeliveredAt) patch.deliveredAt = undefined;
   if (cur?.followUp) patch.followUp = { ...cur.followUp, status: reply === "1" ? "confirmed" : reply === "2" ? "partial" : "reopened" };
-  return db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text.replace(/^(Resident \w+)/, `$1${how}`) });
+  const updated = await db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text.replace(/^(Resident \w+)/, `$1${how}`) });
+  // By text the webhook reply is the receipt; after a call-back, send one so the resident has the outcome in writing.
+  if (via === "call" && cur?.contactRef) {
+    const r = await sendSms(cur.contactRef, CALL_CLOSE_TEXT(cur.shortCode, reply, cur.language));
+    await db.updateRequest(id, {}, { actor: "ai", type: "sms_out", text: `Closing text sent to the resident with the call-back outcome.${r.mocked ? " (simulated)" : ""}` });
+  }
+  return updated;
 }
 
 export type NudgeResult =
