@@ -69,6 +69,12 @@ export interface Partner {
   neighborhoods: string[];
   capacity: number; // open slots this week
   phone?: string;
+  email?: string;
+  /** Who picks up the partner's line, e.g. "Front desk" or a first name */
+  contactName?: string;
+  address?: string;
+  /** [lat, lng] of the pickup location (synthetic demo data) */
+  coords?: [number, number];
   hours?: string;
   verifiedAt?: string;
 }
@@ -85,7 +91,9 @@ export type ActivityType =
   | "reopened"
   | "sms_out"
   | "sms_in"
-  | "call";
+  | "call"
+  | "dispatch"
+  | "email_out";
 
 export interface ActivityEvent {
   id: string;
@@ -122,6 +130,25 @@ export interface HelpRequest {
   contactRef?: string;
   /** Phone-call intake (ElevenLabs agent). Transcript is redacted before storage. */
   call?: CallRecord;
+  /** Handoff to a partner: Jordan calls + emails them, records their answer, then the volunteer gets a route. */
+  dispatch?: Dispatch;
+}
+
+export type DispatchStatus = "calling" | "accepted" | "declined" | "no_answer" | "ready" | "picked_up";
+
+export interface Dispatch {
+  partnerId: string;
+  status: DispatchStatus;
+  startedAt: string;
+  /** live = real outbound phone call via ElevenLabs+Twilio; simulated = partner answers on the /partner-line page */
+  mode: "live" | "simulated";
+  conversationId?: string;
+  outcome?: { accepted: boolean; readyBy?: string; notes?: string; contactName?: string; at: string };
+  call?: CallRecord;
+  emailSentAt?: string;
+  emailMocked?: boolean;
+  readyAt?: string;
+  pickedUpAt?: string;
 }
 
 export interface CallTurn {

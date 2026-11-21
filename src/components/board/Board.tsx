@@ -22,7 +22,15 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
   const reopened = r.residentFeedback === "no" && r.status !== "verified";
   const [chLabel, ChIcon] = CHANNEL[r.channel];
   const border = reopened || r.urgency === "critical" ? "!border-[#f0a3a3]" : r.urgency === "high" ? "!border-[#f3cf95]" : fresh ? "!border-brand" : "";
-  const next = r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? "Verification text sent · awaiting resident reply" : r.residentFeedback === "partial" ? "Resident: partly helped" : "Closed the loop · resident confirmed";
+  const d = r.dispatch;
+  const dispatchLine = d && r.status !== "delivered" && r.status !== "verified"
+    ? d.status === "calling" ? "Jordan is calling the partner…"
+    : d.status === "accepted" ? `Partner accepted${d.outcome?.readyBy ? ` · ready ${d.outcome.readyBy}` : ""}`
+    : d.status === "ready" ? `${r.ownerName ?? "Volunteer"} en route to pickup`
+    : d.status === "picked_up" ? "Picked up · heading to resident"
+    : d.status === "declined" ? "Partner declined · pick another" : d.status === "no_answer" ? "Partner didn't answer" : null
+    : null;
+  const next = dispatchLine ?? (r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? "Verification text sent · awaiting resident reply" : r.residentFeedback === "partial" ? "Resident: partly helped" : "Closed the loop · resident confirmed");
   return (
     <motion.button layout layoutId={r.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 400, damping: 34 }} onClick={onClick}
       className={`card w-full text-left overflow-hidden hover:shadow-[0_2px_8px_rgba(0,0,0,.06)] ${border}`}>
@@ -50,7 +58,7 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
           <Row Icon={UserCheck} k="Owner" v={r.ownerName ?? "Unassigned"} vClass={r.ownerName ? "text-green" : "text-[#b45309]"} />
         </div>
         <div className={`mt-2 rounded-md border px-2.5 py-1.5 text-[11.5px] font-medium ${r.status === "verified" && r.residentFeedback !== "partial" ? "border-[#bfe7cf] bg-green-soft text-green" : "border-[#bfe0f3] bg-brand-soft text-brand"}`}>
-          {r.status === "verified" && r.residentFeedback !== "partial" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : next}
+          {r.status === "verified" && r.residentFeedback !== "partial" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : d?.status === "calling" && r.status !== "delivered" && r.status !== "verified" ? <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> {next}</span> : next}
         </div>
         <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
           <span>Opened {timeAgo(r.createdAt, now)}</span>

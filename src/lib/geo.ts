@@ -17,3 +17,16 @@ export const HOOD_COORDS: Record<string, [number, number]> = {
   Midtown: [43.0505, -87.9375],
 };
 export const MKE_CENTER: [number, number] = [43.04, -87.935];
+
+/** Where a ComForce volunteer typically starts a run when the browser can't share location (synthetic). */
+export const COMFORCE_BASE: { name: string; coords: [number, number] } = { name: "ComForce MKE · Sherman Park base", coords: [43.0738, -87.9612] };
+
+/** Deterministic ~300 m offset so resident pins never sit exactly on a neighborhood centroid (privacy + realism). */
+export function residentApprox(neighborhood: string, seed: string): [number, number] {
+  const c = HOOD_COORDS[neighborhood] ?? MKE_CENTER;
+  let h = 0;
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const a = (h % 360) * (Math.PI / 180);
+  const r = 0.0025 + ((h >> 9) % 100) / 100 * 0.002;
+  return [c[0] + Math.sin(a) * r, c[1] + Math.cos(a) * r * 1.35];
+}

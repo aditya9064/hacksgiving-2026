@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LayoutGrid, Users, BarChart3, Activity, BookOpen, Settings, LogOut, Search, Bell, Smartphone, MessageSquare, MessagesSquare, RotateCcw, Check } from "lucide-react";
+import { LayoutGrid, Users, BarChart3, Activity, BookOpen, Settings, LogOut, Search, Bell, Smartphone, MessageSquare, MessagesSquare, RotateCcw, Check, PhoneForwarded } from "lucide-react";
 import { Logo } from "./ui/Logo";
 
 const NAV = [
@@ -37,6 +37,7 @@ function Sidebar() {
         <Link href="/r" title="Resident intake" className={item}><MessageSquare size={18} strokeWidth={1.8} /></Link>
         <Link href="/m" title="Volunteer phone" className={item}><Smartphone size={18} strokeWidth={1.8} /></Link>
         <Link href="/phone" title="Resident's phone (SMS simulator)" className={item}><MessagesSquare size={18} strokeWidth={1.8} /></Link>
+        <Link href="/partner-line" title="Partner line (pantry's phone + inbox)" className={item}><PhoneForwarded size={18} strokeWidth={1.8} /></Link>
         <SettingsMenu side><span className={item}><Settings size={18} strokeWidth={1.8} /></span></SettingsMenu>
       </nav>
       <Link href="/r" title="Exit to resident view" className={`${item} mt-auto`}><LogOut size={18} strokeWidth={1.8} /></Link>
@@ -71,6 +72,7 @@ function SettingsMenu({ children, side, me }: { children: React.ReactNode; side?
           <Link href="/r" className={row} onClick={() => setOpen(false)}><MessageSquare size={14} className="text-brand" /> Resident intake page</Link>
           <Link href="/m" className={row} onClick={() => setOpen(false)}><Smartphone size={14} className="text-brand" /> Volunteer phone view</Link>
           <Link href="/phone" className={row} onClick={() => setOpen(false)}><MessagesSquare size={14} className="text-brand" /> Resident's phone (SMS)</Link>
+          <Link href="/partner-line" className={row} onClick={() => setOpen(false)}><PhoneForwarded size={14} className="text-brand" /> Partner line (pantry)</Link>
           <div className="my-1 border-t border-line" />
           <button onClick={reset} disabled={state !== "idle"} className={row}>
             {state === "done" ? <Check size={14} className="text-green" /> : <RotateCcw size={14} className={state === "busy" ? "animate-spin text-muted" : "text-ink-2"} />}
