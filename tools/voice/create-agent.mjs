@@ -30,6 +30,7 @@ if (!/^https:\/\//.test(BASE)) die("PUBLIC_BASE_URL must be an https URL (e.g. y
 const cachePath = join(here, ".agent.json");
 const cache = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf8")) : {};
 const prompt = readFileSync(join(here, "prompt.md"), "utf8");
+const dispatchPrompt = readFileSync(join(here, "dispatch-prompt.md"), "utf8");
 
 const toolConfig = {
   type: "webhook",
@@ -77,6 +78,55 @@ const agentConfig = {
   },
 };
 
+// ---- Dispatch agent: Jordan calls a partner organization to hand off a request ----
+const partnerToolConfig = {
+  type: "webhook",
+  name: "partner_response",
+  description: "Record whether the partner organization accepted the request and when it will be ready for pickup. Call exactly once, as soon as you have a clear yes or no.",
+  execution_mode: "immediate",
+  pre_tool_speech: "auto",
+  response_timeout_secs: 20,
+  api_schema: {
+    url: `${BASE}/api/voice/partner-tool`,
+    method: "POST",
+    request_headers: SECRET ? { "x-relay-secret": SECRET } : {},
+    request_body_schema: {
+      type: "object",
+      required: ["accepted"],
+      properties: {
+        accepted: { type: "boolean", description: "True if the partner can take this request." },
+        ready_by: { type: "string", description: "When it will be ready for pickup, in their words, e.g. 'in about 20 minutes' or 'after 2 pm'." },
+        notes: { type: "string", description: "Anything the volunteer should know: which door, what to bring, limits, who to ask for." },
+        contact_name: { type: "string", description: "First name of the person you spoke with, if given." },
+        request_id: { type: "string", dynamic_variable: "request_id" },
+        request_code: { type: "string", dynamic_variable: "request_code" },
+        conversation_id: { type: "string", dynamic_variable: "system__conversation_id" },
+      },
+    },
+  },
+};
+
+const dispatchAgentConfig = {
+  name: "Jordan · Relay dispatch (calls partners)",
+  conversation_config: {
+    agent: {
+      first_message: "Hi, this is Jordan calling from ComForce Milwaukee — have I reached {{partner_name}}?",
+      language: "en",
+      dynamic_variables: {
+        dynamic_variable_placeholders: {
+          partner_name: "Northside Community Pantry", contact_name: "the front desk", request_code: "R-0000", request_id: "", need_summary: "Groceries for a family", needs: "Food", household: "not stated", neighborhood: "Sherman Park", urgency: "high", details: "", volunteer: "a ComForce volunteer",
+        },
+      },
+      prompt: { prompt: dispatchPrompt, llm: process.env.ELEVENLABS_LLM ?? "gpt-4.1", temperature: 0.3, tool_ids: [] },
+    },
+    tts: { voice_id: VOICE_ID, model_id: "eleven_v4_turbo", stability: 0.5, speed: 1.05 },
+    turn: { turn_eagerness: "normal" },
+  },
+  platform_settings: {
+    widget: { variant: "compact", action_text: "Incoming call · ComForce MKE", start_call_text: "Answer", end_call_text: "Hang up", listening_text: "Jordan is listening", speaking_text: "Jordan", bg_color: "#ffffff", btn_color: "#16a34a", btn_text_color: "#ffffff" },
+  },
+};
+
 const tool = cache.toolId
   ? await api("PATCH", `/v1/convai/tools/${cache.toolId}`, { tool_config: toolConfig })
   : await api("POST", "/v1/convai/tools", { tool_config: toolConfig });
@@ -87,10 +137,21 @@ const agent = cache.agentId
   ? await api("PATCH", `/v1/convai/agents/${cache.agentId}`, agentConfig)
   : await api("POST", "/v1/convai/agents/create", agentConfig);
 cache.agentId = agent.agent_id ?? cache.agentId;
+
+const partnerTool = cache.partnerToolId
+  ? await api("PATCH", `/v1/convai/tools/${cache.partnerToolId}`, { tool_config: partnerToolConfig })
+  : await api("POST", "/v1/convai/tools", { tool_config: partnerToolConfig });
+cache.partnerToolId = partnerTool.id;
+dispatchAgentConfig.conversation_config.agent.prompt.tool_ids = [partnerTool.id];
+
+const dispatchAgent = cache.dispatchAgentId
+  ? await api("PATCH", `/v1/convai/agents/${cache.dispatchAgentId}`, dispatchAgentConfig)
+  : await api("POST", "/v1/convai/agents/create", dispatchAgentConfig);
+cache.dispatchAgentId = dispatchAgent.agent_id ?? cache.dispatchAgentId;
 writeFileSync(cachePath, JSON.stringify(cache, null, 2));
 
-console.log(`\n✔ tool  ${cache.toolId}\n✔ agent ${cache.agentId}\n`);
-console.log(`Add to src/.env.local:\n  NEXT_PUBLIC_ELEVENLABS_AGENT_ID=${cache.agentId}\n`);
+console.log(`\n✔ tool  ${cache.toolId}\n✔ agent ${cache.agentId}\n✔ partner tool  ${cache.partnerToolId}\n✔ dispatch agent ${cache.dispatchAgentId}\n`);
+console.log(`Add to src/.env.local:\n  NEXT_PUBLIC_ELEVENLABS_AGENT_ID=${cache.agentId}\n  NEXT_PUBLIC_ELEVENLABS_DISPATCH_AGENT_ID=${cache.dispatchAgentId}\n  (for real outbound calls also set ELEVENLABS_PHONE_NUMBER_ID from an imported Twilio number)\n`);
 console.log(`Then in https://elevenlabs.io/app/agents/settings → Post-call webhooks, add:\n  ${BASE}/api/voice/elevenlabs   (copy its signing secret to ELEVENLABS_WEBHOOK_SECRET)\n`);
 console.log(`Test in the browser: https://elevenlabs.io/app/agents/${cache.agentId}  or the widget on ${BASE}/r`);
 

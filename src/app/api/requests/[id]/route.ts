@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addNote, claim, markDelivered, residentReply } from "@/lib/actions";
+import { markPickedUp, markReady, startDispatch } from "@/lib/dispatch";
 import { db } from "@/lib/db";
 
 
@@ -9,6 +10,9 @@ const Action = z.discriminatedUnion("action", [
   z.object({ action: z.literal("note"), actor: z.string().min(1), text: z.string().min(1).max(1000) }),
   z.object({ action: z.literal("delivered"), actor: z.string().min(1) }),
   z.object({ action: z.literal("resident_reply"), reply: z.enum(["1", "2", "3"]) }),
+  z.object({ action: z.literal("dispatch"), partnerId: z.string().min(1), actorName: z.string().min(1), actorOrg: z.string().min(1) }),
+  z.object({ action: z.literal("ready"), actor: z.string().min(1) }),
+  z.object({ action: z.literal("picked_up"), actor: z.string().min(1) }),
 ]);
 
 export async function GET(_: Request, ctx: { params: Promise<{ id: string }> }) {
@@ -29,6 +33,9 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     a.action === "claim" ? await claim(id, a.ownerName, a.ownerOrg, a.partnerId)
     : a.action === "note" ? await addNote(id, a.actor, a.text)
     : a.action === "delivered" ? await markDelivered(id, a.actor)
+    : a.action === "dispatch" ? await startDispatch(id, a.partnerId, { name: a.actorName, org: a.actorOrg })
+    : a.action === "ready" ? await markReady(id, a.actor)
+    : a.action === "picked_up" ? await markPickedUp(id, a.actor)
     : await residentReply(id, a.reply);
   if (!result) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { contactRef, ...safe } = result;
