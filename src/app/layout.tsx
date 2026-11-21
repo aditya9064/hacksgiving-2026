@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "One shared record that closes the loop on every request for help in Milwaukee.",
 };
 
-export const viewport: Viewport = { themeColor: "#0b93d5", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0b93d5", width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

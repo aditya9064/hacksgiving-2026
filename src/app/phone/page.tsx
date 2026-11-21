@@ -271,7 +271,7 @@ export default function ResidentPhone() {
               <div ref={endRef} />
             </div>
 
-            <div className="border-t border-line bg-surface px-2.5 pb-4 pt-2">
+            <div className="shrink-0 border-t border-line bg-surface px-2.5 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="mb-2 flex flex-wrap gap-1.5">
                 {codes.map((c) => <Quick key={c} onClick={() => send(c)}>Check {c}</Quick>)}
                 {latestReq?.status === "delivered" && <>
@@ -281,9 +281,9 @@ export default function ResidentPhone() {
                 {msgs.length === 0 && <Quick onClick={() => send("Hi, we're out of food until Friday and I have 3 kids. We're near 35th and Burleigh.")}>Text a request</Quick>}
                 {msgs.length === 0 && <Quick onClick={() => send("Hola, necesito ayuda. No tenemos comida hasta el viernes y tengo 3 niños. Estamos cerca de Cesar Chavez y National.")}>Enviar en español</Quick>}
               </div>
-              <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-center gap-2">
-                <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Text Message · SMS" className="h-9 flex-1 rounded-full border border-line bg-bg px-3.5 text-[14px] outline-none focus:border-brand" />
-                <button disabled={!draft.trim() || busy} className="grid h-8 w-8 place-items-center rounded-full bg-brand text-white disabled:opacity-30"><ArrowUp size={16} strokeWidth={2.5} /></button>
+              <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex w-full items-center gap-2">
+                <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Text Message · SMS" className="h-9 min-w-0 flex-1 rounded-full border border-line bg-bg px-3.5 text-[14px] outline-none focus:border-brand" />
+                <button disabled={!draft.trim() || busy} className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-brand text-white disabled:opacity-30"><ArrowUp size={16} strokeWidth={2.5} /></button>
               </form>
             </div>
           </>)}
@@ -537,7 +537,7 @@ function LiveCallback({ req, partner }: { req: HelpRequest; partner?: Partner })
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto w-full md:w-[360px] md:h-[720px] md:rounded-[40px] md:bg-[#111827] md:p-[10px] md:shadow-[0_30px_60px_-20px_rgba(0,0,0,.35)]">
-      <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-bg md:h-full md:rounded-[32px]">
+      <div className="relative flex h-[100dvh] w-full max-w-[100vw] flex-col overflow-hidden bg-bg pt-[env(safe-area-inset-top)] md:h-full md:max-w-none md:rounded-[32px] md:pt-0">
         <div className="hidden items-center justify-between bg-surface/90 px-6 pb-1 pt-3 text-[11px] font-semibold md:flex"><span>9:41</span><span className="flex items-center gap-1 text-ink-2"><Signal size={12} /><Wifi size={12} /><Battery size={14} /></span></div>
         {children}
       </div>

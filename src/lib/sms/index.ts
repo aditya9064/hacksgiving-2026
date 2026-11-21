@@ -60,6 +60,23 @@ export const CODE_TEXT = (code: string, lang?: Lang) =>
       ? `Relay MKE: koj qhov kev thov yog ${code}. Xa ${code} rau tus xov tooj no kom paub xov xwm. Ib tug neeg hais lus Hmoob yuav hu rov qab rau koj. (Your request is ${code}; a Hmong-speaking neighbor will call you back.)`
       : `Relay MKE: your request is logged as ${code}. Text ${code} to this number any time for an update. We'll text you when help is on the way. Reply STOP to opt out.`;
 
+/** Final text after Jordan's call-back, echoing what the resident said so they have it in writing. */
+export const CALL_CLOSE_TEXT = (code: string, reply: "1" | "2" | "3", lang?: Lang) => {
+  if (es(lang)) {
+    return reply === "1"
+      ? `Relay MKE: gracias por hablar con Jordan. Anotamos que la ayuda de ${code} llegó y cerramos su solicitud. Si necesita algo más, envíe un mensaje a este número.`
+      : reply === "2"
+        ? `Relay MKE: gracias por hablar con Jordan. Anotamos que solo llegó parte de la ayuda de ${code}. El equipo revisará lo que falta y le avisaremos.`
+        : `Relay MKE: gracias por hablar con Jordan. Anotamos que la ayuda de ${code} no llegó. Reabrimos su solicitud y avisamos al equipo; le escribiremos pronto.`;
+  }
+  const hm = hmn(lang) ? "Ua tsaug. " : "";
+  return reply === "1"
+    ? `${hm}Relay MKE: thanks for talking with Jordan. We've recorded that the help for ${code} arrived and your request is now closed. Text this number any time if you need anything else.`
+    : reply === "2"
+      ? `${hm}Relay MKE: thanks for talking with Jordan. We've recorded that only part of the help for ${code} arrived. The team is checking what's missing and we'll text you.`
+      : `${hm}Relay MKE: thanks for talking with Jordan. We've recorded that the help for ${code} did not arrive. Your request is reopened and the team has been notified — we'll be in touch soon.`;
+};
+
 export const THANKS_TEXT = (lang?: Lang, reopened = false) =>
   reopened
     ? es(lang) ? "Gracias. Reabrimos su solicitud y avisamos al equipo." : "Thank you. We've reopened your request and the team has been notified."
