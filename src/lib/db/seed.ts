@@ -10,13 +10,14 @@ import type { ActivityEvent, HelpRequest, Partner, Playbook, Status, Need, Urgen
 // Storm requests are mixed with house fires (MFD 2023 building fires) and everyday requests.
 // Card times stay relative to "now" so the board replays the storm as if it were happening live.
 
-export const SEED_PARTNERS: Partner[] = [
+/** Fictional demo partners (isReal unset). Names, contacts and capacity are invented for the demo. */
+export const FICTIONAL_PARTNERS: Partner[] = [
   { id: "p-comforce", name: "ComForce MKE", contactName: "On-call lead", phone: "+14145550100", email: "dispatch@comforce.example", address: "3500 W Burleigh St", coords: [43.0738, -87.9612], needs: ["mediation", "safety", "youth", "other"], neighborhoods: ["Sherman Park", "Harambee", "Amani", "Franklin Heights", "Old North Milwaukee"], capacity: 6, hours: "24/7 rapid response", verifiedAt: "2026-11-19T12:00:00Z", languages: ["en", "es"] },
   { id: "p-disaster", name: "ComForce Disaster Relief", contactName: "Disaster desk", phone: "+14145550188", email: "relief@comforce.example", address: "3100 W Villard Ave", coords: [43.1119, -87.9515], needs: ["housing", "food", "other"], neighborhoods: ["Citywide"], capacity: 8, hours: "24/7 during declared disasters", verifiedAt: "2026-11-20T06:00:00Z" },
   { id: "p-cleanup", name: "Northside Muck-Out Crew", contactName: "Crew lead", phone: "+14145550199", email: "crew@muckout.example", address: "5800 W Villard Ave", coords: [43.1121, -87.9849], needs: ["housing", "other"], neighborhoods: ["Old North Milwaukee", "Silver Spring", "Hampton Heights", "Lincoln Creek", "Thurston Woods", "Arlington Heights"], capacity: 7, hours: "Daily 7am–7pm", verifiedAt: "2026-11-20T07:00:00Z" },
   { id: "p-pantry", name: "Northside Community Pantry", contactName: "Front desk", phone: "+14145550111", email: "intake@northsidepantry.example", address: "4100 W Lisbon Ave", coords: [43.0538, -87.9668], needs: ["food"], neighborhoods: ["Sherman Park", "Garden Homes", "Rufus King", "McGovern Park"], capacity: 14, hours: "Tue–Sat 10–4", verifiedAt: "2026-11-18T15:00:00Z", languages: ["en"] },
   { id: "p-hmong", name: "Hmong Neighbors Center", contactName: "Front desk", phone: "+14145550211", email: "help@hmongneighbors.example", address: "3824 W Vliet St", coords: [43.0470, -87.9630], needs: ["food", "legal", "youth", "other"], neighborhoods: ["Washington Park", "Concordia", "Midtown", "Citywide"], capacity: 7, hours: "Mon–Sat 9–6 · Hmoob/English", verifiedAt: "2026-11-19T10:00:00Z", languages: ["hmn", "en"] },
-  { id: "p-southside", name: "South Side Family Resource Center", contactName: "Recepción", phone: "+14145550222", email: "intake@southsidefrc.example", address: "2701 S Chase Ave", coords: [42.9990, -87.9080], needs: ["food", "housing", "legal", "other"], neighborhoods: ["Clarke Square", "Walker's Point", "Historic Mitchell St", "Silver City"], capacity: 9, hours: "Mon–Fri 8–6 · Español/English", verifiedAt: "2026-11-19T11:00:00Z", languages: ["es", "en"] },
+  { id: "p-southside", name: "South Side Family Resource Center", contactName: "Recepción", phone: "+14145550222", email: "intake@southsidefrc.example", address: "2701 S Chase Ave", coords: [42.9990, -87.9080], needs: ["food", "housing", "legal", "other"], neighborhoods: ["Clarke Square", "Walker's Point", "Historic Mitchell Street", "Silver City"], capacity: 9, hours: "Mon–Fri 8–6 · Español/English", verifiedAt: "2026-11-19T11:00:00Z", languages: ["es", "en"] },
   { id: "p-housing", name: "Milwaukee Housing Helpline", contactName: "Intake line", phone: "+14145550122", email: "help@mkehousing.example", address: "728 N James Lovell St", coords: [43.0405, -87.9205], needs: ["rent", "housing", "legal"], neighborhoods: ["Citywide"], capacity: 3, hours: "Mon–Fri 9–5", verifiedAt: "2026-11-17T09:00:00Z" },
   { id: "p-energy", name: "Keep the Lights On Fund", contactName: "Pledge desk", phone: "+14145550133", email: "pledges@lightson.example", address: "2200 N 27th St", coords: [43.0595, -87.9475], needs: ["utilities"], neighborhoods: ["Citywide"], capacity: 8, hours: "Mon–Fri 9–6", verifiedAt: "2026-11-19T08:00:00Z" },
   { id: "p-clinic", name: "Westside Free Clinic", contactName: "Charge nurse", phone: "+14145550144", email: "frontdesk@westsideclinic.example", address: "4350 W Lloyd St", coords: [43.0510, -87.9700], needs: ["health"], neighborhoods: ["Washington Park", "Concordia", "Midtown", "Uptown", "Rufus King"], capacity: 5, hours: "Mon/Wed/Fri 8–2", verifiedAt: "2026-11-16T10:00:00Z" },
@@ -24,6 +25,55 @@ export const SEED_PARTNERS: Partner[] = [
   { id: "p-youth", name: "Harambee Youth Hub", contactName: "Program lead", phone: "+14145550166", email: "hub@harambeeyouth.example", address: "3300 N Holton St", coords: [43.0745, -87.9050], needs: ["youth", "mediation"], neighborhoods: ["Harambee", "Riverwest", "Sherman Park"], capacity: 4, hours: "Mon–Fri 2–8", verifiedAt: "2026-11-15T13:00:00Z" },
   { id: "p-legal", name: "Tenant Legal Aid MKE", contactName: "Reception", phone: "+14145550177", email: "intake@tenantlegal.example", address: "633 W Wisconsin Ave", coords: [43.0388, -87.9205], needs: ["legal", "rent"], neighborhoods: ["Citywide"], capacity: 2, hours: "Tue/Thu 10–4", verifiedAt: "2026-11-12T13:00:00Z" },
 ];
+
+const CARVD_N_STONE = { title: "ComForce MKE, Team Unified and Milwaukee's Critical Response Team (Carvd N Stone, sponsored article)", url: "https://carvdnstone.com/comforce-mke-team-unified-and-milwaukees-critical-response-team-continue-making-a-difference-in-communities-impacted-by-violence-through-city-partnership/" };
+
+/**
+ * REAL organizations, from public sources only (see `evidence`). No phone, email or street
+ * address: they are never contacted from the demo, and lib/dispatch.ts hard-blocks live
+ * email/calls to any partner with isReal. Capacity is SIMULATED for the demo (capacitySimulated).
+ * Needs map the published services onto the app's existing categories:
+ *   violence interruption -> safety + mediation; mental health resources -> health;
+ *   food distribution -> food; community outreach, convening, funding -> other.
+ * Service areas are not listed in the sources, so `neighborhoods` is left empty.
+ */
+export const REAL_PARTNERS: Partner[] = [
+  {
+    id: "dcws",
+    name: "City of Milwaukee Department of Community Wellness and Safety (DCWS), formerly the Office of Community Wellness and Safety (OCWS)",
+    needs: ["safety", "mediation", "health", "other"],
+    neighborhoods: [],
+    capacity: 3,
+    capacitySimulated: true,
+    isReal: true,
+    relationshipTier: "confirmed_collaborator",
+    relationship: "ComForce MKE is described as a branch of MKE Promise Keepers, which this city agency manages. ComForce has partnered with it for almost four years.",
+    evidence: [
+      { title: "Department of Community Wellness and Safety (City of Milwaukee)", url: "https://city.milwaukee.gov/OCWS" },
+      { title: "Violence Prevention Resource Guide 2025 (City of Milwaukee)", url: "https://city.milwaukee.gov/ImageLibrary/MKE-Health1/MKE-Elevate/MKEViolencePreventionResourceGuideBooklet.pdf" },
+      { title: "Hearing summary naming Promise Keepers / ComForce (Citizen Portal)", url: "https://citizenportal.ai/articles/8704531/Wisconsin/Milwaukee-County/Milwaukee/OCWS-and-community-groups-urge-coordinated-prevention-strategy-OCWS-says-capacity-limited" },
+      CARVD_N_STONE,
+    ],
+  },
+  {
+    id: "mke-promise-keepers",
+    name: "MKE Promise Keepers",
+    needs: ["safety", "mediation", "food", "other"],
+    neighborhoods: [],
+    capacity: 5,
+    capacitySimulated: true,
+    isReal: true,
+    relationshipTier: "confirmed_collaborator",
+    relationship: "City violence-prevention and outreach initiative run through DCWS. ComForce MKE is listed as one of its branches. Operates in designated Promise Zones.",
+    evidence: [
+      { title: "Milwaukee 'Promise Keepers' put love and support into the community (CBS 58)", url: "https://www.cbs58.com/news/milwaukee-promise-keepers-put-love-and-support-into-the-community" },
+      CARVD_N_STONE,
+    ],
+  },
+];
+
+/** Everything the stores load: the two real organizations first, then the fictional demo partners. */
+export const SEED_PARTNERS: Partner[] = [...REAL_PARTNERS, ...FICTIONAL_PARTNERS];
 
 interface SeedReq {
   text: string;
