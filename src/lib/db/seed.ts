@@ -1,15 +1,25 @@
 import type { ActivityEvent, HelpRequest, Partner, Playbook, Status, Need, Urgency } from "../types";
 
-// All names, numbers and stories below are fictional. Neighborhood names are real Milwaukee areas.
+// STORM REPLAY + EVERYDAY MIX: FEMA DR-4923 (severe storms, tornadoes and flooding, Apr 13–23, 2026).
+// Every resident, story, name and dollar amount below is fictional. What is real: the neighborhoods
+// (City of Milwaukee polygons) and where they sit, which comes from public aggregates cached by
+// tools/storm-data/pull.mjs into data/public/dr4923-milwaukee.json:
+//   - FEMA housing-assistance registrations by ZIP (53218, 53209, 53216, 53206, 53210 hit hardest)
+//   - MFD Fire/Rescue calls per neighborhood during the storm vs. the six weeks before
+//   - MFD 2023 building fires per neighborhood
+// Storm requests are mixed with house fires (MFD 2023 building fires) and everyday requests.
+// Card times stay relative to "now" so the board replays the storm as if it were happening live.
 
 export const SEED_PARTNERS: Partner[] = [
-  { id: "p-comforce", name: "ComForce MKE", needs: ["mediation", "safety", "youth", "other"], neighborhoods: ["Sherman Park", "Harambee", "Amani", "Metcalfe Park"], capacity: 6, hours: "24/7 rapid response", verifiedAt: "2026-11-19T12:00:00Z" },
-  { id: "p-pantry", name: "Northside Community Pantry", needs: ["food"], neighborhoods: ["Sherman Park", "Lindsay Heights", "Garden Homes"], capacity: 14, hours: "Tue–Sat 10–4", verifiedAt: "2026-11-18T15:00:00Z" },
+  { id: "p-comforce", name: "ComForce MKE", needs: ["mediation", "safety", "youth", "other"], neighborhoods: ["Sherman Park", "Harambee", "Amani", "Franklin Heights", "Old North Milwaukee"], capacity: 6, hours: "24/7 rapid response", verifiedAt: "2026-11-19T12:00:00Z" },
+  { id: "p-disaster", name: "ComForce Disaster Relief", needs: ["housing", "food", "other"], neighborhoods: ["Citywide"], capacity: 8, hours: "24/7 during declared disasters", verifiedAt: "2026-11-20T06:00:00Z" },
+  { id: "p-cleanup", name: "Northside Muck-Out Crew", needs: ["housing", "other"], neighborhoods: ["Old North Milwaukee", "Silver Spring", "Hampton Heights", "Lincoln Creek", "Thurston Woods", "Arlington Heights"], capacity: 7, hours: "Daily 7am–7pm", verifiedAt: "2026-11-20T07:00:00Z" },
+  { id: "p-pantry", name: "Northside Community Pantry", needs: ["food"], neighborhoods: ["Sherman Park", "Garden Homes", "Rufus King", "McGovern Park"], capacity: 14, hours: "Tue–Sat 10–4", verifiedAt: "2026-11-18T15:00:00Z" },
   { id: "p-housing", name: "Milwaukee Housing Helpline", needs: ["rent", "housing", "legal"], neighborhoods: ["Citywide"], capacity: 3, hours: "Mon–Fri 9–5", verifiedAt: "2026-11-17T09:00:00Z" },
   { id: "p-energy", name: "Keep the Lights On Fund", needs: ["utilities"], neighborhoods: ["Citywide"], capacity: 8, hours: "Mon–Fri 9–6", verifiedAt: "2026-11-19T08:00:00Z" },
-  { id: "p-clinic", name: "Westside Free Clinic", needs: ["health"], neighborhoods: ["Washington Park", "Concordia", "Midtown"], capacity: 5, hours: "Mon/Wed/Fri 8–2", verifiedAt: "2026-11-16T10:00:00Z" },
+  { id: "p-clinic", name: "Westside Free Clinic", needs: ["health"], neighborhoods: ["Washington Park", "Concordia", "Midtown", "Uptown", "Rufus King"], capacity: 5, hours: "Mon/Wed/Fri 8–2", verifiedAt: "2026-11-16T10:00:00Z" },
   { id: "p-rides", name: "Ride Share Collective", needs: ["transport"], neighborhoods: ["Citywide"], capacity: 10, hours: "Daily 6am–10pm", verifiedAt: "2026-11-19T07:00:00Z" },
-  { id: "p-youth", name: "Harambee Youth Hub", needs: ["youth", "mediation"], neighborhoods: ["Harambee", "Riverwest"], capacity: 4, hours: "Mon–Fri 2–8", verifiedAt: "2026-11-15T13:00:00Z" },
+  { id: "p-youth", name: "Harambee Youth Hub", needs: ["youth", "mediation"], neighborhoods: ["Harambee", "Riverwest", "Sherman Park"], capacity: 4, hours: "Mon–Fri 2–8", verifiedAt: "2026-11-15T13:00:00Z" },
   { id: "p-legal", name: "Tenant Legal Aid MKE", needs: ["legal", "rent"], neighborhoods: ["Citywide"], capacity: 2, hours: "Tue/Thu 10–4", verifiedAt: "2026-11-12T13:00:00Z" },
 ];
 
@@ -26,27 +36,51 @@ interface SeedReq {
   feedback?: "yes" | "no" | "partial";
 }
 
+// Source tags: [STORM] FEMA DR-4923 ZIP registrations / MFD storm-window Fire/Rescue spike
+// [FIRE23] MFD 2023 building fires per neighborhood · [EVERYDAY] rent, utilities, health, rides
+// [CORE] ComForce violence-prevention and reentry work. Mixed and shuffled on purpose.
+const DISASTER: [string, string, string] = ["Marcus T.", "ComForce Disaster Relief", "p-disaster"];
 const SEEDS: SeedReq[] = [
-  { text: "Hi this is [name], we're out of food until Friday and I have 3 kids. We're near 35th and Burleigh.", summary: "Family of 4 needs groceries until payday Friday", needs: ["food"], urgency: "high", hood: "Sherman Park", status: "new", ageMin: 6, household: 4 },
+  // [STORM 53209][MFD] Old North Milwaukee Fire/Rescue 3.6/day during the storm vs 1.95 before
+  { text: "Basement took 3 feet of water overnight, furnace and water heater are under. Me and my 2 kids, my son has asthma and it already smells. Near Teutonia and Villard.", summary: "Flooded basement, no heat or hot water, child with asthma", needs: ["housing", "health"], urgency: "critical", hood: "Old North Milwaukee", status: "new", ageMin: 6, household: 3 },
+  // [CORE]
   { text: "My neighbor and I keep getting into it over the parking, last night it almost got physical. Can somebody come talk to us before it gets worse", summary: "Escalating neighbor dispute, requests mediation before it turns physical", needs: ["mediation", "safety"], urgency: "critical", hood: "Harambee", status: "new", ageMin: 14 },
+  // [EVERYDAY]
   { text: "We Energies says shutoff is Monday. I'm $210 behind. Single mom, I work but hours got cut.", summary: "Utility shutoff Monday, $210 behind", needs: ["utilities"], urgency: "high", hood: "Metcalfe Park", status: "new", ageMin: 31, household: 3 },
+  // [STORM 53218][MFD] Hampton Heights Fire/Rescue 0.9/day during the storm vs 0.36 before
+  { text: "Tree went through the back of the house during the tornado warning, part of the roof is open and there's a line down in the yard. Fire department taped it off. Where do we sleep tonight?", summary: "Tree through roof, line down, family of 4 needs shelter tonight", needs: ["housing", "safety"], urgency: "critical", hood: "Hampton Heights", status: "new", ageMin: 48, household: 4 },
+  // [EVERYDAY]
   { text: "Landlord gave me a 5 day notice. I have the money on the 1st but not now. [name], [phone]", summary: "5-day eviction notice, can pay on the 1st", needs: ["rent", "legal"], urgency: "critical", hood: "Clarke Square", status: "claimed", owner: ["Keisha R.", "Milwaukee Housing Helpline", "p-housing"], ageMin: 55, household: 2 },
-  { text: "My son's been getting threats at school and now online. He's 15. I don't want this to turn into something", summary: "Teen receiving threats at school and online, parent wants intervention", needs: ["youth", "safety", "mediation"], urgency: "high", hood: "Amani", status: "claimed", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 80 },
-  { text: "Need a ride to my dialysis Thursday 7am, my usual ride fell through", summary: "Ride needed for dialysis Thursday 7am", needs: ["transport", "health"], urgency: "high", hood: "Washington Park", status: "claimed", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 120 },
-  { text: "Elderly mother ran out of blood pressure meds, pharmacy says insurance lapsed", summary: "Senior out of BP medication, insurance lapsed", needs: ["health"], urgency: "high", hood: "Concordia", status: "in_progress", owner: ["Dr. Patel", "Westside Free Clinic", "p-clinic"], ageMin: 200 },
-  { text: "House fire on our block last night, family of 5 lost everything, staying in their car", summary: "Family of 5 displaced by fire, sleeping in car", needs: ["housing", "food", "other"], urgency: "critical", hood: "Lindsay Heights", status: "in_progress", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 300, household: 5 },
-  { text: "Can I get some help with my water bill, it's $87 past due and they put a notice on the door", summary: "Water bill $87 past due with shutoff notice", needs: ["utilities"], urgency: "normal", hood: "Silver City", status: "in_progress", owner: ["Jamal W.", "Keep the Lights On Fund", "p-energy"], ageMin: 420 },
-  { text: "Bus pass for the month so I can keep getting to work and my kid to daycare", summary: "Monthly bus pass for work and daycare", needs: ["transport"], urgency: "normal", hood: "Historic Mitchell St", status: "in_progress", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 600 },
-  { text: "Grocery delivery for grandma, she can't leave the house with her hip", summary: "Grocery delivery for homebound senior", needs: ["food"], urgency: "normal", hood: "Garden Homes", status: "delivered", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 900, household: 1 },
+  // [STORM 53218]
+  { text: "I'm 72 and I can't carry the wet carpet and drywall out of the basement by myself. City says put it on the curb.", summary: "Senior needs basement muck-out after flooding", needs: ["housing", "other"], urgency: "high", hood: "Silver Spring", status: "claimed", owner: ["Luis P.", "Northside Muck-Out Crew", "p-cleanup"], ageMin: 80, household: 1 },
+  // [CORE]
+  { text: "My son's been getting threats at school and now online. He's 15. I don't want this to turn into something", summary: "Teen receiving threats at school and online, parent wants intervention", needs: ["youth", "safety", "mediation"], urgency: "high", hood: "Amani", status: "claimed", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 120 },
+  // [FIRE23] Lincoln Village: 17 building fires in 2023, second most in the city
+  { text: "House fire on our block last night, family of 5 lost everything, staying in their car", summary: "Family of 5 displaced by fire, sleeping in car", needs: ["housing", "food", "other"], urgency: "critical", hood: "Lincoln Village", status: "in_progress", owner: DISASTER, ageMin: 200, household: 5 },
+  // [STORM 53209]
+  { text: "My dad's blood pressure meds and his CPAP got ruined when the basement flooded. Pharmacy says it's too early to refill.", summary: "Senior's BP meds and CPAP lost in flood, refill refused", needs: ["health"], urgency: "high", hood: "Rufus King", status: "in_progress", owner: ["Dr. Patel", "Westside Free Clinic", "p-clinic"], ageMin: 300 },
+  // [EVERYDAY]
+  { text: "Need a ride to my dialysis Thursday 7am, my usual ride fell through", summary: "Ride needed for dialysis Thursday 7am", needs: ["transport", "health"], urgency: "high", hood: "Washington Park", status: "in_progress", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 420 },
+  // [STORM 53206][MFD][FIRE23] Franklin Heights Fire/Rescue 1.9/day during the storm vs 0.7 before; 16 building fires in 2023
+  { text: "Fire last night started in the basement after the water got to the electrical panel. Family of 4 is out, staying with a cousin on the couch.", summary: "Family of 4 displaced by electrical fire after flooding", needs: ["housing", "other"], urgency: "critical", hood: "Franklin Heights", status: "in_progress", owner: DISASTER, ageMin: 600, household: 4 },
+  // [STORM 53209]
+  { text: "Grandma's food all went bad in the outage and she can't get to the store with her hip.", summary: "Grocery delivery for homebound senior after outage", needs: ["food"], urgency: "normal", hood: "Garden Homes", status: "delivered", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 900, household: 1 },
+  // [EVERYDAY]
   { text: "Behind $800 on rent after my hours got cut. Trying to avoid eviction", summary: "$800 rent arrears, avoiding eviction", needs: ["rent"], urgency: "high", hood: "Walker's Point", status: "delivered", owner: ["Keisha R.", "Milwaukee Housing Helpline", "p-housing"], ageMin: 1300 },
+  // [CORE]
   { text: "Two groups of young guys keep posting at each other and it's about to pop off this weekend", summary: "Online beef between two youth groups, risk of weekend violence", needs: ["safety", "mediation", "youth"], urgency: "critical", hood: "Harambee", status: "delivered", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 1500 },
-  { text: "Need transit vouchers for two weeks to get to my new job until first check", summary: "Two weeks of transit vouchers until first paycheck", needs: ["transport"], urgency: "normal", hood: "Bay View", status: "delivered", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 1700 },
-  { text: "Food pantry bag for family of 5 please, we come every other week", summary: "Regular pantry support, family of 5", needs: ["food"], urgency: "normal", hood: "Sherman Park", status: "verified", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 2600, household: 5, feedback: "yes" },
-  { text: "Rent help for November, I'm $400 short", summary: "$400 short on November rent", needs: ["rent"], urgency: "high", hood: "Midtown", status: "verified", owner: ["Keisha R.", "Milwaukee Housing Helpline", "p-housing"], ageMin: 3000, feedback: "yes" },
-  { text: "Landlord won't fix the heat, it's 52 degrees inside with a baby", summary: "No heat with infant in home, landlord unresponsive", needs: ["housing", "legal"], urgency: "critical", hood: "Riverwest", status: "verified", owner: ["Ana G.", "Tenant Legal Aid MKE", "p-legal"], ageMin: 4000, household: 3, feedback: "partial" },
-  { text: "My brother just got out and needs ID, a phone and somewhere to stay or he'll end up back with the old crowd", summary: "Reentry support: ID, phone, housing", needs: ["housing", "other", "safety"], urgency: "high", hood: "Amani", status: "verified", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 5200, feedback: "yes" },
-  { text: "Mediation went well, but the other family still parks in my spot sometimes", summary: "Follow-up after neighbor mediation", needs: ["mediation"], urgency: "low", hood: "Washington Park", status: "verified", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 7000, feedback: "partial" },
-  { text: "Heat shut off, two kids, landlord says it's my bill", summary: "Heat shutoff with two children", needs: ["utilities", "housing"], urgency: "critical", hood: "Metcalfe Park", status: "verified", owner: ["Jamal W.", "Keep the Lights On Fund", "p-energy"], ageMin: 8000, household: 3, feedback: "yes" },
+  // [STORM 53209][MFD] Fairfield Fire/Rescue 1.2/day during the storm vs 0.3 before
+  { text: "Car flooded out on the street. Need rides to work for two weeks until insurance pays.", summary: "Rides to work for 2 weeks, car lost to flooding", needs: ["transport"], urgency: "normal", hood: "Fairfield", status: "delivered", owner: ["Dee L.", "Ride Share Collective", "p-rides"], ageMin: 1700 },
+  // [STORM 53218]
+  { text: "Pantry bag please, family of 5. We lost everything in the fridge and freezer when the power went.", summary: "Pantry support for family of 5 after power loss", needs: ["food"], urgency: "normal", hood: "McGovern Park", status: "verified", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 2600, household: 5, feedback: "yes" },
+  // [EVERYDAY]
+  { text: "Landlord won't fix the heat, it's 52 degrees inside with a baby", summary: "No heat with infant in home, landlord unresponsive", needs: ["housing", "legal"], urgency: "critical", hood: "Riverwest", status: "verified", owner: ["Ana G.", "Tenant Legal Aid MKE", "p-legal"], ageMin: 3000, household: 3, feedback: "partial" },
+  // [CORE]
+  { text: "My brother just got out and needs ID, a phone and somewhere to stay or he'll end up back with the old crowd", summary: "Reentry support: ID, phone, housing", needs: ["housing", "other", "safety"], urgency: "high", hood: "Amani", status: "verified", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 4000, feedback: "yes" },
+  // [STORM 53206 renters, major damage]
+  { text: "Sewage backed up into the basement in the storm and the landlord won't pump it out. We have a baby.", summary: "Sewage backup, landlord won't remediate, infant in home", needs: ["housing", "legal"], urgency: "critical", hood: "North Division", status: "verified", owner: ["Ana G.", "Tenant Legal Aid MKE", "p-legal"], ageMin: 5200, household: 3, feedback: "yes" },
+  // [FIRE23] Uptown: 14 building fires in 2023
+  { text: "Kitchen fire last month, Red Cross put us up for 3 nights. Now I need a security deposit for a new place.", summary: "Security deposit needed after kitchen fire displacement", needs: ["housing", "rent"], urgency: "high", hood: "Uptown", status: "verified", owner: ["Keisha R.", "Milwaukee Housing Helpline", "p-housing"], ageMin: 7000, household: 2, feedback: "yes" },
 ];
 
 const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
