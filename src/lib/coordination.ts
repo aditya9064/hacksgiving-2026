@@ -12,6 +12,21 @@ import type { Urgency } from "./types";
 // -----------------------------------------------------------------------------
 export const COORDINATOR_ORG = "ComForce MKE";
 
+/** A reassign/release must carry a real reason for the audit trail. 1-500 chars after trimming. */
+export const REASSIGN_REASON_MAX = 500;
+
+/**
+ * Validate the free-text reason for a reassign/release. Returns an error message to show the
+ * user, or null when the reason is acceptable. Trimmed so a whitespace-only reason is rejected.
+ * Single source of truth: the API route calls this, so the test and the server agree.
+ */
+export function reassignReasonError(reason: string): string | null {
+  const trimmed = reason.trim();
+  if (trimmed.length < 1) return "A reason is required to reassign or release a request.";
+  if (trimmed.length > REASSIGN_REASON_MAX) return `Reason is too long (${REASSIGN_REASON_MAX} characters max).`;
+  return null;
+}
+
 export interface ReassignIntent {
   /** Org of the acting user, as sent from the browser. Demo-only trust. */
   actorOrg: string;

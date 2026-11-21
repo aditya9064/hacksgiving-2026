@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { addNote, claim, markDelivered, residentReply, nudgeOwner, reassign } from "@/lib/actions";
-import { canReassign } from "@/lib/coordination";
+import { canReassign, reassignReasonError } from "@/lib/coordination";
 import { db } from "@/lib/db";
 
 
@@ -18,7 +18,9 @@ const Action = z.discriminatedUnion("action", [
     newOwnerName: z.string().optional(),
     newOwnerOrg: z.string().optional(),
     newPartnerId: z.string().optional(),
-    reason: z.string().trim().min(1).max(500),
+    // Length/blank is enforced by reassignReasonError() so the rule has one source of truth
+    // and stays unit-testable; keep a generous cap here just to bound the payload.
+    reason: z.string().max(2000),
     confirmUnownedUrgent: z.boolean().optional(),
   }),
 ]);
@@ -41,6 +43,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   // Reassign/release is coordinator-only and is checked here on the SERVER, not just hidden in the
   // UI. This is demo-level authorization (the identity comes from the browser); see canReassign().
   if (a.action === "reassign") {
+    const reasonErr = reassignReasonError(a.reason);
+    if (reasonErr) return NextResponse.json({ error: reasonErr }, { status: 400 });
     const current = await db.getRequest(id);
     if (!current) return NextResponse.json({ error: "not found" }, { status: 404 });
     const check = canReassign({ actorOrg: a.actorOrg, urgency: current.urgency, newOwnerName: a.newOwnerName, confirmUnownedUrgent: a.confirmUnownedUrgent });
