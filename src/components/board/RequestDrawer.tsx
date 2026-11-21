@@ -1,11 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, AlertTriangle, Clock3 } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, AlertTriangle, Clock3, Bell, UserCog } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUS_LABEL } from "@/lib/types";
 import { timeAgo } from "@/lib/stats";
+import { COORDINATOR_ORG } from "@/lib/coordination";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
 
 const ACTOR_ICON = (actor: string) => (actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />);
@@ -132,6 +133,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
               {request.status === "verified" && (
                 <div className="flex items-center gap-2 rounded-lg border border-[#bfe7cf] bg-green-soft p-3 text-[13px] font-medium text-green"><ShieldCheck size={16} /> Loop closed. Confirmed by the resident, credited to {request.ownerOrg}.</div>
               )}
+              {request.status !== "verified" && <CoordinatorTools request={request} me={me} partners={partners} />}
             </div>
           </motion.aside>
         </>
@@ -154,6 +156,85 @@ function AttentionAlert({ attn }: { attn: SafeRequest["attention"] }) {
         <span>Last meaningful update: <b className="font-semibold text-ink">{timeAgo(attn.lastMeaningfulAt)}</b></span>
       </div>
     </section>
+  );
+}
+
+function CoordinatorTools({ request, me, partners }: { request: SafeRequest; me: { name: string; org: string; partnerId?: string }; partners: Partner[] }) {
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState("release");
+  const [reason, setReason] = useState("");
+  const [confirmUnowned, setConfirmUnowned] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // Nothing to nudge or reassign until someone owns the request.
+  if (!request.ownerName) return null;
+  const isCoordinator = me.org === COORDINATOR_ORG;
+  const urgent = request.urgency === "critical" || request.urgency === "high";
+  const releasing = target === "release";
+
+  const call = async (body: Record<string, unknown>, onOk?: () => void) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await act(request.id, body);
+      onOk?.();
+    } catch (e) {
+      let msg = (e as Error).message;
+      try { msg = JSON.parse(msg).error ?? msg; } catch {}
+      setErr(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitReassign = () => {
+    const partner = partners.find((p) => p.id === target);
+    const body: Record<string, unknown> = { action: "reassign", actorName: me.name, actorOrg: me.org, reason };
+    if (partner) {
+      body.newOwnerName = partner.name;
+      body.newOwnerOrg = partner.name;
+      body.newPartnerId = partner.id;
+    }
+    if (confirmUnowned) body.confirmUnownedUrgent = true;
+    call(body, () => { setOpen(false); setReason(""); setTarget("release"); setConfirmUnowned(false); });
+  };
+
+  return (
+    <div className="rounded-lg border border-line bg-surface-2 p-3 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="label">Coordinator tools</span>
+        {!isCoordinator && <span className="text-[11px] text-muted">Nudge only</span>}
+      </div>
+      <button disabled={busy} onClick={() => call({ action: "nudge", actor: me.name })} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2 text-[13px] font-medium hover:bg-surface-3 disabled:opacity-50">
+        <Bell size={15} /> Nudge {request.ownerName} to follow up
+      </button>
+      {isCoordinator && !open && (
+        <button disabled={busy} onClick={() => setOpen(true)} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2 text-[13px] font-medium hover:bg-surface-3 disabled:opacity-50">
+          <UserCog size={15} /> Reassign or release
+        </button>
+      )}
+      {isCoordinator && open && (
+        <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
+          <select value={target} onChange={(e) => setTarget(e.target.value)} className="select w-full">
+            <option value="release">Release to the unclaimed queue</option>
+            {partners.map((p) => <option key={p.id} value={p.id}>Reassign to {p.name}</option>)}
+          </select>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] outline-none focus:border-brand" />
+          {releasing && urgent && (
+            <label className="flex items-start gap-2 text-[12px] text-ink-2">
+              <input type="checkbox" checked={confirmUnowned} onChange={(e) => setConfirmUnowned(e.target.checked)} className="mt-0.5" />
+              This is an urgent request. I confirm leaving it with no owner.
+            </label>
+          )}
+          <div className="flex gap-2">
+            <button disabled={busy || !reason.trim() || (releasing && urgent && !confirmUnowned)} onClick={submitReassign} className="flex-1 rounded-lg bg-brand py-2 text-[13px] font-medium text-white hover:bg-brand-2 disabled:opacity-50">Confirm</button>
+            <button disabled={busy} onClick={() => { setOpen(false); setErr(null); }} className="rounded-lg border border-line bg-surface px-3 text-[13px] hover:bg-surface-2">Cancel</button>
+          </div>
+        </div>
+      )}
+      {err && <div className="rounded-lg border border-[#f3c4c4] bg-red-soft px-3 py-2 text-[12px] text-red">{err}</div>}
+    </div>
   );
 }
 
