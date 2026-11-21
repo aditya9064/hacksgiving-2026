@@ -47,6 +47,18 @@ const SEEDS: SeedReq[] = [
   { text: "My brother just got out and needs ID, a phone and somewhere to stay or he'll end up back with the old crowd", summary: "Reentry support: ID, phone, housing", needs: ["housing", "other", "safety"], urgency: "high", hood: "Amani", status: "verified", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 5200, feedback: "yes" },
   { text: "Mediation went well, but the other family still parks in my spot sometimes", summary: "Follow-up after neighbor mediation", needs: ["mediation"], urgency: "low", hood: "Washington Park", status: "in_progress", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 7000, feedback: "partial" },
   { text: "Heat shut off, two kids, landlord says it's my bill", summary: "Heat shutoff with two children", needs: ["utilities", "housing"], urgency: "critical", hood: "Metcalfe Park", status: "verified", owner: ["Jamal W.", "Keep the Lights On Fund", "p-energy"], ageMin: 8000, household: 3, feedback: "yes" },
+
+  // --- Guaranteed "Needs Attention + Follow-Up" demo cases (timestamps are relative to server
+  // start via ageMin, so these are flagged whenever the app loads). See attention.ts for limits:
+  // critical 2h, high 12h, normal 2d, low 3d.
+  // D1 (req-021): critical claimed ~3h ago, no progress since -> NEEDS ATTENTION (overdue).
+  { text: "My ex showed up at my job today, there's a restraining order. I'm scared to go home tonight.", summary: "Protective-order violation, resident afraid to go home", needs: ["safety"], urgency: "critical", hood: "Metcalfe Park", status: "claimed", owner: ["Vaun M.", "ComForce MKE", "p-comforce"], ageMin: 192 },
+  // D2 (req-022): resident said help only partly arrived -> FOLLOW-UP (amber), same owner owns next step.
+  { text: "The pantry box came but it was only enough for a couple days and I've got five mouths to feed.", summary: "Pantry delivery arrived but not enough for the household", needs: ["food"], urgency: "high", hood: "Garden Homes", status: "in_progress", owner: ["Tasha B.", "Northside Community Pantry", "p-pantry"], ageMin: 150, household: 5, feedback: "partial" },
+  // D3 (req-023): high urgency, unclaimed ~14h -> NEEDS ATTENTION (overdue, nobody owns it).
+  { text: "Got an eviction summons taped to my door, court date is in two weeks and I don't know what to do.", summary: "Eviction summons received, no legal help yet", needs: ["rent", "legal"], urgency: "high", hood: "Clarke Square", status: "new", ageMin: 840, household: 4 },
+  // D4 (req-024): critical but actively worked minutes ago -> HEALTHY (no flag), the contrast case.
+  { text: "Water main broke in the building, three units flooded, families need somewhere to stay tonight.", summary: "Building flood, families being relocated tonight", needs: ["housing", "other"], urgency: "critical", hood: "Riverwest", status: "in_progress", owner: ["Marcus T.", "ComForce MKE", "p-comforce"], ageMin: 50, household: 4 },
 ];
 
 const CODE_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
