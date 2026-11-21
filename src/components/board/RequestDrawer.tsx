@@ -9,6 +9,7 @@ import { timeAgo } from "@/lib/stats";
 import { COORDINATOR_ORG } from "@/lib/coordination";
 import { lastNudge, nudgeCooldownRemainingMs } from "@/lib/nudge";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
+import { PartnerBadge, PartnerSources } from "../ui/PartnerProvenance";
 
 const ACTOR_ICON = (actor: string, type?: string) =>
   type === "email_out" ? <Mail size={11} /> : type === "dispatch" ? <PhoneOutgoing size={11} /> : actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />;
@@ -115,7 +116,8 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                       <div key={p.id} className="card flex items-center justify-between p-3">
                         <div>
                           <div className="text-[13.5px] font-semibold">{p.name}</div>
-                          <div className="text-[11.5px] text-muted">{p.hours} · {p.capacity} open slots{p.address ? ` · ${p.address}` : ""}</div>
+                          <div className="mt-0.5"><PartnerBadge partner={p} size="sm" /></div>
+                          <div className="mt-0.5 text-[11.5px] text-muted">{[p.hours, `${p.capacity} open slots${p.capacitySimulated ? " (simulated)" : ""}`, p.address].filter(Boolean).join(" · ")}</div>
                           {request.language && request.language !== "en" && p.languages?.includes(request.language) && <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#6d28d9]"><Languages size={10} /> Speaks {LANGUAGE_LABEL[request.language]}</div>}
                         </div>
                         <button disabled={busy} onClick={() => setConfirm(p)} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={13} /> Connect</button>
@@ -129,14 +131,25 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                 {confirm && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-w-[500px] rounded-t-2xl border border-line bg-surface p-5 shadow-2xl">
                     <div className="text-[15px] font-bold">Connect {request.shortCode} to {confirm.name}?</div>
+                    <div className="mt-1.5"><PartnerBadge partner={confirm} size="sm" /></div>
+                    {confirm.isReal ? (
+                    <>
+                    <ul className="mt-3 space-y-2 text-[13px] text-ink-2">
+                      <li className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand" /> <span><b>Simulated handoff.</b> {confirm.name} is a real organization, so nothing is sent: no email, no phone call. Jordan&apos;s call plays out on the partner-line demo screen.</span></li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand" /> <span>You become the owner. To reach them for real, ComForce staff use their own channels.</span></li>
+                    </ul>
+                    <div className="mt-3"><PartnerSources partner={confirm} compact /></div>
+                    </>
+                    ) : (
                     <ul className="mt-3 space-y-2 text-[13px] text-ink-2">
                       <li className="flex gap-2"><PhoneOutgoing size={15} className="mt-0.5 shrink-0 text-brand" /> <span>Jordan calls <b>{confirm.contactName ?? "their line"}</b>{confirm.phone ? ` at ${confirm.phone}` : ""}, briefs them, and asks when it'll be ready.</span></li>
                       <li className="flex gap-2"><Mail size={15} className="mt-0.5 shrink-0 text-brand" /> <span>A written brief goes to <b>{confirm.email ?? "their inbox"}</b> — need, household, area, urgency. No names, numbers or addresses.</span></li>
                       <li className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand" /> <span>You become the owner. Once they accept, you get a pickup → delivery route.</span></li>
                     </ul>
+                    )}
                     <div className="mt-4 flex gap-2">
                       <button onClick={() => setConfirm(null)} className="flex-1 rounded-lg border border-line py-2.5 text-[13.5px] font-medium hover:bg-surface-2">Cancel</button>
-                      <button disabled={busy} onClick={async () => { const p = confirm; setConfirm(null); await run({ action: "dispatch", partnerId: p.id, actorName: me.name, actorOrg: me.org }); }} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13.5px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={15} /> Confirm · call &amp; email</button>
+                      <button disabled={busy} onClick={async () => { const p = confirm; setConfirm(null); await run({ action: "dispatch", partnerId: p.id, actorName: me.name, actorOrg: me.org }); }} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13.5px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={15} /> {confirm.isReal ? "Confirm · simulated handoff" : <>Confirm · call &amp; email</>}</button>
                     </div>
                   </motion.div>
                 )}
@@ -286,7 +299,7 @@ function CoordinatorTools({ request, me, partners, activity }: { request: SafeRe
         <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
           <select value={target} onChange={(e) => setTarget(e.target.value)} className="select w-full">
             <option value="release">Release to the unclaimed queue</option>
-            {partners.map((p) => <option key={p.id} value={p.id}>Reassign to {p.name}</option>)}
+            {partners.map((p) => <option key={p.id} value={p.id}>Reassign to {p.name} ({p.isReal ? "real org, simulated handoff" : "fictional demo partner"})</option>)}
           </select>
           <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] outline-none focus:border-brand" />
           {releasing && urgent && (
@@ -419,7 +432,7 @@ function DispatchSection({ request, partner }: { request: SafeRequest; partner?:
   return (
     <section className={`card p-4 ${declined ? "!border-red/40" : "!border-brand/30"}`}>
       <div className="flex items-center justify-between">
-        <div className="label flex items-center gap-1.5"><PhoneOutgoing size={12} className="text-brand" /> Handoff · {partner?.name ?? "Partner"}</div>
+        <div className="label flex items-center gap-1.5"><PhoneOutgoing size={12} className="text-brand" /> Handoff · {partner?.name ?? "Partner"}{partner && <span className="ml-1 normal-case tracking-normal"><PartnerBadge partner={partner} size="sm" /></span>}</div>
         {calling && <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand"><span className="h-2 w-2 rounded-full bg-brand blink" /> Jordan is on the line</span>}
         {declined && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red"><XCircle size={12} /> {d.status === "no_answer" ? "No answer" : "Declined"}</span>}
       </div>
@@ -441,6 +454,7 @@ function DispatchSection({ request, partner }: { request: SafeRequest; partner?:
       )}
 
       <div className="mt-3 space-y-2 text-[13px]">
+        {partner?.isReal && <div className="rounded-lg bg-surface-2 px-2.5 py-1.5 text-[12px] text-ink-2"><ShieldCheck size={12} className="mr-1 inline text-brand" />Simulated handoff: this real organization was not contacted. Capacity shown is simulated.</div>}
         {d.emailSentAt && <div className="flex items-center gap-2 text-ink-2"><Mail size={13} className="text-brand" /> Brief emailed to {partner?.email ?? "partner"}{d.emailMocked ? <span className="text-[11px] text-muted">· shown in partner inbox</span> : null}</div>}
         {calling && !d.answeredAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> Ringing {partner?.name}{partner?.phone ? ` · ${partner.phone}` : ""}…</p>}
         {d.answeredAt && !d.call?.endedAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> <span><b className="text-ink">{d.outcome?.contactName ?? partner?.contactName ?? "Partner"}</b> picked up · Jordan is briefing them live</span></p>}
