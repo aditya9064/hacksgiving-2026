@@ -223,7 +223,7 @@ function CoordinatorTools({ request, me, partners, activity }: { request: SafeRe
       </button>
       {last && (
         <div className="text-[11px] text-muted">
-          Nudged {timeAgo(last.at)} ago by {last.actor}{onCooldown ? `. Wait ${Math.ceil(cooldownLeftMs / 60000)} min to nudge again.` : ""}
+          Nudged {timeAgo(last.at)} by {last.actor}{onCooldown ? `. Wait ${Math.ceil(cooldownLeftMs / 60000)} min to nudge again.` : ""}
         </div>
       )}
       {isCoordinator && !open && (
