@@ -85,6 +85,7 @@ export type ActivityType =
   | "partial"
   | "reopened"
   | "reassigned"
+  | "nudge"
   | "sms_out"
   | "sms_in"
   | "call";

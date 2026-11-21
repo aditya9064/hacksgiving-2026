@@ -78,6 +78,51 @@ export async function residentReply(id: string, reply: "1" | "2" | "3") {
   return db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text });
 }
 
+/**
+ * Nudge the current owner to follow up. Records an auditable timeline event and uses the existing
+ * SMS helper (which mocks when Twilio is not configured). NEVER sends automatically and never puts a
+ * phone number in the timeline. Owners have no phone on the request, so we fall back to the partner's
+ * phone if present, otherwise log a mocked nudge. A nudge is NOT a meaningful event, so it does not
+ * reset the attention clock (see lib/attention.ts).
+ */
+export async function nudgeOwner(id: string, actor: string) {
+  const req = await db.getRequest(id);
+  if (!req || !req.ownerName) return undefined;
+  const partner = (await db.listPartners()).find((p) => p.id === req.partnerId);
+  const message = `Relay MKE: a coordinator flagged request ${req.shortCode} for follow-up. Please update the case when you can.`;
+  const result = partner?.phone ? await sendSms(partner.phone, message) : { ok: true, mocked: true };
+  const how = result.mocked ? " (SMS not configured, logged only)" : "";
+  return db.updateRequest(id, {}, { actor, type: "nudge", text: `${actor} nudged ${req.ownerName} to follow up${how}` });
+}
+
+export interface ReassignInput {
+  actorName: string;
+  newOwnerName?: string;
+  newOwnerOrg?: string;
+  newPartnerId?: string;
+  reason: string;
+}
+
+/**
+ * Reassign a request to a new owner, or release it back to the unclaimed queue. Records the previous
+ * owner, the new owner (if any), the reason, and who authorized it, using the dedicated "reassigned"
+ * event type (not "reopened"). Authorization is enforced in the route via canReassign(); this mutator
+ * assumes the caller already passed that check.
+ */
+export async function reassign(id: string, input: ReassignInput) {
+  const req = await db.getRequest(id);
+  if (!req) return undefined;
+  const prevOwner = req.ownerName ? `${req.ownerName}${req.ownerOrg ? ` (${req.ownerOrg})` : ""}` : "no owner";
+  const toNewOwner = Boolean(input.newOwnerName);
+  const patch: Partial<HelpRequest> = toNewOwner
+    ? { status: "claimed", ownerName: input.newOwnerName, ownerOrg: input.newOwnerOrg, partnerId: input.newPartnerId }
+    : { status: "new", ownerName: undefined, ownerOrg: undefined, partnerId: undefined };
+  const text = toNewOwner
+    ? `Reassigned from ${prevOwner} to ${input.newOwnerName}${input.newOwnerOrg ? ` (${input.newOwnerOrg})` : ""} by ${input.actorName}. Reason: ${input.reason}`
+    : `Released from ${prevOwner} to the unclaimed queue by ${input.actorName}. Reason: ${input.reason}`;
+  return db.updateRequest(id, patch, { actor: input.actorName, type: "reassigned", text });
+}
+
 /** Parses an inbound SMS body such as "R-4F2K 1" or just "1" (when only one open verification exists for that number). */
 export async function handleInboundSms(fromNumber: string, body: string): Promise<string> {
   const text = body.trim().toUpperCase();
