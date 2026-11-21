@@ -253,9 +253,11 @@ function FollowUpSection({ request }: { request: SafeRequest }) {
         <div className="label flex items-center gap-1.5"><PhoneIncoming size={12} className="text-brand" /> Closing the loop · resident</div>
         {live && <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand"><span className="h-2 w-2 rounded-full bg-brand blink" /> Jordan is calling back</span>}
         {f.status === "waiting_sms" && <span className="text-[11px] font-semibold text-muted">Waiting for a text reply</span>}
+        {f.status === "no_answer" && <span className="text-[11px] font-semibold text-muted">Call-back unanswered</span>}
       </div>
       <div className="mt-3 space-y-2 text-[13px]">
         {f.status === "waiting_sms" && <p className="text-ink-2">"Did it arrive?" text sent{f.language !== "en" ? ` in ${lang}` : ""}. If there's no reply, Jordan calls the resident back automatically.</p>}
+        {f.status === "no_answer" && <p className="text-ink-2">Jordan's call-back wasn't answered{f.call?.summary ? ` · ${f.call.summary}` : ""}. Try the resident again later.</p>}
         {f.status === "calling" && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> No reply by text · ringing the resident{f.language !== "en" ? ` · ${lang}` : ""}…</p>}
         {f.status === "answered" && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> <span>Resident picked up · Jordan is asking{f.language !== "en" ? ` in ${lang}` : ""} whether the help arrived</span></p>}
         {f.call && !f.call.endedAt && f.call.transcript.length > 0 && (

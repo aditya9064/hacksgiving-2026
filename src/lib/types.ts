@@ -171,6 +171,8 @@ export interface SafetyFlag {
 export type FollowUpStatus = "waiting_sms" | "calling" | "answered" | "confirmed" | "partial" | "reopened" | "no_answer";
 export interface FollowUp {
   status: FollowUpStatus;
+  /** "live": Jordan rings the resident's phone (/phone) and a real ElevenLabs conversation runs when they answer. "sim": scripted. */
+  mode?: "live" | "sim";
   /** Language the callback is made in */
   language: string;
   startedAt: string;
