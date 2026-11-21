@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { ActivityEvent, HelpRequest, Partner, Playbook, Snapshot } from "../types";
-import { SEED_PARTNERS, SEED_PLAYBOOKS, buildSeed } from "./seed";
+import { REAL_PARTNERS, SEED_PARTNERS, SEED_PLAYBOOKS, buildSeed } from "./seed";
 import type { Store } from "./store";
 
 /**
@@ -59,7 +59,12 @@ export function makeSupabaseStore(url: string, serviceKey: string): Store {
     async listPartners() {
       const r = await sb.from("partners").select("data");
       const p = rows<Partner>(r);
-      return p.length ? p : SEED_PARTNERS;
+      if (!p.length) return SEED_PARTNERS;
+      // A partner list saved before the real organizations were added: merge them in, no reset needed.
+      const missing = REAL_PARTNERS.filter((rp) => !p.some((x) => x.id === rp.id));
+      if (missing.length) await sb.from("partners").upsert(missing.map((x) => ({ id: x.id, data: x })));
+      // Real-organization facts always come from the source-linked seed, never a stale saved copy.
+      return [...REAL_PARTNERS, ...p.filter((x) => !REAL_PARTNERS.some((rp) => rp.id === x.id))];
     },
     async listPlaybooks() {
       const r = await sb.from("playbooks").select("data");

@@ -1,6 +1,6 @@
 import type { Channel, HelpRequest, Need, Urgency } from "../types";
 import { NEIGHBORHOODS } from "../types";
-import { SEED_PARTNERS, makeShortCode } from "./seed";
+import { FICTIONAL_PARTNERS, makeShortCode } from "./seed";
 
 /**
  * SYNTHETIC ARCHIVE of closed cases for past months, so Impact & Reporting can filter by
@@ -115,8 +115,9 @@ export function buildHistory(now = new Date(), cutoffDays = 6): HelpRequest[] {
       d.setHours(7 + Math.floor(r() * 14), Math.floor(r() * 60), 0, 0);
       if (d.getTime() >= end) continue;
 
-      const partners = SEED_PARTNERS.filter((p) => p.needs.includes(t.needs[0]));
-      const partner = partners.length ? partners[Math.floor(r() * partners.length)] : SEED_PARTNERS[0];
+      // Synthetic cases are only ever credited to fictional partners, never to a real organization.
+      const partners = FICTIONAL_PARTNERS.filter((p) => p.needs.includes(t.needs[0]));
+      const partner = partners.length ? partners[Math.floor(r() * partners.length)] : FICTIONAL_PARTNERS[0];
       const names = RESPONDERS[partner.id] ?? ["Volunteer"];
       const [lo, hi] = RESPONSE[t.urgency];
       const mins = Math.round(lo * Math.pow(hi / lo, r()));

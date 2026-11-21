@@ -94,6 +94,28 @@ export interface Partner {
   verifiedAt?: string;
   /** ISO 639 codes staff can take a call in, e.g. ["en","es"] or ["hmn","en"] */
   languages?: string[];
+  /** True only for real organizations added from public sources. Never contacted for real; dispatch is simulated. */
+  isReal?: boolean;
+  /** How strong the public evidence of a tie to ComForce is (real organizations only). */
+  relationshipTier?: RelationshipTier;
+  /** One-sentence relationship to ComForce, from the public sources. */
+  relationship?: string;
+  /** Public sources for the facts above. */
+  evidence?: EvidenceLink[];
+  /** Capacity is a demo value, not reported or confirmed by the organization. */
+  capacitySimulated?: boolean;
+}
+
+export type RelationshipTier = "confirmed_collaborator" | "affiliated" | "supporter" | "ecosystem" | "to_verify";
+
+export interface EvidenceLink {
+  title: string;
+  url: string;
+}
+
+/** Only these tiers may be described as "ComForce partners" in UI copy. */
+export function isComForcePartnerTier(tier?: RelationshipTier): boolean {
+  return tier === "confirmed_collaborator" || tier === "affiliated";
 }
 
 export type ActivityType =
