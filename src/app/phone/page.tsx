@@ -68,9 +68,9 @@ export default function ResidentPhone() {
 
   // Jordan's call-back after delivery: show the incoming call over the thread while it's live, then briefly after it ends.
   const fu = latestReq?.followUp;
-  const [, tick] = useState(0);
-  useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
-  const endedAgo = fu?.call?.endedAt ? Date.now() - new Date(fu.call.endedAt).getTime() : Infinity;
+  const [now, setNow] = useState(0);
+  useEffect(() => { setNow(Date.now()); const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const endedAgo = fu?.call?.endedAt && now ? now - new Date(fu.call.endedAt).getTime() : Infinity;
   const showCall = fu && (fu.status === "calling" || fu.status === "answered" || (fu.call?.endedAt && endedAgo < 6000));
 
   return (
