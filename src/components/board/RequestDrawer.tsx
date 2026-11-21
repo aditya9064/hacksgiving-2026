@@ -1,18 +1,20 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, PhoneOutgoing, Mail, Navigation, Check, XCircle, Clock, PackageCheck } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUS_LABEL } from "@/lib/types";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
 
-const ACTOR_ICON = (actor: string) => (actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />);
+const ACTOR_ICON = (actor: string, type?: string) =>
+  type === "email_out" ? <Mail size={11} /> : type === "dispatch" ? <PhoneOutgoing size={11} /> : actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />;
 
 export function RequestDrawer({ request, partners, onClose, me }: { request: SafeRequest | null; partners: Partner[]; onClose: () => void; me: { name: string; org: string; partnerId?: string } }) {
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState<Partner | null>(null);
 
   useEffect(() => {
     if (!request) return;
@@ -36,7 +38,12 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
     }
   };
 
-  const suggested = request ? partners.filter((p) => p.needs.some((n) => request.needs.includes(n)) && p.capacity > 0).slice(0, 3) : [];
+  const suggested = request
+    ? partners
+        .filter((p) => p.id !== me.partnerId && p.name !== me.org && p.capacity > 0 && p.needs.some((n) => request.needs.includes(n)))
+        .sort((a, b) => b.needs.filter((n) => request.needs.includes(n)).length - a.needs.filter((n) => request.needs.includes(n)).length || b.capacity - a.capacity)
+        .slice(0, 3)
+    : [];
 
   return (
     <AnimatePresence>
@@ -73,29 +80,49 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                 <Field k="Consent to share" v={request.consentToShare ? "Yes, with partners" : "ComForce only"} />
               </section>
 
-              {request.status === "new" && suggested.length > 0 && (
+              {request.dispatch && <DispatchSection request={request} partner={partners.find((p) => p.id === request.dispatch!.partnerId)} />}
+
+              {(!request.dispatch || request.dispatch.status === "declined" || request.dispatch.status === "no_answer") && (request.status === "new" || request.status === "claimed") && suggested.length > 0 && (
                 <section>
-                  <div className="text-[13.5px] font-semibold mb-2">Partners with capacity</div>
+                  <div className="text-[13.5px] font-semibold mb-0.5">Connect to a partner</div>
+                  <div className="text-[12px] text-muted mb-2">Jordan calls their line and emails a name-free brief. You pick up and deliver.</div>
                   <div className="space-y-2">
                     {suggested.map((p) => (
                       <div key={p.id} className="card flex items-center justify-between p-3">
                         <div>
                           <div className="text-[13.5px] font-semibold">{p.name}</div>
-                          <div className="text-[11.5px] text-muted">{p.hours} · {p.capacity} open slots</div>
+                          <div className="text-[11.5px] text-muted">{p.hours} · {p.capacity} open slots{p.address ? ` · ${p.address}` : ""}</div>
                         </div>
-                        <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: p.name, partnerId: p.id })} className="rounded-lg bg-brand px-3 py-1.5 text-[12px] font-medium text-white hover:bg-brand-2 disabled:opacity-50">Route here</button>
+                        <button disabled={busy} onClick={() => setConfirm(p)} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={13} /> Connect</button>
                       </div>
                     ))}
                   </div>
                 </section>
               )}
 
+              <AnimatePresence>
+                {confirm && (
+                  <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} className="fixed inset-x-0 bottom-0 z-[60] mx-auto max-w-[500px] rounded-t-2xl border border-line bg-surface p-5 shadow-2xl">
+                    <div className="text-[15px] font-bold">Connect {request.shortCode} to {confirm.name}?</div>
+                    <ul className="mt-3 space-y-2 text-[13px] text-ink-2">
+                      <li className="flex gap-2"><PhoneOutgoing size={15} className="mt-0.5 shrink-0 text-brand" /> <span>Jordan calls <b>{confirm.contactName ?? "their line"}</b>{confirm.phone ? ` at ${confirm.phone}` : ""}, briefs them, and asks when it'll be ready.</span></li>
+                      <li className="flex gap-2"><Mail size={15} className="mt-0.5 shrink-0 text-brand" /> <span>A written brief goes to <b>{confirm.email ?? "their inbox"}</b> — need, household, area, urgency. No names, numbers or addresses.</span></li>
+                      <li className="flex gap-2"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-brand" /> <span>You become the owner. Once they accept, you get a pickup → delivery route.</span></li>
+                    </ul>
+                    <div className="mt-4 flex gap-2">
+                      <button onClick={() => setConfirm(null)} className="flex-1 rounded-lg border border-line py-2.5 text-[13.5px] font-medium hover:bg-surface-2">Cancel</button>
+                      <button disabled={busy} onClick={async () => { const p = confirm; setConfirm(null); await run({ action: "dispatch", partnerId: p.id, actorName: me.name, actorOrg: me.org }); }} className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13.5px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={15} /> Confirm · call &amp; email</button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <section>
                 <div className="text-[13.5px] font-semibold mb-3">Timeline</div>
                 <ol className="relative border-l border-line ml-2 space-y-3">
                   {activity.map((a) => (
                     <li key={a.id} className="ml-4">
-                      <span className={`absolute -left-[9px] mt-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border ${a.type === "verified" ? "bg-green border-green text-white" : a.type === "reopened" ? "bg-red border-red text-white" : "bg-surface border-line text-muted"}`}>{ACTOR_ICON(a.actor)}</span>
+                      <span className={`absolute -left-[9px] mt-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full border ${a.type === "verified" ? "bg-green border-green text-white" : a.type === "reopened" ? "bg-red border-red text-white" : "bg-surface border-line text-muted"}`}>{ACTOR_ICON(a.actor, a.type)}</span>
                       <div className="text-[12.5px] leading-snug">{a.text}</div>
                       <div className="text-[11px] text-muted">{a.actor} · {new Date(a.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</div>
                     </li>
@@ -110,6 +137,9 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
               )}
               {(request.status === "claimed" || request.status === "in_progress") && (
                 <>
+                  {request.dispatch && (request.dispatch.status === "accepted" || request.dispatch.status === "ready" || request.dispatch.status === "picked_up") && (
+                    <a href={`/route/${request.id}`} onClick={() => { if (request.dispatch!.status === "accepted") run({ action: "ready", actor: me.name }); }} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-ink py-2.5 text-[13.5px] font-medium text-white hover:opacity-90"><Navigation size={16} /> {request.dispatch.status === "accepted" ? "Ready to go · get the route" : "Open route"}</a>
+                  )}
                   <div className="flex gap-2">
                     <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add an update…" className="flex-1 rounded-lg border border-line bg-surface px-3 py-2.5 text-[13.5px] outline-none focus:border-brand" />
                     <button disabled={busy || !note} onClick={() => { run({ action: "note", actor: me.name, text: note }); setNote(""); }} className="rounded-lg border border-line bg-surface px-3 hover:bg-surface-2 disabled:opacity-50"><Send size={16} /></button>
@@ -185,6 +215,78 @@ function CallSection({ call }: { call: NonNullable<SafeRequest["call"]> }) {
           )}
         </div>
       )}
+    </section>
+  );
+}
+
+
+const DISPATCH_STEPS = ["calling", "accepted", "ready", "picked_up"] as const;
+
+function DispatchSection({ request, partner }: { request: SafeRequest; partner?: Partner }) {
+  const d = request.dispatch!;
+  const [open, setOpen] = useState(false);
+  const declined = d.status === "declined" || d.status === "no_answer";
+  const idx = declined ? 0 : DISPATCH_STEPS.indexOf(d.status as (typeof DISPATCH_STEPS)[number]);
+  const calling = d.status === "calling";
+  return (
+    <section className={`card p-4 ${declined ? "!border-red/40" : "!border-brand/30"}`}>
+      <div className="flex items-center justify-between">
+        <div className="label flex items-center gap-1.5"><PhoneOutgoing size={12} className="text-brand" /> Handoff · {partner?.name ?? "Partner"}</div>
+        {calling && <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand"><span className="h-2 w-2 rounded-full bg-brand blink" /> Jordan is on the line</span>}
+        {declined && <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-red"><XCircle size={12} /> {d.status === "no_answer" ? "No answer" : "Declined"}</span>}
+      </div>
+
+      {!declined && (
+        <ol className="mt-3 grid grid-cols-4 gap-1.5">
+          {DISPATCH_STEPS.map((st, i) => {
+            const done = i < idx || (i === idx && !calling);
+            const active = i === idx;
+            const label = st === "calling" ? "Calling" : st === "accepted" ? "Accepted" : st === "ready" ? "En route" : "Picked up";
+            return (
+              <li key={st} className="flex flex-col gap-1.5">
+                <span className={`h-1.5 rounded-full ${done ? "bg-brand" : active ? "bg-brand/50 blink" : "bg-surface-3"}`} />
+                <span className={`text-[11px] font-medium ${done || active ? "text-ink" : "text-muted"}`}>{label}</span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+
+      <div className="mt-3 space-y-2 text-[13px]">
+        {d.emailSentAt && <div className="flex items-center gap-2 text-ink-2"><Mail size={13} className="text-brand" /> Brief emailed to {partner?.email ?? "partner"}{d.emailMocked ? <span className="text-[11px] text-muted">· shown in partner inbox</span> : null}</div>}
+        {calling && !d.answeredAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> Ringing {partner?.name}{partner?.phone ? ` · ${partner.phone}` : ""}…</p>}
+        {d.answeredAt && !d.call?.endedAt && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> <span><b className="text-ink">{d.outcome?.contactName ?? partner?.contactName ?? "Partner"}</b> picked up · Jordan is briefing them live</span></p>}
+        {d.call && !d.call.endedAt && d.call.transcript.length > 0 && (
+          <ol className="space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+            {d.call.transcript.map((t, i) => (
+              <li key={i} className="flex gap-2"><span className={`w-[58px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Jordan" : (d.outcome?.contactName ?? "Partner")}</span><span className="text-ink-2">{t.text}</span></li>
+            ))}
+            <li className="flex gap-2 text-muted"><span className="w-[58px] shrink-0" /><span className="blink">…</span></li>
+          </ol>
+        )}
+        {d.outcome && (
+          <div className={`rounded-lg p-3 ${d.outcome.accepted ? "bg-green-soft" : "bg-red/5"}`}>
+            <div className={`flex items-center gap-1.5 text-[13px] font-semibold ${d.outcome.accepted ? "text-green" : "text-red"}`}>{d.outcome.accepted ? <Check size={14} /> : <XCircle size={14} />} {partner?.name} {d.outcome.accepted ? "accepted" : "can't take this right now"}{d.outcome.contactName ? ` · spoke with ${d.outcome.contactName}` : ""}</div>
+            {d.outcome.readyBy && <div className="mt-1 flex items-center gap-1.5 text-ink"><Clock size={13} className="text-muted" /> Ready {d.outcome.readyBy}</div>}
+            {d.outcome.notes && <div className="mt-1 text-ink-2">"{d.outcome.notes}"</div>}
+          </div>
+        )}
+        {d.call?.summary && <p className="text-[13.5px] leading-[1.5] text-ink">{d.call.summary}</p>}
+        {d.call?.endedAt && d.call.transcript.length > 0 && (
+          <div>
+            <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:underline"><ChevronDown size={13} className={`transition ${open ? "rotate-180" : ""}`} /> {open ? "Hide" : "Show"} partner call · {d.call.transcript.length} turns</button>
+            {open && (
+              <ol className="mt-2 space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+                {d.call.transcript.map((t, i) => (
+                  <li key={i} className="flex gap-2"><span className={`w-[58px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Jordan" : "Partner"}</span><span className="text-ink-2">{highlight(t.text)}</span></li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
+        {d.status === "picked_up" && <div className="flex items-center gap-2 text-[13px] font-medium text-green"><PackageCheck size={15} /> Picked up · on the way to the resident</div>}
+        {declined && <p className="text-ink-2">Pick another partner below, or claim and handle it directly.</p>}
+      </div>
     </section>
   );
 }
