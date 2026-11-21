@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, Clock, FileText, Inbox, MapPin, RotateCcw, Sparkles, Users, BarChart3 } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleDashed, Clock, FileText, Inbox, MapPin, RotateCcw, Sparkles, Users, BarChart3 } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
 import { StatCard, SectionCard } from "@/components/ui/StatCard";
 import { Avatar } from "@/components/ui/Chip";
@@ -115,11 +115,12 @@ export default function ImpactPage() {
     >
       {error && <div className="mb-3 rounded-lg border border-[#f5c2c2] bg-red-soft px-3 py-2 text-[12.5px] text-red">{error}</div>}
 
-      <div className="grid grid-cols-6 gap-3.5 mb-2">
+      <div className="grid grid-cols-7 gap-3.5 mb-2">
         <StatCard icon={<Inbox size={14} />} label="Total Requests" value={k.total} sub={`${scope}, all channels`} />
         <StatCard icon={<CheckCircle2 size={14} />} label="Help Delivered" value={k.delivered} sub="delivered or verified" tint="blue" />
         <StatCard icon={<CheckCircle2 size={14} />} label="Resident-Verified" value={`${k.verifiedPct}%`} bar={k.verifiedPct} tint="green" />
-        <StatCard icon={<Clock size={14} />} label="Median Response" value={k.medianMinutes ? fmtMinutes(k.medianMinutes) : "—"} sub="first text → delivered" />
+        <StatCard icon={<CircleDashed size={14} />} label="Partly Helped" value={k.partlyHelped} sub="still open for follow-up" tint={k.partlyHelped ? "orange" : "none"} />
+        <StatCard icon={<Clock size={14} />} label="Median Response" value={k.medianMinutes ? fmtMinutes(k.medianMinutes) : "—"} sub="first text to delivered" />
         <StatCard icon={<RotateCcw size={14} />} label="Reopened" value={k.reopened} sub="resident said not helped" tint={k.reopened ? "red" : "none"} />
         <StatCard icon={<Users size={14} />} label="Partners Active" value={k.partnersActive} sub={`across ${k.neighborhoods} neighborhoods`} tint="purple" />
       </div>

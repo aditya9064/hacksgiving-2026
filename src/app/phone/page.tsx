@@ -6,11 +6,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowUp, Battery, ChevronLeft, Info, Phone, PhoneOff, Signal, Trash2, Wifi } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useSnapshot } from "@/lib/client/useSnapshot";
+import { Conversation } from "@elevenlabs/client";
+import { NEED_LABEL, type HelpRequest, type Partner } from "@/lib/types";
 
 type Msg = { id: string; dir: "out" | "in"; number: string; body: string; at: string; mocked?: boolean };
 
 const DEFAULT_NUMBER = "+1 (414) 555-0199";
 const AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
+const FOLLOWUP_AGENT_ID = process.env.NEXT_PUBLIC_ELEVENLABS_FOLLOWUP_AGENT_ID;
 
 /**
  * Resident's phone — a live simulator over the real SMS pipeline.
@@ -87,26 +90,10 @@ export default function ResidentPhone() {
       <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-10 px-6 pb-16 lg:grid-cols-[380px_1fr]">
         <Frame>
           <AnimatePresence>
-            {showCall && fu && (
-              <motion.div key="call" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="absolute inset-0 z-10 flex flex-col bg-[#0f172a] text-white">
-                <div className="flex flex-col items-center px-6 pt-10">
-                  <div className={`grid h-16 w-16 place-items-center rounded-full ${fu.status === "calling" ? "bg-brand animate-pulse" : "bg-brand"}`}><span className="text-[22px] font-bold">R</span></div>
-                  <div className="mt-3 text-[18px] font-bold">Relay MKE</div>
-                  <div className="text-[12.5px] text-white/70">Jordan · ComForce{fu.language === "es" ? " · Español" : fu.language === "hmn" ? " · Hmoob interpreter" : ""}</div>
-                  <div className="mt-1 text-[12px] text-white/60">{fu.status === "calling" ? "Incoming call…" : fu.call?.endedAt ? "Call ended" : callTimer(fu.call?.transcript.at(-1)?.t)}</div>
-                </div>
-                <div className="mt-4 flex-1 space-y-2 overflow-y-auto px-3 pb-3 text-[13px] leading-snug">
-                  {fu.status === "calling" && <p className="mt-10 text-center text-[12px] text-white/50">Picking up automatically — this is the simulated line</p>}
-                  {fu.call?.transcript.map((t, i) => (
-                    <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${t.role === "caller" ? "justify-end" : "justify-start"}`}>
-                      <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${t.role === "caller" ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-white/10 text-white"}`}>{t.text}</div>
-                    </motion.div>
-                  ))}
-                  {fu.status === "answered" && !fu.call?.endedAt && <div className="flex"><div className="rounded-2xl rounded-bl-md bg-white/10 px-3.5 py-2.5"><span className="dots"><i /><i /><i /></span></div></div>}
-                  {fu.call?.endedAt && <div className="mt-2 text-center text-[12px] text-green-300">✓ You told Jordan the help arrived</div>}
-                </div>
-                <div className="flex justify-center pb-8"><span className={`grid h-12 w-12 place-items-center rounded-full ${fu.call?.endedAt ? "bg-white/20" : "bg-red"}`}><PhoneOff size={20} /></span></div>
-              </motion.div>
+            {showCall && fu && latestReq && (
+              fu.mode === "live" && FOLLOWUP_AGENT_ID
+                ? <LiveCallback key="live" req={latestReq} partner={snapshot?.partners.find((p) => p.id === latestReq.dispatch?.partnerId)} />
+                : <SimulatedCallback key="sim" fu={fu} />
             )}
           </AnimatePresence>
           <div className="flex items-center gap-2 border-b border-line bg-surface/90 px-3 pb-2 pt-1 backdrop-blur">
@@ -212,6 +199,132 @@ export default function ResidentPhone() {
 function callTimer(lastT?: number) {
   const s = Math.round((lastT ?? 0) + 8);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+type FU = NonNullable<HelpRequest["followUp"]>;
+
+function CallScreen({ title, sub, status, children, footer }: { title: string; sub: string; status: string; children: React.ReactNode; footer: React.ReactNode }) {
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="absolute inset-0 z-10 flex flex-col bg-[#0f172a] text-white">
+      <div className="flex flex-col items-center px-6 pt-10">
+        <div className={`grid h-16 w-16 place-items-center rounded-full bg-brand ${status === "Incoming call…" ? "animate-pulse" : ""}`}><span className="text-[22px] font-bold">R</span></div>
+        <div className="mt-3 text-[18px] font-bold">{title}</div>
+        <div className="text-[12.5px] text-white/70">{sub}</div>
+        <div className="mt-1 text-[12px] text-white/60">{status}</div>
+      </div>
+      <div className="mt-4 flex-1 space-y-2 overflow-y-auto px-3 pb-3 text-[13px] leading-snug">{children}</div>
+      <div className="flex justify-center gap-10 pb-8">{footer}</div>
+    </motion.div>
+  );
+}
+
+const langSub = (lang: string) => `Jordan · ComForce${lang === "es" ? " · Español" : lang === "hmn" ? " · Hmoob interpreter" : ""}`;
+
+/** Scripted fallback when no follow-up agent is configured. */
+function SimulatedCallback({ fu }: { fu: FU }) {
+  return (
+    <CallScreen title="Relay MKE" sub={langSub(fu.language)} status={fu.status === "calling" ? "Incoming call…" : fu.call?.endedAt ? "Call ended" : callTimer(fu.call?.transcript.at(-1)?.t)}
+      footer={<span className={`grid h-12 w-12 place-items-center rounded-full ${fu.call?.endedAt ? "bg-white/20" : "bg-red"}`}><PhoneOff size={20} /></span>}>
+      {fu.status === "calling" && <p className="mt-10 text-center text-[12px] text-white/50">Picking up automatically — this is the simulated line</p>}
+      <Transcript fu={fu} />
+      {fu.status === "answered" && !fu.call?.endedAt && <div className="flex"><div className="rounded-2xl rounded-bl-md bg-white/10 px-3.5 py-2.5"><span className="dots"><i /><i /><i /></span></div></div>}
+      {fu.call?.endedAt && <div className="mt-2 text-center text-[12px] text-green-300">✓ You told Jordan the help arrived</div>}
+    </CallScreen>
+  );
+}
+
+function Transcript({ fu }: { fu: FU }) {
+  return <>{fu.call?.transcript.map((t, i) => (
+    <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${t.role === "caller" ? "justify-end" : "justify-start"}`}>
+      <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${t.role === "caller" ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-white/10 text-white"}`}>{t.text}</div>
+    </motion.div>
+  ))}</>;
+}
+
+/**
+ * Jordan really calls this phone: the server marks the request "calling", the screen rings, and Answer opens a live
+ * ElevenLabs conversation with the follow-up agent primed with this case. Turns are mirrored to the server so the
+ * Board sees the transcript; the agent's `followup_result` tool closes the loop.
+ */
+function LiveCallback({ req, partner }: { req: HelpRequest; partner?: Partner }) {
+  const fu = req.followUp!;
+  const [mode, setMode] = useState<"speaking" | "listening" | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const convRef = useRef<Conversation | null>(null);
+  const post = (body: Record<string, unknown>) => fetch("/api/followup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: req.id, ...body }) }).catch(() => {});
+
+  useEffect(() => {
+    if (fu.status !== "answered" || fu.call?.endedAt) return;
+    const t = setInterval(() => setElapsed((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, [fu.status, fu.call?.endedAt]);
+
+  // Hang up the live session if the overlay unmounts (e.g. the resident texted "1" meanwhile).
+  useEffect(() => () => { convRef.current?.endSession().catch(() => {}); }, []);
+
+  const answer = async () => {
+    if (connecting || convRef.current) return;
+    setConnecting(true);
+    setError(null);
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const need = NEED_LABEL[req.needs.find((n) => n !== "youth" && n !== "other") ?? req.needs[0] ?? "other"].toLowerCase();
+      const lang = fu.language === "es" ? "es" : "en";
+      const volunteer = req.ownerName ?? "A ComForce volunteer";
+      // The agent's configured first message is spoken but not emitted through onMessage, so mirror it ourselves.
+      const opening = lang === "es"
+        ? `Hola, habla Jordan de ComForce Milwaukee. Le llamo por su solicitud ${req.shortCode}. ${volunteer} pasó a dejar ${need}. ¿Le llegó bien?`
+        : `Hi, this is Jordan with ComForce Milwaukee — I'm calling about your request ${req.shortCode}. ${volunteer} came by with the ${need}. Did it get to you okay?`;
+      const conv = await Conversation.startSession({
+        agentId: FOLLOWUP_AGENT_ID!,
+        connectionType: "websocket",
+        overrides: { agent: { language: lang } },
+        dynamicVariables: {
+          request_id: req.id,
+          request_code: req.shortCode,
+          need_summary: need,
+          volunteer,
+          partner_name: partner?.name ?? "a partner organization",
+          language_name: lang === "es" ? "Spanish" : fu.language === "hmn" ? "English (Hmong interpreter line)" : "English",
+        },
+        onConnect: () => setConnecting(false),
+        onModeChange: ({ mode }) => setMode(mode),
+        onMessage: ({ message, source }) => { post({ action: "turn", role: source === "ai" ? "agent" : "caller", text: message }); },
+        onDisconnect: () => { convRef.current = null; setMode(null); post({ action: "end" }); },
+        onError: (m) => setError(m),
+      });
+      convRef.current = conv;
+      await post({ action: "answer", conversationId: conv.getId() });
+      await post({ action: "turn", role: "agent", text: opening });
+    } catch (e) {
+      setConnecting(false);
+      setError(e instanceof Error ? e.message : "Couldn't start the call");
+    }
+  };
+  const hangUp = async () => { const c = convRef.current; convRef.current = null; if (c) await c.endSession().catch(() => {}); else await post({ action: "decline" }); };
+
+  const ringing = fu.status === "calling";
+  const ended = !!fu.call?.endedAt || (!ringing && fu.status !== "answered");
+  const status = ringing ? (connecting ? "Connecting…" : "Incoming call…") : ended ? "Call ended" : `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}${mode === "speaking" ? " · Jordan is speaking" : mode === "listening" ? " · listening" : ""}`;
+  const outcome = fu.status === "confirmed" ? "✓ You told Jordan the help arrived" : fu.status === "partial" ? "You told Jordan part of it arrived" : fu.status === "reopened" ? "You told Jordan it didn't arrive · case reopened" : fu.status === "no_answer" ? "Jordan will try again later" : null;
+
+  return (
+    <CallScreen title="Relay MKE" sub={langSub(fu.language)} status={status}
+      footer={ended
+        ? <span className="grid h-12 w-12 place-items-center rounded-full bg-white/20"><PhoneOff size={20} /></span>
+        : <>
+            <button onClick={hangUp} className="flex flex-col items-center gap-1.5 text-[11px] text-white/80"><span className="grid h-14 w-14 place-items-center rounded-full bg-red"><PhoneOff size={22} /></span>{ringing ? "Decline" : "Hang up"}</button>
+            {ringing && <button onClick={answer} disabled={connecting} className="flex flex-col items-center gap-1.5 text-[11px] text-white/80 disabled:opacity-60"><span className="grid h-14 w-14 place-items-center rounded-full bg-green-500 animate-bounce"><Phone size={22} /></span>Answer</button>}
+          </>}>
+      {ringing && <p className="mt-10 text-center text-[12px] text-white/50">Jordan is calling about {req.shortCode}. Tap Answer — this is a live voice call.</p>}
+      {error && <p className="rounded-lg bg-red/20 px-3 py-2 text-center text-[12px] text-red-200">{error}</p>}
+      <Transcript fu={fu} />
+      {mode === "speaking" && <div className="flex"><div className="rounded-2xl rounded-bl-md bg-white/10 px-3.5 py-2.5"><span className="dots"><i /><i /><i /></span></div></div>}
+      {ended && outcome && <div className="mt-2 text-center text-[12px] text-green-300">{outcome}</div>}
+    </CallScreen>
+  );
 }
 
 function Frame({ children }: { children: React.ReactNode }) {

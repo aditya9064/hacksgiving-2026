@@ -1,6 +1,6 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, RotateCcw, AlertTriangle, Clock, Info, Siren, Languages } from "lucide-react";
+import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, RotateCcw, AlertTriangle, Clock3, Clock, Info, Siren, Languages } from "lucide-react";
 import type { SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUSES, STATUS_LABEL, LANGUAGE_LABEL } from "@/lib/types";
 import { timeAgo } from "@/lib/stats";
@@ -21,9 +21,12 @@ function Row({ Icon, k, v, vClass = "text-ink" }: { Icon: typeof MapPin; k: stri
 }
 
 export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh: boolean; onClick: () => void; now: number }) {
+  const attn = r.attention;
+  const flagged = attn.level !== "none";
+  const overdue = attn.level === "needs_attention";
   const reopened = r.residentFeedback === "no" && r.status !== "verified";
   const [chLabel, ChIcon] = CHANNEL[r.channel];
-  const border = reopened || r.urgency === "critical" ? "!border-[#f0a3a3]" : r.urgency === "high" ? "!border-[#f3cf95]" : fresh ? "!border-brand" : "";
+  const border = reopened || overdue || r.urgency === "critical" ? "!border-[#f0a3a3]" : flagged || r.urgency === "high" ? "!border-[#f3cf95]" : fresh ? "!border-brand" : "";
   const d = r.dispatch;
   const dispatchLine = d && r.status !== "delivered" && r.status !== "verified"
     ? d.status === "calling" ? "Jordan is calling the partner…"
@@ -32,14 +35,19 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
     : d.status === "picked_up" ? "Picked up · heading to resident"
     : d.status === "declined" ? "Partner declined · pick another" : d.status === "no_answer" ? "Partner didn't answer" : null
     : null;
-  const next = dispatchLine ?? (r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? (r.followUp?.status === "calling" ? "No text reply · Jordan is calling the resident…" : r.followUp?.status === "answered" ? "Resident on the line with Jordan…" : "Verification text sent · awaiting resident reply") : r.residentFeedback === "partial" ? "Resident: partly helped" : (r.followUp?.call ? "Closed the loop · confirmed by phone" : "Closed the loop · resident confirmed"));
+  const next = dispatchLine ?? (r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? (r.followUp?.status === "calling" ? "No text reply · Jordan is calling the resident…" : r.followUp?.status === "answered" ? "Resident on the line with Jordan…" : r.followUp?.status === "no_answer" ? "Call-back unanswered · try the resident later" : "Verification text sent · awaiting resident reply") : r.residentFeedback === "partial" ? "Resident: partly helped" : (r.followUp?.call ? "Closed the loop · confirmed by phone" : "Closed the loop · resident confirmed"));
   return (
     <motion.button layout layoutId={r.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 400, damping: 34 }} onClick={onClick}
       className={`card w-full text-left overflow-hidden hover:shadow-[0_2px_8px_rgba(0,0,0,.06)] ${border}`}>
       {reopened && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><RotateCcw size={11} /> Reopened by resident</div>}
       {!reopened && r.safety && <div className="flex items-center gap-1.5 bg-red px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-white"><Siren size={11} /> {r.safety.level === "crisis" ? "Crisis" : "Safety"} · {shortResources(r.safety.resourcesShared)} shared · lead paged</div>}
-      {!reopened && !r.safety && r.urgency === "critical" && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>}
-      {fresh && r.urgency !== "critical" && r.urgency !== "high" && !reopened && <div className="flex items-center gap-1.5 bg-brand-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-brand"><Info size={11} /> Just arrived</div>}
+      {!reopened && !r.safety && flagged && (
+        <div className={`flex items-center gap-1.5 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide ${overdue ? "bg-red-soft text-red" : "bg-orange-soft text-[#b45309]"}`}>
+          {overdue ? <AlertTriangle size={11} /> : <Clock3 size={11} />} {overdue ? "Needs attention" : "Follow-up needed"}
+        </div>
+      )}
+      {!reopened && !r.safety && !flagged && r.urgency === "critical" && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>}
+      {fresh && !flagged && r.urgency !== "critical" && r.urgency !== "high" && !reopened && <div className="flex items-center gap-1.5 bg-brand-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-brand"><Info size={11} /> Just arrived</div>}
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
