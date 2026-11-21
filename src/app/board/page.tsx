@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Plus, RefreshCcw, Search, LayoutGrid, Table2 } from "lucide-react";
+import { Plus, RefreshCcw, Search, LayoutGrid, Table2, AlertTriangle } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
 import { Board } from "@/components/board/Board";
 import { RequestTable } from "@/components/board/RequestTable";
@@ -9,6 +9,7 @@ import { StatBand } from "@/components/board/StatBand";
 import { useSnapshot } from "@/lib/client/useSnapshot";
 import { useMe } from "@/lib/client/me";
 import { computeStats } from "@/lib/stats";
+import { compareAttention } from "@/lib/attention";
 import { NEED_LABEL, NEIGHBORHOODS, type Need } from "@/lib/types";
 
 export default function BoardPage() {
@@ -20,6 +21,7 @@ export default function BoardPage() {
   const [hood, setHood] = useState("all");
   const [urg, setUrg] = useState("all");
   const [status, setStatus] = useState("all");
+  const [attnOnly, setAttnOnly] = useState(false);
   const [view, setView] = useState<"board" | "table">("board");
   const now = useClock();
 
@@ -36,17 +38,25 @@ export default function BoardPage() {
   const needCounts = useMemo(() => all.reduce<Record<string, number>>((a, r) => { r.needs.forEach((n) => (a[n] = (a[n] ?? 0) + 1)); return a; }, {}), [all]);
   const topNeeds = Object.entries(needCounts).sort((a, b) => b[1] - a[1]).slice(0, 4) as [Need, number][];
 
-  const filtered = all.filter((r) =>
-    (need === "all" || r.needs.includes(need)) &&
-    (hood === "all" || r.neighborhood === hood) &&
-    (urg === "all" || r.urgency === urg) &&
-    (status === "all" || r.status === status) &&
-    (!q || `${r.summary} ${r.redactedText} ${r.neighborhood} ${r.shortCode}`.toLowerCase().includes(q.toLowerCase()))
-  );
+  const filtered = all
+    .filter((r) =>
+      (need === "all" || r.needs.includes(need)) &&
+      (hood === "all" || r.neighborhood === hood) &&
+      (urg === "all" || r.urgency === urg) &&
+      (status === "all" || r.status === status) &&
+      (!attnOnly || r.attention.level !== "none") &&
+      (!q || `${r.summary} ${r.redactedText} ${r.neighborhood} ${r.shortCode}`.toLowerCase().includes(q.toLowerCase()))
+    )
+    // Flagged requests float to the top (most urgent first); the kanban keeps this order
+    // inside each status column. compareAttention returns 0 for two unflagged requests,
+    // so they keep the snapshot's newest-first order.
+    .sort((a, b) => compareAttention(a, b, now));
   const open = all.find((r) => r.id === openId) ?? null;
   const unclaimed = all.filter((r) => r.status === "new").length;
   const reopened = all.filter((r) => r.residentFeedback === "no" && r.status !== "verified").length;
   const critical = all.filter((r) => (r.urgency === "critical" || r.urgency === "high") && r.status !== "verified").length;
+  const overdue = all.filter((r) => r.attention.level === "needs_attention").length;
+  const followup = all.filter((r) => r.attention.level === "follow_up").length;
 
   return (
     <AppShell
@@ -63,7 +73,7 @@ export default function BoardPage() {
         <Btn onClick={async () => { await fetch("/api/reset", { method: "POST" }); reload(); }} title="Reset demo data"><RefreshCcw size={14} /> Reset demo</Btn>
       </>}
     >
-      {stats && <StatBand open={stats.open} unclaimed={unclaimed} median={stats.medianMinutes} verifiedPct={stats.verifiedPct} reopened={reopened} critical={critical} />}
+      {stats && <StatBand open={stats.open} unclaimed={unclaimed} median={stats.medianMinutes} verifiedPct={stats.verifiedPct} reopened={reopened} critical={critical} overdue={overdue} followup={followup} />}
 
       <div className="mt-4 seg">
         <button onClick={() => setNeed("all")} className={`seg-item ${need === "all" ? "active-blue" : ""}`}>All Needs <span className="count">{all.length}</span></button>
@@ -75,6 +85,7 @@ export default function BoardPage() {
         <select value={hood} onChange={(e) => setHood(e.target.value)} className="select"><option value="all">All Neighborhoods</option>{NEIGHBORHOODS.map((h) => <option key={h}>{h}</option>)}</select>
         <select value={urg} onChange={(e) => setUrg(e.target.value)} className="select"><option value="all">All Urgencies</option><option value="critical">Critical</option><option value="high">Urgent</option><option value="normal">Normal</option><option value="low">Low</option></select>
         <select value={status} onChange={(e) => setStatus(e.target.value)} className="select"><option value="all">All Statuses</option><option value="new">Unclaimed</option><option value="claimed">Claimed</option><option value="in_progress">In progress</option><option value="delivered">Delivered</option><option value="verified">Verified</option></select>
+        <button onClick={() => setAttnOnly((v) => !v)} aria-pressed={attnOnly} className={`inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-[13px] font-medium ${attnOnly ? "border-[#f0a3a3] bg-red-soft text-red" : "border-line bg-surface text-ink-2 hover:bg-surface-2"}`}><AlertTriangle size={14} /> Needs attention only{(overdue + followup) > 0 && <span className="count !bg-red">{overdue + followup}</span>}</button>
       </div>
 
       <div className="mt-4 overflow-x-auto pb-2">

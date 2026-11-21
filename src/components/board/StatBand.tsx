@@ -15,10 +15,11 @@ function Stat({ label, value, hint, Icon, tone = "default", bar, color }: { labe
   );
 }
 
-export function StatBand({ open, unclaimed, median, verifiedPct, reopened, critical }: { open: number; unclaimed: number; median: number; verifiedPct: number; reopened: number; critical: number }) {
+export function StatBand({ open, unclaimed, median, verifiedPct, reopened, critical, overdue, followup }: { open: number; unclaimed: number; median: number; verifiedPct: number; reopened: number; critical: number; overdue: number; followup: number }) {
   const med = median ? (median >= 60 ? `${(median / 60).toFixed(1)} h` : `${median} min`) : "—";
   return (
     <div className="flex gap-3">
+      <Stat label="Needs Attention" value={String(overdue + followup)} hint={`${overdue} overdue, ${followup} to follow up`} Icon={AlertTriangle} tone={overdue ? "red" : followup ? "orange" : "default"} />
       <Stat label="Open Requests" value={String(open)} hint="across all partners" Icon={ListChecks} />
       <Stat label="Unclaimed" value={String(unclaimed)} hint="need a partner" Icon={Hand} />
       <Stat label="Median Response" value={med} hint="first text → delivered" Icon={Clock} color="text-green" />

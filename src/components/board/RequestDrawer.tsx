@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, PhoneOutgoing, Mail, Navigation, Check, XCircle, Clock, PackageCheck, Siren, Languages, PhoneIncoming } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, PhoneOutgoing, Mail, Navigation, Check, XCircle, Clock, PackageCheck, Siren, Languages, PhoneIncoming, AlertTriangle, Clock3, Bell, UserCog } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
 import { STATUS_LABEL, LANGUAGE_LABEL } from "@/lib/types";
+import { timeAgo } from "@/lib/stats";
+import { COORDINATOR_ORG } from "@/lib/coordination";
+import { lastNudge, nudgeCooldownRemainingMs } from "@/lib/nudge";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
 
 const ACTOR_ICON = (actor: string, type?: string) =>
@@ -70,6 +73,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-5">
+              {request.attention.level !== "none" && <AttentionAlert attn={request.attention} />}
               <section className="card p-4">
                 <div className="label mb-2">Resident's words · redacted</div>
                 <p className="text-[14.5px] leading-[1.55] text-ink">{highlight(request.redactedText)}</p>
@@ -181,11 +185,124 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
               {request.status === "verified" && (
                 <div className="flex items-center gap-2 rounded-lg border border-[#bfe7cf] bg-green-soft p-3 text-[13px] font-medium text-green"><ShieldCheck size={16} /> Loop closed. Confirmed by the resident, credited to {request.ownerOrg}.</div>
               )}
+              {request.status !== "verified" && <CoordinatorTools request={request} me={me} partners={partners} activity={activity} />}
             </div>
           </motion.aside>
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+function AttentionAlert({ attn }: { attn: SafeRequest["attention"] }) {
+  const overdue = attn.level === "needs_attention";
+  return (
+    <section className={`rounded-lg border p-4 ${overdue ? "border-[#f3c4c4] bg-red-soft" : "border-[#f6dcb0] bg-orange-soft"}`}>
+      <div className="flex items-center gap-2 text-[13.5px] font-semibold">
+        {overdue ? <AlertTriangle size={15} className="text-red" /> : <Clock3 size={15} className="text-[#b45309]" />}
+        <span className={overdue ? "text-red" : "text-[#b45309]"}>{overdue ? "Needs attention" : "Follow-up needed"}</span>
+      </div>
+      <p className="mt-1.5 text-[13.5px] leading-snug text-ink">{attn.reason}</p>
+      <div className="mt-2.5 flex flex-wrap gap-x-5 gap-y-1 text-[11.5px] text-ink-2">
+        <span>Owner: <b className="font-semibold text-ink">{attn.owner ?? "Unassigned"}</b></span>
+        <span>Last meaningful update: <b className="font-semibold text-ink">{timeAgo(attn.lastMeaningfulAt)}</b></span>
+      </div>
+    </section>
+  );
+}
+
+function CoordinatorTools({ request, me, partners, activity }: { request: SafeRequest; me: { name: string; org: string; partnerId?: string }; partners: Partner[]; activity: ActivityEvent[] }) {
+  const [busy, setBusy] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [target, setTarget] = useState("release");
+  const [reason, setReason] = useState("");
+  const [confirmUnowned, setConfirmUnowned] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  // Read the clock in an effect, not during render (render must stay pure), so the cooldown
+  // countdown stays live without calling Date.now() inline.
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const t0 = setTimeout(() => setNow(Date.now()), 0);
+    const t = setInterval(() => setNow(Date.now()), 15000);
+    return () => { clearTimeout(t0); clearInterval(t); };
+  }, []);
+
+  // Nothing to nudge or reassign until someone owns the request.
+  if (!request.ownerName) return null;
+  const isCoordinator = me.org === COORDINATOR_ORG;
+  const urgent = request.urgency === "critical" || request.urgency === "high";
+  const releasing = target === "release";
+  const last = lastNudge(activity);
+  const cooldownLeftMs = now > 0 ? nudgeCooldownRemainingMs(activity, now) : 0;
+  const onCooldown = cooldownLeftMs > 0;
+
+  const call = async (body: Record<string, unknown>, onOk?: () => void) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      await act(request.id, body);
+      onOk?.();
+    } catch (e) {
+      let msg = (e as Error).message;
+      try { msg = JSON.parse(msg).error ?? msg; } catch {}
+      setErr(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitReassign = () => {
+    const partner = partners.find((p) => p.id === target);
+    const body: Record<string, unknown> = { action: "reassign", actorName: me.name, actorOrg: me.org, reason };
+    if (partner) {
+      body.newOwnerName = partner.name;
+      body.newOwnerOrg = partner.name;
+      body.newPartnerId = partner.id;
+    }
+    if (confirmUnowned) body.confirmUnownedUrgent = true;
+    call(body, () => { setOpen(false); setReason(""); setTarget("release"); setConfirmUnowned(false); });
+  };
+
+  return (
+    <div className="rounded-lg border border-line bg-surface-2 p-3 space-y-2.5">
+      <div className="flex items-center justify-between">
+        <span className="label">Coordinator tools</span>
+        {!isCoordinator && <span className="text-[11px] text-muted">Nudge only</span>}
+      </div>
+      <button disabled={busy || onCooldown} onClick={() => call({ action: "nudge", actor: me.name })} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2 text-[13px] font-medium hover:bg-surface-3 disabled:opacity-50">
+        <Bell size={15} /> Nudge {request.ownerName} to follow up
+      </button>
+      {last && (
+        <div className="text-[11px] text-muted">
+          Nudged {timeAgo(last.at)} by {last.actor}{onCooldown ? `. Wait ${Math.ceil(cooldownLeftMs / 60000)} min to nudge again.` : ""}
+        </div>
+      )}
+      {isCoordinator && !open && (
+        <button disabled={busy} onClick={() => setOpen(true)} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface py-2 text-[13px] font-medium hover:bg-surface-3 disabled:opacity-50">
+          <UserCog size={15} /> Reassign or release
+        </button>
+      )}
+      {isCoordinator && open && (
+        <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
+          <select value={target} onChange={(e) => setTarget(e.target.value)} className="select w-full">
+            <option value="release">Release to the unclaimed queue</option>
+            {partners.map((p) => <option key={p.id} value={p.id}>Reassign to {p.name}</option>)}
+          </select>
+          <input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason (required)" className="w-full rounded-lg border border-line bg-surface px-3 py-2 text-[13px] outline-none focus:border-brand" />
+          {releasing && urgent && (
+            <label className="flex items-start gap-2 text-[12px] text-ink-2">
+              <input type="checkbox" checked={confirmUnowned} onChange={(e) => setConfirmUnowned(e.target.checked)} className="mt-0.5" />
+              This is an urgent request. I confirm leaving it with no owner.
+            </label>
+          )}
+          <div className="flex gap-2">
+            <button disabled={busy || !reason.trim() || (releasing && urgent && !confirmUnowned)} onClick={submitReassign} className="flex-1 rounded-lg bg-brand py-2 text-[13px] font-medium text-white hover:bg-brand-2 disabled:opacity-50">Confirm</button>
+            <button disabled={busy} onClick={() => { setOpen(false); setErr(null); }} className="rounded-lg border border-line bg-surface px-3 text-[13px] hover:bg-surface-2">Cancel</button>
+          </div>
+        </div>
+      )}
+      {err && <div className="rounded-lg border border-[#f3c4c4] bg-red-soft px-3 py-2 text-[12px] text-red">{err}</div>}
+    </div>
   );
 }
 
