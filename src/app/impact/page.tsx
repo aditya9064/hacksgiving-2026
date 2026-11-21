@@ -1,9 +1,10 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarDays, CheckCircle2, CircleDashed, Clock, FileText, Inbox, MapPin, RotateCcw, Sparkles, Users, BarChart3 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type KeyboardEvent, type ReactNode } from "react";
+import { BarChart3, CalendarDays, CheckCircle2, ChevronRight, Clock, FileDown, FileText, FileType, Inbox, Info, LayoutDashboard, MapPin, RotateCcw, Sparkles, Users } from "lucide-react";
 import { AppShell, Btn, useClock } from "@/components/AppShell";
-import { StatCard, SectionCard } from "@/components/ui/StatCard";
+import { StatCard } from "@/components/ui/StatCard";
 import { Avatar } from "@/components/ui/Chip";
+import { PartnerBadge } from "@/components/ui/PartnerProvenance";
 import { ChartExplorer } from "@/components/impact/ChartExplorer";
 import { ExportMenu } from "@/components/impact/ExportMenu";
 import { FunderReport } from "@/components/impact/FunderReport";
@@ -12,6 +13,22 @@ import { useMe } from "@/lib/client/me";
 import { fmtMinutes } from "@/lib/stats";
 import { MONTHS, availableYears, buildReport, type Period, type ReportRequest } from "@/lib/report";
 import type { ExportFormat } from "@/lib/client/exporters";
+
+const SECTIONS = [
+  { id: "overview", label: "Overview", Icon: LayoutDashboard },
+  { id: "charts", label: "Charts", Icon: BarChart3 },
+  { id: "partners", label: "Partners", Icon: Users },
+  { id: "neighborhoods", label: "Neighborhoods", Icon: MapPin },
+  { id: "report", label: "Funder report", Icon: FileText },
+] as const;
+type SectionId = (typeof SECTIONS)[number]["id"];
+
+// The open section lives in the URL hash (/impact#charts), so it deep-links and survives reloads.
+const subscribeHash = (cb: () => void) => {
+  window.addEventListener("hashchange", cb);
+  return () => window.removeEventListener("hashchange", cb);
+};
+const readHash = () => window.location.hash.slice(1);
 
 export default function ImpactPage() {
   const { data } = useSnapshot();
@@ -22,6 +39,8 @@ export default function ImpactPage() {
   const [picked, setPeriod] = useState<Period | null>(null);
   const today = useMemo(() => new Date(clock || 0), [clock]);
   const period = useMemo<Period>(() => picked ?? (clock ? { year: today.getFullYear(), month: today.getMonth() } : { year: null, month: null }), [picked, clock, today]);
+  const hash = useSyncExternalStore(subscribeHash, readHash, () => "");
+  const section: SectionId = SECTIONS.some((s) => s.id === hash) ? (hash as SectionId) : "overview";
   const [narratives, setNarratives] = useState<Record<string, string>>({});
   const [drafting, setDrafting] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -32,6 +51,11 @@ export default function ImpactPage() {
   useEffect(() => {
     fetch("/api/history").then((r) => r.json()).then((j) => setHistory(j.requests ?? [])).catch(() => {});
   }, []);
+
+  const open = (id: SectionId) => {
+    window.history.replaceState(null, "", `#${id}`);
+    window.dispatchEvent(new HashChangeEvent("hashchange"));
+  };
 
   const partners = useMemo(() => data?.partners ?? [], [data]);
   const all = useMemo<ReportRequest[]>(() => [...history, ...(data?.requests ?? [])], [history, data]);
@@ -44,6 +68,7 @@ export default function ImpactPage() {
   const k = report.kpis;
   const unclaimed = (data?.requests ?? []).filter((r) => r.status === "new").length;
   const isFuture = (y: number, m: number) => !!clock && (y > today.getFullYear() || (y === today.getFullYear() && m > today.getMonth()));
+  const scope = report.period.label === "All time" ? "all time" : `in ${report.period.label}`;
 
   const draft = useCallback(async (): Promise<string | null> => {
     const label = report.period.label;
@@ -86,12 +111,14 @@ export default function ImpactPage() {
     }
   };
 
-  const scope = report.period.label === "All time" ? "all time" : `in ${report.period.label}`;
+  const topNeed = report.needs[0];
+  const topPartner = report.partners[0];
+  const topHood = report.neighborhoods[0];
 
   return (
     <AppShell
-      title={<>Impact &amp; Reporting <span className="chip chip-soft bg-green-soft text-green">Live data</span></>}
-      subtitle="Every number below is computed from the Relay record. Nothing is typed into a spreadsheet by hand."
+      title="Impact & Reporting"
+      subtitle="Outcomes for the month you pick, computed from the Relay record."
       badge={unclaimed}
       me={me.name}
       actions={<>
@@ -109,76 +136,201 @@ export default function ImpactPage() {
             <option value="all">All time</option>
           </select>
         </div>
-        <Btn variant="solid" onClick={generate} disabled={drafting}><Sparkles size={15} /> {drafting ? "Drafting…" : "Generate funder report"}</Btn>
         <ExportMenu onExport={doExport} busy={busy} periodLabel={report.period.label} />
       </>}
     >
       {error && <div className="mb-3 rounded-lg border border-[#f5c2c2] bg-red-soft px-3 py-2 text-[12.5px] text-red">{error}</div>}
 
-      <div className="grid grid-cols-7 gap-3.5 mb-2">
-        <StatCard icon={<Inbox size={14} />} label="Total Requests" value={k.total} sub={`${scope}, all channels`} />
-        <StatCard icon={<CheckCircle2 size={14} />} label="Help Delivered" value={k.delivered} sub="delivered or verified" tint="blue" />
-        <StatCard icon={<CheckCircle2 size={14} />} label="Resident-Verified" value={`${k.verifiedPct}%`} bar={k.verifiedPct} tint="green" />
-        <StatCard icon={<CircleDashed size={14} />} label="Partly Helped" value={k.partlyHelped} sub="still open for follow-up" tint={k.partlyHelped ? "orange" : "none"} />
-        <StatCard icon={<Clock size={14} />} label="Median Response" value={k.medianMinutes ? fmtMinutes(k.medianMinutes) : "—"} sub="first text to delivered" />
-        <StatCard icon={<RotateCcw size={14} />} label="Reopened" value={k.reopened} sub="resident said not helped" tint={k.reopened ? "red" : "none"} />
-        <StatCard icon={<Users size={14} />} label="Partners Active" value={k.partnersActive} sub={`across ${k.neighborhoods} neighborhoods`} tint="purple" />
-      </div>
-      <p className="mb-4 text-[11.5px] text-muted">Showing {report.period.label}. This week comes from the live record; earlier months come from a synthetic archive of closed cases so month-by-month reporting can be demonstrated.</p>
+      <SectionTabs active={section} onChange={open} />
 
-      <div className="grid grid-cols-3 gap-3.5 mb-3.5">
-        <SectionCard className="col-span-2" title={<span className="flex items-center gap-2"><BarChart3 size={15} className="text-brand" /> Charts · {report.period.label}</span>} action={<span className="text-[12px] text-muted">{k.total} requests · pick a chart</span>}>
-          <ChartExplorer report={report} />
-        </SectionCard>
+      <div role="tabpanel" id={`panel-${section}`} aria-labelledby={`tab-${section}`} className="mt-4">
+        {section === "overview" && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-4 gap-3.5">
+              <StatCard icon={<Inbox size={14} />} label="Total requests" value={k.total} sub={`${scope}, all channels`} />
+              <StatCard icon={<CheckCircle2 size={14} />} label="Help delivered" value={k.delivered} sub="delivered or verified" tint="blue" />
+              <StatCard icon={<CheckCircle2 size={14} />} label="Resident-verified" value={`${k.verifiedPct}%`} bar={k.verifiedPct} tint="green" />
+              <StatCard icon={<Clock size={14} />} label="Median response" value={k.medianMinutes ? fmtMinutes(k.medianMinutes) : "—"} sub="first text to delivered" />
+            </div>
 
-        <SectionCard title="Partner Outcomes" action={<Btn className="!h-[28px] !px-2.5 !text-[12px]" href="/partners">All partners</Btn>}>
-          {report.partners.length ? (
-            <ul className="divide-y divide-line">
-              {report.partners.map((p) => (
-                <li key={p.name} className="flex items-center gap-3 px-4 py-2.5">
-                  <Avatar name={p.name} size={28} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium truncate">{p.name}</div>
-                    <div className="text-[11.5px] text-muted">{p.handled} handled · {p.verified} verified</div>
-                  </div>
-                  <span className={`chip chip-soft ${p.rate >= 50 ? "bg-green-soft text-green" : "bg-surface-2 text-ink-2"}`}>{p.rate}%</span>
-                </li>
-              ))}
-            </ul>
-          ) : <div className="p-6 text-center text-[13px] text-muted">No partner activity {scope}.</div>}
-        </SectionCard>
-      </div>
+            <section className="card">
+              <header className="border-b border-line px-4 py-3 text-[14px] font-semibold">At a glance</header>
+              <ul className="divide-y divide-line">
+                <GlanceRow icon={<BarChart3 size={15} />} title="Top need" value={topNeed ? `${topNeed.label} · ${topNeed.value} requests` : "No requests yet"} onClick={() => open("charts")} cta="See charts" />
+                <GlanceRow icon={<Users size={15} />} title="Most active partner" value={topPartner ? `${topPartner.name} · ${topPartner.handled} handled, ${topPartner.rate}% verified` : "No partner activity"} onClick={() => open("partners")} cta={`All ${k.partnersActive} partners`} />
+                <GlanceRow icon={<MapPin size={15} />} title="Busiest neighborhood" value={topHood ? `${topHood.neighborhood} · ${topHood.total} requests, ${topHood.open} open` : "No requests yet"} onClick={() => open("neighborhoods")} cta={`All ${k.neighborhoods} neighborhoods`} />
+                <GlanceRow icon={<RotateCcw size={15} />} title="Needs follow-up" value={`${k.partlyHelped} partly helped · ${k.reopened} reopened`} href="/board?view=table" cta="Open board" tone={k.partlyHelped + k.reopened ? "warn" : undefined} />
+                <GlanceRow icon={<FileText size={15} />} title="Funder report" value={narrative ? "Drafted, ready to download" : "Not drafted yet"} onClick={() => open("report")} cta={narrative ? "Open" : "Build it"} />
+              </ul>
+            </section>
 
-      <div className="grid grid-cols-3 gap-3.5">
-        <SectionCard title={<span className="flex items-center gap-2"><FileText size={15} className="text-brand" /> Funder Report</span>} className="col-span-2" action={narrative && <button onClick={() => setReportOpen(true)} className="text-[12px] font-medium text-brand hover:underline">Open full report</button>}>
-          <div className="p-5">
+            <p className="flex items-start gap-1.5 text-[11.5px] text-muted"><Info size={12} className="mt-[2px] shrink-0" aria-hidden /> Recent days come from the live board. Earlier months are a synthetic archive of closed cases, used to demonstrate monthly reporting.</p>
+          </div>
+        )}
+
+        {section === "charts" && (
+          <section className="card">
+            <ChartExplorer report={report} />
+          </section>
+        )}
+
+        {section === "partners" && (
+          <section className="card overflow-hidden">
+            <header className="flex items-center justify-between border-b border-line px-4 py-3">
+              <h2 className="text-[14px] font-semibold">Partner outcomes · {report.period.label}</h2>
+              <Btn className="!h-[30px] !px-2.5 !text-[12px]" href="/partners">Partner Network</Btn>
+            </header>
+            {report.partners.length ? (
+              <table className="w-full text-[13px]">
+                <thead className="bg-surface-2 text-[12px] text-ink-2">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">Partner</th>
+                    <th className="px-3 py-2 text-right font-medium">Handled</th>
+                    <th className="px-3 py-2 text-right font-medium">Resident-verified</th>
+                    <th className="w-[220px] px-4 py-2 text-left font-medium">Verified rate</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {report.partners.map((p) => {
+                    const meta = partners.find((x) => x.name === p.name);
+                    return (
+                      <tr key={p.name}>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <Avatar name={p.name} size={28} />
+                            <div className="min-w-0">
+                              <div className="font-medium">{p.name}</div>
+                              {meta && <div className="mt-0.5"><PartnerBadge partner={meta} size="sm" /></div>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="num px-3 py-2.5 text-right font-medium">{p.handled}</td>
+                        <td className="num px-3 py-2.5 text-right font-medium">{p.verified}</td>
+                        <td className="px-4 py-2.5">
+                          <div className="flex items-center gap-2">
+                            <div className="bar !bg-surface-3 flex-1"><span style={{ width: `${p.rate}%` }} /></div>
+                            <span className="num w-10 text-right text-[12px] font-medium">{p.rate}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : <div className="p-8 text-center text-[13px] text-muted">No partner activity {scope}.</div>}
+          </section>
+        )}
+
+        {section === "neighborhoods" && (
+          <section className="card overflow-hidden">
+            <header className="flex items-center justify-between border-b border-line px-4 py-3">
+              <h2 className="text-[14px] font-semibold">Requests by neighborhood · {report.period.label}</h2>
+              <Btn className="!h-[30px] !px-2.5 !text-[12px]" href="/pulse">Open Pulse map</Btn>
+            </header>
+            {report.neighborhoods.length ? (
+              <table className="w-full text-[13px]">
+                <thead className="bg-surface-2 text-[12px] text-ink-2">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">Neighborhood</th>
+                    <th className="w-[260px] px-4 py-2 text-left font-medium">Requests</th>
+                    <th className="px-4 py-2 text-right font-medium">Still open</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {report.neighborhoods.map((h) => (
+                    <tr key={h.neighborhood}>
+                      <td className="px-4 py-2.5 font-medium">{h.neighborhood}</td>
+                      <td className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="bar !bg-surface-3 flex-1"><span style={{ width: `${(h.total / report.neighborhoods[0].total) * 100}%` }} /></div>
+                          <span className="num w-8 text-right text-[12px] font-medium">{h.total}</span>
+                        </div>
+                      </td>
+                      <td className="num px-4 py-2.5 text-right">{h.open}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <div className="p-8 text-center text-[13px] text-muted">No requests {scope}.</div>}
+            <p className="border-t border-line px-4 py-2.5 text-[11.5px] text-muted">Areas, never people: counts are per neighborhood only.</p>
+          </section>
+        )}
+
+        {section === "report" && (
+          <section className="card p-5">
             {narrative ? (
-              <p className="text-[14.5px] leading-[1.7] text-ink whitespace-pre-line">{narrative}</p>
+              <>
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-[15px] font-semibold">Funder report · {report.period.label}</h2>
+                  <div className="flex gap-2">
+                    <Btn onClick={() => setReportOpen(true)}>Open full report</Btn>
+                    <Btn variant="solid" onClick={() => doExport("pdf")} disabled={!!busy}><FileDown size={15} /> PDF</Btn>
+                    <Btn onClick={() => doExport("docx")} disabled={!!busy}><FileType size={15} /> Word</Btn>
+                  </div>
+                </div>
+                <p className="whitespace-pre-line text-[14.5px] leading-[1.7] text-ink">{narrative}</p>
+              </>
             ) : (
               <div className="rounded-lg border border-dashed border-line bg-surface-2 p-8 text-center">
                 <Sparkles size={22} className="mx-auto text-brand" />
                 <div className="mt-2 text-[14px] font-medium">Build the {report.period.label} funder report</div>
-                <p className="mt-1 text-[12.5px] text-muted max-w-[460px] mx-auto">A 150-word narrative drafted from the numbers, plus the key figures, all nine charts and partner and neighborhood tables. Download it as PDF or Word.</p>
+                <p className="mx-auto mt-1 max-w-[460px] text-[12.5px] text-muted">A short narrative drafted from the numbers, plus the key figures, all nine charts and partner and neighborhood tables. Download it as PDF or Word.</p>
                 <Btn variant="solid" className="mt-4" onClick={generate} disabled={drafting}><Sparkles size={15} /> {drafting ? "Drafting…" : "Generate funder report"}</Btn>
               </div>
             )}
-          </div>
-        </SectionCard>
-
-        <SectionCard title={<span className="flex items-center gap-2"><MapPin size={15} className="text-brand" /> By Neighborhood</span>} action={<Btn className="!h-[28px] !px-2.5 !text-[12px]" href="/pulse">Open Pulse</Btn>}>
-          <ul className="divide-y divide-line">
-            {report.neighborhoods.slice(0, 8).map((h) => (
-              <li key={h.neighborhood} className="flex items-center justify-between px-4 py-2.5 text-[13px]">
-                <span className="font-medium">{h.neighborhood}</span>
-                <span className="flex items-center gap-2 text-[12px] text-muted">{h.open} open <span className="count">{h.total}</span></span>
-              </li>
-            ))}
-            {!report.neighborhoods.length && <li className="p-6 text-center text-[13px] text-muted">No requests {scope}.</li>}
-          </ul>
-        </SectionCard>
+          </section>
+        )}
       </div>
 
       <FunderReport open={reportOpen} onClose={() => setReportOpen(false)} report={report} narrative={narrative} drafting={drafting} onExport={doExport} busy={busy} />
     </AppShell>
   );
+}
+
+/** Section switcher. Arrow keys move between sections (WAI-ARIA tabs pattern). */
+function SectionTabs({ active, onChange }: { active: SectionId; onChange: (id: SectionId) => void }) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const onKey = (e: KeyboardEvent, i: number) => {
+    const dir = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!dir) return;
+    e.preventDefault();
+    const next = (i + dir + SECTIONS.length) % SECTIONS.length;
+    onChange(SECTIONS[next].id);
+    refs.current[next]?.focus();
+  };
+  return (
+    <div role="tablist" aria-label="Impact sections" className="seg">
+      {SECTIONS.map((s, i) => (
+        <button
+          key={s.id}
+          ref={(el) => { refs.current[i] = el; }}
+          role="tab"
+          id={`tab-${s.id}`}
+          aria-selected={active === s.id}
+          aria-controls={`panel-${s.id}`}
+          tabIndex={active === s.id ? 0 : -1}
+          onClick={() => onChange(s.id)}
+          onKeyDown={(e) => onKey(e, i)}
+          className={`seg-item ${active === s.id ? "active-blue" : ""}`}
+        >
+          <s.Icon size={14} aria-hidden /> {s.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GlanceRow({ icon, title, value, cta, onClick, href, tone }: { icon: ReactNode; title: string; value: string; cta: string; onClick?: () => void; href?: string; tone?: "warn" }) {
+  const body = (
+    <>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${tone === "warn" ? "bg-orange-soft text-orange" : "bg-brand-soft text-brand"}`}>{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[12px] text-muted">{title}</span>
+        <span className="block truncate text-[13.5px] font-medium text-ink">{value}</span>
+      </span>
+      <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-medium text-brand">{cta} <ChevronRight size={14} aria-hidden /></span>
+    </>
+  );
+  const cls = "flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2 focus-visible:bg-surface-2 outline-none";
+  return <li>{href ? <a href={href} className={cls}>{body}</a> : <button onClick={onClick} className={cls}>{body}</button>}</li>;
 }
