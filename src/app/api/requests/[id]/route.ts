@@ -18,7 +18,7 @@ const Action = z.discriminatedUnion("action", [
     newOwnerName: z.string().optional(),
     newOwnerOrg: z.string().optional(),
     newPartnerId: z.string().optional(),
-    reason: z.string().min(1).max(500),
+    reason: z.string().trim().min(1).max(500),
     confirmUnownedUrgent: z.boolean().optional(),
   }),
 ]);
@@ -51,11 +51,23 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
     return NextResponse.json({ request: { ...safe, hasContact: Boolean(contactRef) } });
   }
 
+  // Nudge: enforce the 30 minute cooldown on the server (not just a disabled button).
+  if (a.action === "nudge") {
+    const n = await nudgeOwner(id, a.actor);
+    if (!n) return NextResponse.json({ error: "not found" }, { status: 404 });
+    if (!n.ok) {
+      if (n.code === "no_owner") return NextResponse.json({ error: "There is no owner to nudge yet.", code: n.code }, { status: 409 });
+      const mins = Math.ceil(n.retryAfterSec / 60);
+      return NextResponse.json({ error: `This request was nudged recently. Try again in ${mins} min.`, code: n.code, retryAfterSec: n.retryAfterSec }, { status: 429 });
+    }
+    const { contactRef, ...safe } = n.request;
+    return NextResponse.json({ request: { ...safe, hasContact: Boolean(contactRef) } });
+  }
+
   const result =
     a.action === "claim" ? await claim(id, a.ownerName, a.ownerOrg, a.partnerId)
     : a.action === "note" ? await addNote(id, a.actor, a.text)
     : a.action === "delivered" ? await markDelivered(id, a.actor)
-    : a.action === "nudge" ? await nudgeOwner(id, a.actor)
     : await residentReply(id, a.reply);
   if (!result) return NextResponse.json({ error: "not found" }, { status: 404 });
   const { contactRef, ...safe } = result;
