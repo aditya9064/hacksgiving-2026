@@ -3,6 +3,7 @@ import { structureIntake } from "./ai";
 import { makeShortCode } from "./db/seed";
 import { sendSms, VERIFY_PROMPT } from "./sms";
 import { classifyResidentReply } from "./replyClassifier";
+import { nudgeCooldownRemainingMs } from "./nudge";
 import type { Channel, HelpRequest, StructuredIntake } from "./types";
 
 export interface IntakeInput {
@@ -78,21 +79,32 @@ export async function residentReply(id: string, reply: "1" | "2" | "3") {
   return db.updateRequest(id, patch, { actor: "resident", type: outcome.event.type, text: outcome.event.text });
 }
 
+export type NudgeResult =
+  | { ok: true; request: HelpRequest }
+  | { ok: false; code: "no_owner" }
+  | { ok: false; code: "cooldown"; retryAfterSec: number };
+
 /**
  * Nudge the current owner to follow up. Records an auditable timeline event and uses the existing
  * SMS helper (which mocks when Twilio is not configured). NEVER sends automatically and never puts a
  * phone number in the timeline. Owners have no phone on the request, so we fall back to the partner's
- * phone if present, otherwise log a mocked nudge. A nudge is NOT a meaningful event, so it does not
- * reset the attention clock (see lib/attention.ts).
+ * phone if present, otherwise log a simulated nudge. A nudge is NOT a meaningful event, so it does
+ * not reset the attention clock (see lib/attention.ts). A 30 minute cooldown (NUDGE_COOLDOWN_MS)
+ * prevents nudge spam and is enforced here on the server, not just hidden in the UI.
  */
-export async function nudgeOwner(id: string, actor: string) {
+export async function nudgeOwner(id: string, actor: string): Promise<NudgeResult | undefined> {
   const req = await db.getRequest(id);
-  if (!req || !req.ownerName) return undefined;
+  if (!req) return undefined;
+  if (!req.ownerName) return { ok: false, code: "no_owner" };
+  const events = await db.listActivity(id);
+  const remaining = nudgeCooldownRemainingMs(events, Date.now());
+  if (remaining > 0) return { ok: false, code: "cooldown", retryAfterSec: Math.ceil(remaining / 1000) };
   const partner = (await db.listPartners()).find((p) => p.id === req.partnerId);
   const message = `Relay MKE: a coordinator flagged request ${req.shortCode} for follow-up. Please update the case when you can.`;
   const result = partner?.phone ? await sendSms(partner.phone, message) : { ok: true, mocked: true };
-  const how = result.mocked ? " (SMS not configured, logged only)" : "";
-  return db.updateRequest(id, {}, { actor, type: "nudge", text: `${actor} nudged ${req.ownerName} to follow up${how}` });
+  const how = result.mocked ? " SMS simulated (not configured)." : " Text sent.";
+  const updated = await db.updateRequest(id, {}, { actor, type: "nudge", text: `${actor} nudged ${req.ownerName} to follow up.${how}` });
+  return updated ? { ok: true, request: updated } : undefined;
 }
 
 export interface ReassignInput {
