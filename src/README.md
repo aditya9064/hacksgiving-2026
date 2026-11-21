@@ -79,6 +79,18 @@ curl -X POST localhost:3077/api/voice/elevenlabs -H 'content-type: application/j
   -d '{"type":"post_call_transcription","data":{"conversation_id":"c1","metadata":{"call_duration_secs":90},"transcript":[{"role":"agent","message":"Hey, this is Jordan. What is going on?"},{"role":"user","message":"We are out of food until Friday and I have three kids, near 35th and Burleigh."}]}}'
 ```
 
+### Languages (Spanish live, Hmong routed)
+
+Jordan speaks English and Spanish on the same number — the whole call, including the code read-back, switches to Spanish and every text (tracking code, "did it arrive?", thanks) is sent in Spanish. Milwaukee's Hmong community is handled honestly: Jordan doesn't pretend to speak Hmong, says a short greeting, gets a number, logs the need with `language: "hmn"` and promises a Hmong-speaking call-back; the texts carry a Hmong line plus English. On the Board, non-English requests get a language chip and the **Connect to a partner** list ranks partners with that language first (`Partner.languages`, e.g. the Hmong and South Side centers in the seed).
+
+### Safety escalation
+
+If a caller describes abuse, a weapon, threats or thoughts of self-harm, Jordan slows down, offers the right line by name and number — **988**, **Milwaukee County Crisis Line 414-257-7222**, **Sojourner Family Peace Center 414-933-2722**, **2-1-1** — and still logs the request with `safety_concern`/`safety_level`/`safety_note`/`resources_shared`. Server side (`lib/safety.ts`, `flagSafety` in `lib/actions.ts`) a keyword screen acts as a floor under the LLM's `safety` field for text/SMS channels too. The request is bumped to critical, gets a red **Crisis / Safety** banner on the card, a ComForce-only box in the drawer with the resources shared, and a "ComForce on-call lead paged" timeline event (mock page). SMS intakes get the same resources texted back. Partners never see the note.
+
+### Closing the loop by voice
+
+**Mark delivered** (drawer or the volunteer's route page) texts the resident "did it arrive? 1/2/3" in their language. If nobody replies within `FOLLOWUP_SMS_WAIT_MS` (default 15 s for the demo), Jordan **calls the resident back in their language** (`lib/followup.ts`): the call rings, streams turn by turn to the Board drawer and the `/phone` mock-up, and the confirmation closes the request as **Verified · by phone**. A text reply cancels the call. Simulated today; the same hook places a real outbound call once `ELEVENLABS_PHONE_NUMBER_ID` is set.
+
 ## Privacy by construction
 
 `lib/ai/redact.ts` strips names, phones, addresses and emails **before** any text reaches an AI model. Contact info lives apart from case data. Pulse only ever receives aggregates.

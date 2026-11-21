@@ -41,8 +41,26 @@ export async function sendSms(to: string, body: string): Promise<SmsResult> {
   }
 }
 
-export const VERIFY_PROMPT = (code: string) =>
-  `Relay MKE: Did the help for request ${code} arrive? Reply 1 = yes, 2 = partly, 3 = no. Reply STOP to opt out.`;
+type Lang = string | undefined;
+const es = (l: Lang) => l === "es";
+const hmn = (l: Lang) => l === "hmn";
 
-export const CODE_TEXT = (code: string) =>
-  `Relay MKE: your request is logged as ${code}. Text ${code} to this number any time for an update. We'll text you when help is on the way. Reply STOP to opt out.`;
+/** "Did help arrive?" — Spanish for Spanish speakers; Hmong gets a short Hmong line plus English since staff follow up by voice. */
+export const VERIFY_PROMPT = (code: string, lang?: Lang) =>
+  es(lang)
+    ? `Relay MKE: ¿Llegó la ayuda de su solicitud ${code}? Responda 1 = sí, 2 = en parte, 3 = no. Responda STOP para no recibir más mensajes.`
+    : hmn(lang)
+      ? `Relay MKE: Puas tau txais kev pab ${code}? Teb 1 = tau, 2 = tau ib nrab, 3 = tsis tau. (Did the help for ${code} arrive? Reply 1 = yes, 2 = partly, 3 = no.)`
+      : `Relay MKE: Did the help for request ${code} arrive? Reply 1 = yes, 2 = partly, 3 = no. Reply STOP to opt out.`;
+
+export const CODE_TEXT = (code: string, lang?: Lang) =>
+  es(lang)
+    ? `Relay MKE: su solicitud quedó registrada como ${code}. Envíe ${code} a este número cuando quiera saber cómo va. Le avisaremos cuando la ayuda esté en camino. Responda STOP para no recibir más mensajes.`
+    : hmn(lang)
+      ? `Relay MKE: koj qhov kev thov yog ${code}. Xa ${code} rau tus xov tooj no kom paub xov xwm. Ib tug neeg hais lus Hmoob yuav hu rov qab rau koj. (Your request is ${code}; a Hmong-speaking neighbor will call you back.)`
+      : `Relay MKE: your request is logged as ${code}. Text ${code} to this number any time for an update. We'll text you when help is on the way. Reply STOP to opt out.`;
+
+export const THANKS_TEXT = (lang?: Lang, reopened = false) =>
+  reopened
+    ? es(lang) ? "Gracias. Reabrimos su solicitud y avisamos al equipo." : "Thank you. We've reopened your request and the team has been notified."
+    : es(lang) ? "Gracias por avisarnos." : hmn(lang) ? "Ua tsaug. (Thank you for letting us know.)" : "Thank you for letting us know.";

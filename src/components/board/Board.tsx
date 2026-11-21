@@ -1,13 +1,15 @@
 "use client";
 import { AnimatePresence, motion } from "motion/react";
-import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, RotateCcw, AlertTriangle, Clock, Info } from "lucide-react";
+import { MessageSquareText, Mic, Globe, Users, User, MapPin, Home, UserCheck, Check, RotateCcw, AlertTriangle, Clock, Info, Siren, Languages } from "lucide-react";
 import type { SafeRequest } from "@/lib/client/useSnapshot";
-import { STATUSES, STATUS_LABEL } from "@/lib/types";
+import { STATUSES, STATUS_LABEL, LANGUAGE_LABEL } from "@/lib/types";
 import { timeAgo } from "@/lib/stats";
 import { NeedChip, UrgencyChip } from "../ui/Chip";
 
 const CHANNEL = { sms: ["SMS", MessageSquareText], voice: ["Voice", Mic], web: ["Web", Globe], partner: ["Partner", Users] } as const;
 const COL_DOT: Record<string, string> = { new: "#0b93d5", claimed: "#7c3aed", in_progress: "#f59e0b", delivered: "#16a34a", verified: "#16a34a" };
+
+const shortResources = (names: string[]) => names.map((n) => n.startsWith("988") ? "988" : n.includes("County") ? "County crisis" : n.includes("Sojourner") ? "Sojourner" : "211").slice(0, 2).join(" / ");
 
 function Row({ Icon, k, v, vClass = "text-ink" }: { Icon: typeof MapPin; k: string; v: React.ReactNode; vClass?: string }) {
   return (
@@ -30,18 +32,20 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
     : d.status === "picked_up" ? "Picked up · heading to resident"
     : d.status === "declined" ? "Partner declined · pick another" : d.status === "no_answer" ? "Partner didn't answer" : null
     : null;
-  const next = dispatchLine ?? (r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? "Verification text sent · awaiting resident reply" : r.residentFeedback === "partial" ? "Resident: partly helped" : "Closed the loop · resident confirmed");
+  const next = dispatchLine ?? (r.status === "new" ? "Awaiting a partner to claim" : r.status === "claimed" ? `Claimed by ${r.ownerName ?? "partner"} · work starting` : r.status === "in_progress" ? "In progress · update resident when delivered" : r.status === "delivered" ? (r.followUp?.status === "calling" ? "No text reply · Jordan is calling the resident…" : r.followUp?.status === "answered" ? "Resident on the line with Jordan…" : "Verification text sent · awaiting resident reply") : r.residentFeedback === "partial" ? "Resident: partly helped" : (r.followUp?.call ? "Closed the loop · confirmed by phone" : "Closed the loop · resident confirmed"));
   return (
     <motion.button layout layoutId={r.id} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: "spring", stiffness: 400, damping: 34 }} onClick={onClick}
       className={`card w-full text-left overflow-hidden hover:shadow-[0_2px_8px_rgba(0,0,0,.06)] ${border}`}>
       {reopened && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><RotateCcw size={11} /> Reopened by resident</div>}
-      {!reopened && r.urgency === "critical" && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>}
+      {!reopened && r.safety && <div className="flex items-center gap-1.5 bg-red px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-white"><Siren size={11} /> {r.safety.level === "crisis" ? "Crisis" : "Safety"} · {shortResources(r.safety.resourcesShared)} shared · lead paged</div>}
+      {!reopened && !r.safety && r.urgency === "critical" && <div className="flex items-center gap-1.5 bg-red-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-red"><AlertTriangle size={11} /> Critical priority</div>}
       {fresh && r.urgency !== "critical" && r.urgency !== "high" && !reopened && <div className="flex items-center gap-1.5 bg-brand-soft px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-brand"><Info size={11} /> Just arrived</div>}
       <div className="p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1 min-w-0 overflow-hidden">
             <span className="chip shrink-0"><ChIcon size={10} /> {chLabel}</span>
             {r.needs.slice(0, r.urgency === "critical" || r.urgency === "high" ? 1 : 2).map((n) => <NeedChip key={n} need={n} />)}
+            {r.language && r.language !== "en" && <span className="chip shrink-0 inline-flex items-center gap-1 bg-[#ede9fe] text-[#6d28d9]"><Languages size={10} /> {LANGUAGE_LABEL[r.language]?.split(" ")[0] ?? r.language}</span>}
           </div>
           <span className="shrink-0"><UrgencyChip urgency={r.urgency} /></span>
         </div>
@@ -58,7 +62,7 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
           <Row Icon={UserCheck} k="Owner" v={r.ownerName ?? "Unassigned"} vClass={r.ownerName ? "text-green" : "text-[#b45309]"} />
         </div>
         <div className={`mt-2 rounded-md border px-2.5 py-1.5 text-[11.5px] font-medium ${r.status === "verified" && r.residentFeedback !== "partial" ? "border-[#bfe7cf] bg-green-soft text-green" : "border-[#bfe0f3] bg-brand-soft text-brand"}`}>
-          {r.status === "verified" && r.residentFeedback !== "partial" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : d?.status === "calling" && r.status !== "delivered" && r.status !== "verified" ? <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> {next}</span> : next}
+          {r.status === "verified" && r.residentFeedback !== "partial" ? <span className="inline-flex items-center gap-1.5"><Check size={12} /> {next}</span> : (d?.status === "calling" && r.status !== "delivered" && r.status !== "verified") || r.followUp?.status === "calling" || r.followUp?.status === "answered" ? <span className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> {next}</span> : next}
         </div>
         <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
           <span>Opened {timeAgo(r.createdAt, now)}</span>

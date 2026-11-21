@@ -1,5 +1,6 @@
 import { NEEDS, NEIGHBORHOODS, type Need, type StructuredIntake, type Urgency } from "../types";
 import { redactPII } from "./redact";
+import { detectSafety } from "../safety";
 import { complete, llmConfigured, parseJson } from "./llm";
 
 const KEYWORDS: Record<Need, RegExp> = {
@@ -26,7 +27,7 @@ function fallbackStructure(redacted: string): Omit<StructuredIntake, "redactedTe
   const householdSize = guessHousehold(redacted);
   const language = /\b(hola|necesito|ayuda|gracias|por favor)\b/i.test(redacted) ? "es" : "en";
   const summary = looksSpoken(redacted) ? composeHeadline(needs, householdSize, redacted) : cleanSummary(redacted);
-  return { summary, needs: needs.slice(0, 3), urgency, neighborhood: hood, householdSize, language, source: "rules" };
+  return { summary, needs: needs.slice(0, 3), urgency, neighborhood: hood, householdSize, language, source: "rules", safety: detectSafety(redacted) };
 }
 
 const FILLER = /\b(okay|ok|uh+|um+|hmm+|yeah|so|like|you know)\b/gi;
@@ -105,10 +106,16 @@ function guessHoodFromStreets(t: string): string | undefined {
 
 const SYSTEM = `You structure incoming requests for help for a Milwaukee community organization.
 The text has already had personal identifiers replaced with [name], [phone], [address], [email]. Never try to guess them back.
-Return strict JSON: {"summary": string (<= 12 words, neutral, no names), "needs": string[] (1-3 from ${JSON.stringify(NEEDS)}), "urgency": "low"|"normal"|"high"|"critical", "neighborhood": one of ${JSON.stringify(NEIGHBORHOODS)} or "Unknown", "householdSize": number|null, "language": "en"|"es"|"hmn"|"other"}.
+Return strict JSON: {"summary": string (<= 12 words, neutral, no names), "needs": string[] (1-3 from ${JSON.stringify(NEEDS)}), "urgency": "low"|"normal"|"high"|"critical", "neighborhood": one of ${JSON.stringify(NEIGHBORHOODS)} or "Unknown", "householdSize": number|null, "language": "en"|"es"|"hmn"|"other", "safety": "none"|"concern"|"crisis"}.
+Safety: "crisis" = thoughts of self-harm, overdose, someone with a weapon or threatening to kill; "concern" = domestic violence, abuse, feeling unsafe at home, threats, stalking; otherwise "none".
 Urgency rules: critical = risk to life/safety, shutoff/eviction within 72h, infant without heat; high = needed within a week, or food/housing/utilities when children are in the home, or health; normal otherwise.
 Neighborhood: only pick one if the text names it or names streets you are sure of (35th/Burleigh/Sherman = Sherman Park; Holton/Locust/MLK = Harambee; 27th/Center = Metcalfe Park; Fond du Lac/North Ave = Amani; Teutonia/Villard/Hampton Ave = Old North Milwaukee; Good Hope = Thurston Woods; Capitol Dr = Roosevelt Grove; Cesar Chavez/National = Clarke Square; Mitchell St = Historic Mitchell Street; KK/Bay View = Bay View; Humboldt/Riverwest = Riverwest). Otherwise "Unknown".
 Describe the NEED. Never characterize people as dangerous or as suspects.`;
+
+function maxSafety(a?: "concern" | "crisis", b?: "concern" | "crisis") {
+  if (a === "crisis" || b === "crisis") return "crisis" as const;
+  return a ?? b;
+}
 
 export async function structureIntake(rawText: string): Promise<StructuredIntake> {
   const { redactedText, redactions } = redactPII(rawText);
@@ -129,6 +136,8 @@ export async function structureIntake(rawText: string): Promise<StructuredIntake
       householdSize: typeof parsed.householdSize === "number" ? parsed.householdSize : fallback.householdSize,
       language: typeof parsed.language === "string" ? parsed.language : fallback.language,
       source: "llm",
+      // The keyword screen is a floor: the model may raise a level but never clear an obvious one.
+      safety: maxSafety(parsed.safety === "crisis" || parsed.safety === "concern" ? parsed.safety : undefined, detectSafety(redactedText)),
     };
   } catch (err) {
     console.warn("[ai] falling back to rules:", (err as Error).message);

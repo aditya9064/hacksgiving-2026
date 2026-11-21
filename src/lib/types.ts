@@ -92,6 +92,8 @@ export interface Partner {
   coords?: [number, number];
   hours?: string;
   verifiedAt?: string;
+  /** ISO 639 codes staff can take a call in, e.g. ["en","es"] or ["hmn","en"] */
+  languages?: string[];
 }
 
 export type ActivityType =
@@ -108,7 +110,9 @@ export type ActivityType =
   | "sms_in"
   | "call"
   | "dispatch"
-  | "email_out";
+  | "email_out"
+  | "safety"
+  | "followup_call";
 
 export interface ActivityEvent {
   id: string;
@@ -147,7 +151,34 @@ export interface HelpRequest {
   call?: CallRecord;
   /** Handoff to a partner: Jordan calls + emails them, records their answer, then the volunteer gets a route. */
   dispatch?: Dispatch;
+  /** Set when the resident described risk to themselves or others. Jordan shares crisis resources and the ComForce lead is paged. */
+  safety?: SafetyFlag;
+  /** After delivery: if the resident doesn't answer the "did it arrive?" text, Jordan calls them back in their language. */
+  followUp?: FollowUp;
 }
+
+export type SafetyLevel = "concern" | "crisis";
+export interface SafetyFlag {
+  level: SafetyLevel;
+  /** ComForce-tier only: Jordan's one-line note on what was said (already redacted). */
+  note?: string;
+  /** Resource names Jordan shared on the call, e.g. "988", "211", "Sojourner" */
+  resourcesShared: string[];
+  at: string;
+  leadPagedAt?: string;
+}
+
+export type FollowUpStatus = "waiting_sms" | "calling" | "answered" | "confirmed" | "partial" | "reopened" | "no_answer";
+export interface FollowUp {
+  status: FollowUpStatus;
+  /** Language the callback is made in */
+  language: string;
+  startedAt: string;
+  answeredAt?: string;
+  call?: CallRecord;
+}
+
+export const LANGUAGE_LABEL: Record<string, string> = { en: "English", es: "Español", hmn: "Hmoob · Hmong", other: "Other" };
 
 export type DispatchStatus = "calling" | "accepted" | "declined" | "no_answer" | "ready" | "picked_up";
 
@@ -202,6 +233,7 @@ export interface StructuredIntake {
   redactions: { kind: "name" | "phone" | "address" | "email" | "other"; placeholder: string }[];
   /** Whether the LLM produced these fields or the keyword rules did */
   source?: "llm" | "rules";
+  safety?: SafetyLevel;
 }
 
 export interface Snapshot {
