@@ -1,9 +1,10 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Users, Search, ShieldCheck, Clock, MapPin, CheckCircle2, Plus, Gauge, Phone } from "lucide-react";
+import { Users, Search, Clock, MapPin, CheckCircle2, Plus, Gauge, Phone } from "lucide-react";
 import { AppShell, Btn } from "@/components/AppShell";
 import { StatCard } from "@/components/ui/StatCard";
 import { NeedChip, Avatar } from "@/components/ui/Chip";
+import { PartnerBadge, PartnerSources } from "@/components/ui/PartnerProvenance";
 import { useSnapshot } from "@/lib/client/useSnapshot";
 import { useMe } from "@/lib/client/me";
 import { computeStats } from "@/lib/stats";
@@ -35,23 +36,24 @@ export default function PartnersPage() {
       const load = Math.min(100, Math.round((active / Math.max(1, active + p.capacity)) * 100));
       return { p, active, verified, handled: mine.length, load };
     })
-    .sort((a, b) => b.p.capacity - a.p.capacity);
+    .sort((a, b) => Number(!!b.p.isReal) - Number(!!a.p.isReal) || b.p.capacity - a.p.capacity);
 
   const totalCapacity = partners.reduce((s, p) => s + p.capacity, 0);
   const activeAll = requests.filter((r) => r.status === "claimed" || r.status === "in_progress").length;
   const unclaimed = requests.filter((r) => r.status === "new").length;
+  const realCount = partners.filter((p) => p.isReal).length;
 
   return (
     <AppShell
       title={<>Partner Network <span className="chip chip-soft bg-brand-soft text-brand">{partners.length} orgs</span></>}
-      subtitle="Who can take what, right now. Capacity is self-reported weekly and shown to the whole network."
+      subtitle={`Who can take what, right now. ${realCount} real organizations from public sources; the rest are fictional demo partners. All capacity figures are simulated.`}
       badge={unclaimed}
       me={me.name}
       actions={<><Btn variant="solid" href="mailto:?subject=Join%20Relay%20MKE%20as%20a%20partner&body=ComForce%20MKE%20invites%20your%20organization%20to%20the%20Relay%20MKE%20partner%20network."><Plus size={15} /> Invite partner</Btn><Btn href="/impact">View outcomes</Btn></>}
     >
       <div className="grid grid-cols-5 gap-3.5 mb-5">
-        <StatCard icon={<Users size={14} />} label="Verified Partners" value={partners.length} sub="MOU signed, contact verified" />
-        <StatCard icon={<Gauge size={14} />} label="Open Capacity" value={totalCapacity} sub="slots available this week" tint="green" />
+        <StatCard icon={<Users size={14} />} label="Partners" value={partners.length} sub={`${realCount} real · ${partners.length - realCount} fictional demo`} />
+        <StatCard icon={<Gauge size={14} />} label="Open Capacity" value={totalCapacity} sub="simulated slots this week" tint="green" />
         <StatCard icon={<Clock size={14} />} label="Active Assignments" value={activeAll} sub="claimed or in progress" tint="blue" />
         <StatCard icon={<CheckCircle2 size={14} />} label="Resident-Verified" value={`${stats.verifiedPct}%`} bar={stats.verifiedPct} />
         <StatCard icon={<MapPin size={14} />} label="Neighborhoods Covered" value={stats.neighborhoodCount} sub="of 15 focus areas" tint="purple" />
@@ -81,17 +83,18 @@ export default function PartnersPage() {
                 <Avatar name={p.name} />
                 <div>
                   <div className="text-[14px] font-semibold leading-tight">{p.name}</div>
-                  <div className="mt-0.5 flex items-center gap-1 text-[11.5px] text-muted"><ShieldCheck size={11} className="text-green" /> Verified {p.verifiedAt ? new Date(p.verifiedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""}</div>
+                  <div className="mt-1"><PartnerBadge partner={p} size="sm" /></div>
                 </div>
               </div>
-              <span className={`chip chip-soft ${p.capacity <= 2 ? "bg-red-soft text-red" : p.capacity <= 5 ? "bg-orange-soft text-orange" : "bg-green-soft text-green"}`}>{p.capacity} open</span>
+              <span className={`chip chip-soft shrink-0 ${p.capacity <= 2 ? "bg-red-soft text-red" : p.capacity <= 5 ? "bg-orange-soft text-orange" : "bg-green-soft text-green"}`} title={p.capacitySimulated ? "Simulated for the demo" : undefined}>{p.capacity} open{p.capacitySimulated ? " · simulated" : ""}</span>
             </div>
 
             <div className="mt-3 flex flex-wrap gap-1">{p.needs.map((n) => <NeedChip key={n} need={n} />)}</div>
+            {p.isReal && <div className="mt-3"><PartnerSources partner={p} /></div>}
 
             <div className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-[12.5px] space-y-1">
-              <div className="flex justify-between gap-3"><span className="flex items-center gap-1.5 text-ink-2"><MapPin size={12} /> Serves</span><span className="font-medium text-right truncate">{p.neighborhoods.join(", ")}</span></div>
-              <div className="flex justify-between gap-3"><span className="flex items-center gap-1.5 text-ink-2"><Clock size={12} /> Hours</span><span className="font-medium">{p.hours}</span></div>
+              <div className="flex justify-between gap-3"><span className="flex items-center gap-1.5 text-ink-2"><MapPin size={12} /> Serves</span><span className="font-medium text-right truncate">{p.neighborhoods.length ? p.neighborhoods.join(", ") : <span className="text-muted font-normal">Not listed in sources</span>}</span></div>
+              <div className="flex justify-between gap-3"><span className="flex items-center gap-1.5 text-ink-2"><Clock size={12} /> Hours</span><span className="font-medium">{p.hours ?? <span className="text-muted font-normal">Not listed</span>}</span></div>
               <div className="flex justify-between gap-3"><span className="flex items-center gap-1.5 text-ink-2"><CheckCircle2 size={12} /> Handled</span><span className="font-medium">{handled} <span className="text-muted">· {verified} verified</span></span></div>
             </div>
 
