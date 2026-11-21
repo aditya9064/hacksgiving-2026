@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { intake } from "./actions";
+import { intake, flagSafety } from "./actions";
 import { sendSms, CODE_TEXT } from "./sms";
 import { redactPII } from "./ai/redact";
 import { summarizeCall, structureIntake } from "./ai";
@@ -16,6 +16,13 @@ export interface CallToolInput {
   callback_ok?: boolean | string;
   callback_number?: string;
   language?: string;
+  /** Jordan sets this when the caller describes risk to themselves or others */
+  safety_concern?: boolean | string;
+  safety_level?: "concern" | "crisis" | string;
+  /** One neutral sentence on what was said, no names */
+  safety_note?: string;
+  /** Which crisis lines Jordan read out, e.g. ["988","sojourner"] */
+  resources_shared?: string[] | string;
 }
 
 const yes = (v: unknown) => v === true || /^(true|yes|y|1)$/i.test(String(v ?? ""));
@@ -47,10 +54,16 @@ export async function createRequestFromCall(input: CallToolInput): Promise<{ req
 
   let updated = (await db.updateRequest(request.id, patch, { actor: "ai", type: "call", text: "Phone intake in progress — created live during the call" })) ?? request;
 
+  if (yes(input.safety_concern) || input.safety_level === "crisis" || input.safety_level === "concern") {
+    const level = input.safety_level === "crisis" ? "crisis" : "concern";
+    const shared = Array.isArray(input.resources_shared) ? input.resources_shared : String(input.resources_shared ?? "").split(/[,\s]+/).filter(Boolean);
+    updated = (await flagSafety(updated.id, level, text, input.safety_note, shared.map((k) => k.toLowerCase()))) ?? updated;
+  }
+
   // Text the code so nobody has to memorize it over the phone; the same number is the reply channel.
   let texted = false;
   if (contactRef) {
-    const r = await sendSms(contactRef, CODE_TEXT(updated.shortCode));
+    const r = await sendSms(contactRef, CODE_TEXT(updated.shortCode, updated.language));
     texted = r.ok;
     const note = r.ok ? `Tracking code texted to the resident${r.mocked ? " (mock SMS)" : ""}` : `Could not text code: ${r.error}`;
     updated = (await db.updateRequest(updated.id, {}, { actor: "system", type: "sms_out", text: note })) ?? updated;

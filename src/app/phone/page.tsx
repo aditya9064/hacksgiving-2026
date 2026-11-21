@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, ArrowUp, Battery, ChevronLeft, Info, Phone, Signal, Trash2, Wifi } from "lucide-react";
+import { ArrowLeft, ArrowUp, Battery, ChevronLeft, Info, Phone, PhoneOff, Signal, Trash2, Wifi } from "lucide-react";
 import { Logo } from "@/components/ui/Logo";
 import { useSnapshot } from "@/lib/client/useSnapshot";
 
@@ -66,6 +66,13 @@ export default function ResidentPhone() {
 
   const groups = useMemo(() => groupByDay(msgs), [msgs]);
 
+  // Jordan's call-back after delivery: show the incoming call over the thread while it's live, then briefly after it ends.
+  const fu = latestReq?.followUp;
+  const [, tick] = useState(0);
+  useEffect(() => { const t = setInterval(() => tick((n) => n + 1), 1000); return () => clearInterval(t); }, []);
+  const endedAgo = fu?.call?.endedAt ? Date.now() - new Date(fu.call.endedAt).getTime() : Infinity;
+  const showCall = fu && (fu.status === "calling" || fu.status === "answered" || (fu.call?.endedAt && endedAgo < 6000));
+
   return (
     <div className="min-h-screen bg-bg">
       {AGENT_ID && <Script src="https://unpkg.com/@elevenlabs/convai-widget-embed" strategy="afterInteractive" />}
@@ -79,6 +86,29 @@ export default function ResidentPhone() {
 
       <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-10 px-6 pb-16 lg:grid-cols-[380px_1fr]">
         <Frame>
+          <AnimatePresence>
+            {showCall && fu && (
+              <motion.div key="call" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="absolute inset-0 z-10 flex flex-col bg-[#0f172a] text-white">
+                <div className="flex flex-col items-center px-6 pt-10">
+                  <div className={`grid h-16 w-16 place-items-center rounded-full ${fu.status === "calling" ? "bg-brand animate-pulse" : "bg-brand"}`}><span className="text-[22px] font-bold">R</span></div>
+                  <div className="mt-3 text-[18px] font-bold">Relay MKE</div>
+                  <div className="text-[12.5px] text-white/70">Jordan · ComForce{fu.language === "es" ? " · Español" : fu.language === "hmn" ? " · Hmoob interpreter" : ""}</div>
+                  <div className="mt-1 text-[12px] text-white/60">{fu.status === "calling" ? "Incoming call…" : fu.call?.endedAt ? "Call ended" : callTimer(fu.call?.transcript.at(-1)?.t)}</div>
+                </div>
+                <div className="mt-4 flex-1 space-y-2 overflow-y-auto px-3 pb-3 text-[13px] leading-snug">
+                  {fu.status === "calling" && <p className="mt-10 text-center text-[12px] text-white/50">Picking up automatically — this is the simulated line</p>}
+                  {fu.call?.transcript.map((t, i) => (
+                    <motion.div key={i} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className={`flex ${t.role === "caller" ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[82%] rounded-2xl px-3 py-2 ${t.role === "caller" ? "rounded-br-md bg-brand text-white" : "rounded-bl-md bg-white/10 text-white"}`}>{t.text}</div>
+                    </motion.div>
+                  ))}
+                  {fu.status === "answered" && !fu.call?.endedAt && <div className="flex"><div className="rounded-2xl rounded-bl-md bg-white/10 px-3.5 py-2.5"><span className="dots"><i /><i /><i /></span></div></div>}
+                  {fu.call?.endedAt && <div className="mt-2 text-center text-[12px] text-green-300">✓ You told Jordan the help arrived</div>}
+                </div>
+                <div className="flex justify-center pb-8"><span className={`grid h-12 w-12 place-items-center rounded-full ${fu.call?.endedAt ? "bg-white/20" : "bg-red"}`}><PhoneOff size={20} /></span></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="flex items-center gap-2 border-b border-line bg-surface/90 px-3 pb-2 pt-1 backdrop-blur">
             <ChevronLeft size={20} className="text-brand" />
             <div className="flex flex-1 flex-col items-center">
@@ -115,6 +145,7 @@ export default function ResidentPhone() {
                 <Quick onClick={() => send("3")}>3 · no, it didn't</Quick>
               </>}
               {msgs.length === 0 && <Quick onClick={() => send("Hi, we're out of food until Friday and I have 3 kids. We're near 35th and Burleigh.")}>Text a request</Quick>}
+              {msgs.length === 0 && <Quick onClick={() => send("Hola, necesito ayuda. No tenemos comida hasta el viernes y tengo 3 niños. Estamos cerca de Cesar Chavez y National.")}>Enviar en español</Quick>}
             </div>
             <form onSubmit={(e) => { e.preventDefault(); send(); }} className="flex items-center gap-2">
               <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Text Message · SMS" className="h-9 flex-1 rounded-full border border-line bg-bg px-3.5 text-[14px] outline-none focus:border-brand" />
@@ -178,10 +209,15 @@ export default function ResidentPhone() {
   );
 }
 
+function callTimer(lastT?: number) {
+  const s = Math.round((lastT ?? 0) + 8);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 function Frame({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto w-[360px] h-[720px] rounded-[40px] bg-[#111827] p-[10px] shadow-[0_30px_60px_-20px_rgba(0,0,0,.35)]">
-      <div className="flex h-full w-full flex-col overflow-hidden rounded-[32px] bg-bg">
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-[32px] bg-bg">
         <div className="flex items-center justify-between bg-surface/90 px-6 pt-3 pb-1 text-[11px] font-semibold"><span>9:41</span><span className="flex items-center gap-1 text-ink-2"><Signal size={12} /><Wifi size={12} /><Battery size={14} /></span></div>
         {children}
       </div>

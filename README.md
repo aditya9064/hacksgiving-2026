@@ -21,7 +21,7 @@ Every one of ComForce's eight divisions runs the same loop: **intake → coordin
 | Hackathon track | Relay module |
 | --- | --- |
 | Information Sharing & Coordination | **Partner Network + Dispatch**: shared directory, live capacity, consent-scoped handoffs — one click and the AI agent **calls and emails the partner**, records their answer live, then hands the volunteer a **GPS run sheet** (pickup → resident) |
-| Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web intake **and a phone line answered by a human-sounding AI agent** that logs the request live and reads back a tracking code; claim-to-own; *resident confirms help arrived* |
+| Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web intake **and a phone line answered by a human-sounding AI agent** (English + Spanish; Hmong routed to a Hmong-speaking partner) that logs the request live and reads back a tracking code; claim-to-own; *resident confirms help arrived* — by text, or **Jordan calls them back in their language** if they don't reply |
 | Data Collection & Impact Measurement | **Field Log + Impact Studio**: voice-note activity logs, live dashboard, one-click funder report, full export |
 | Community Awareness & Decision Support | **Neighborhood Pulse**: map of needs and unmet needs, never people |
 | Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
@@ -54,6 +54,8 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 - 🧑‍⚖️ AI drafts, humans decide
 - 📦 ComForce owns and can export all of its data
 - 🧪 Synthetic data only
+- 🆘 Safety first: when a caller describes abuse, a weapon or thoughts of self-harm, the agent shares 988 / Milwaukee County Crisis Line / Sojourner / 2-1-1, flags the case **Crisis** and pages the ComForce lead — partners see the need, never the details
+- 🌐 Serves Milwaukee in English and Spanish today; Hmong callers are handled honestly (no fake fluency) and routed to Hmong-speaking partners
 
 ## Repository structure
 

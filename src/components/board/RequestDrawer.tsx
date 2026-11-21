@@ -1,14 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, PhoneOutgoing, Mail, Navigation, Check, XCircle, Clock, PackageCheck } from "lucide-react";
+import { X, ShieldCheck, Send, CheckCheck, HandHelping, MessageSquareReply, Bot, User, Cpu, RotateCcw, Phone, ChevronDown, PhoneOutgoing, Mail, Navigation, Check, XCircle, Clock, PackageCheck, Siren, Languages, PhoneIncoming } from "lucide-react";
 import type { ActivityEvent, Partner } from "@/lib/types";
 import { act, type SafeRequest } from "@/lib/client/useSnapshot";
-import { STATUS_LABEL } from "@/lib/types";
+import { STATUS_LABEL, LANGUAGE_LABEL } from "@/lib/types";
 import { Avatar, NeedChip, UrgencyDot } from "../ui/Chip";
 
 const ACTOR_ICON = (actor: string, type?: string) =>
   type === "email_out" ? <Mail size={11} /> : type === "dispatch" ? <PhoneOutgoing size={11} /> : actor === "ai" ? <Cpu size={12} /> : actor === "system" ? <Bot size={12} /> : actor === "resident" ? <MessageSquareReply size={12} /> : <User size={12} />;
+
+/** Need overlap first; a partner that speaks the resident's language outranks one that doesn't. */
+function score(p: Partner, r: SafeRequest) {
+  const overlap = p.needs.filter((n) => r.needs.includes(n)).length;
+  const lang = r.language && r.language !== "en" ? (p.languages?.includes(r.language) ? 2 : -1) : 0;
+  return overlap + lang;
+}
 
 export function RequestDrawer({ request, partners, onClose, me }: { request: SafeRequest | null; partners: Partner[]; onClose: () => void; me: { name: string; org: string; partnerId?: string } }) {
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
@@ -41,7 +48,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
   const suggested = request
     ? partners
         .filter((p) => p.id !== me.partnerId && p.name !== me.org && p.capacity > 0 && p.needs.some((n) => request.needs.includes(n)))
-        .sort((a, b) => b.needs.filter((n) => request.needs.includes(n)).length - a.needs.filter((n) => request.needs.includes(n)).length || b.capacity - a.capacity)
+        .sort((a, b) => score(b, request) - score(a, request) || b.capacity - a.capacity)
         .slice(0, 3)
     : [];
 
@@ -57,7 +64,7 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                   <span>{request.shortCode}</span>·<span className="uppercase">{STATUS_LABEL[request.status]}</span>·<UrgencyDot urgency={request.urgency} withLabel />
                 </div>
                 <h2 className="text-[19px] font-bold leading-snug mt-1.5">{request.summary}</h2>
-                <div className="mt-2 flex flex-wrap gap-1">{request.needs.map((n) => <NeedChip key={n} need={n} />)}</div>
+                <div className="mt-2 flex flex-wrap gap-1">{request.needs.map((n) => <NeedChip key={n} need={n} />)}{request.language && request.language !== "en" && <span className="chip inline-flex items-center gap-1 bg-[#ede9fe] text-[#6d28d9]"><Languages size={10} /> {LANGUAGE_LABEL[request.language] ?? request.language}</span>}</div>
               </div>
               <button onClick={onClose} className="p-1.5 text-muted hover:text-ink"><X size={18} /></button>
             </div>
@@ -69,29 +76,43 @@ export function RequestDrawer({ request, partners, onClose, me }: { request: Saf
                 <div className="mt-3 flex items-center gap-1.5 text-[11.5px] text-brand"><ShieldCheck size={13} /> Identifiers removed before AI. Contact details {request.hasContact ? "held in the ComForce-only tier" : "not provided"}.</div>
               </section>
 
+              {request.safety && (
+                <section className="card p-4 !border-red/40 bg-red/5">
+                  <div className="flex items-center justify-between">
+                    <div className="label flex items-center gap-1.5 text-red"><Siren size={12} /> {request.safety.level === "crisis" ? "Crisis" : "Safety concern"} · ComForce-only</div>
+                    {request.safety.leadPagedAt && <span className="text-[11px] font-semibold text-red">On-call lead paged</span>}
+                  </div>
+                  {request.safety.note && <p className="mt-2 text-[13.5px] leading-snug text-ink">{highlight(request.safety.note)}</p>}
+                  <div className="mt-2 text-[12.5px] text-ink-2">{request.channel === "voice" ? "Jordan shared on the call" : "Resources texted back"}: <b className="text-ink">{request.safety.resourcesShared.join(" · ")}</b></div>
+                  <div className="mt-1.5 text-[11.5px] text-muted">Partners see the need and neighborhood only. Follow ComForce's safety protocol before any visit.</div>
+                </section>
+              )}
+
               {request.call && <CallSection call={request.call} />}
 
               <section className="card grid grid-cols-2 gap-3 p-4 text-[13px]">
                 <Field k="Neighborhood" v={request.neighborhood} />
                 <Field k="Household" v={request.householdSize ? `${request.householdSize} people` : "—"} />
                 <Field k="Channel" v={request.channel.toUpperCase()} />
-                <Field k="Language" v={request.language === "es" ? "Spanish" : request.language === "hmn" ? "Hmong" : "English"} />
+                <Field k="Language" v={LANGUAGE_LABEL[request.language ?? "en"] ?? request.language ?? "English"} />
                 <Field k="Owner" v={request.ownerName ? `${request.ownerName} · ${request.ownerOrg}` : "Unclaimed"} />
                 <Field k="Consent to share" v={request.consentToShare ? "Yes, with partners" : "ComForce only"} />
               </section>
 
               {request.dispatch && <DispatchSection request={request} partner={partners.find((p) => p.id === request.dispatch!.partnerId)} />}
+              {request.followUp && <FollowUpSection request={request} />}
 
               {(!request.dispatch || request.dispatch.status === "declined" || request.dispatch.status === "no_answer") && (request.status === "new" || request.status === "claimed") && suggested.length > 0 && (
                 <section>
                   <div className="text-[13.5px] font-semibold mb-0.5">Connect to a partner</div>
-                  <div className="text-[12px] text-muted mb-2">Jordan calls their line and emails a name-free brief. You pick up and deliver.</div>
+                  <div className="text-[12px] text-muted mb-2">Jordan calls their line and emails a name-free brief. You pick up and deliver.{request.language && request.language !== "en" ? ` Partners who speak ${LANGUAGE_LABEL[request.language] ?? request.language} are listed first.` : ""}</div>
                   <div className="space-y-2">
                     {suggested.map((p) => (
                       <div key={p.id} className="card flex items-center justify-between p-3">
                         <div>
                           <div className="text-[13.5px] font-semibold">{p.name}</div>
                           <div className="text-[11.5px] text-muted">{p.hours} · {p.capacity} open slots{p.address ? ` · ${p.address}` : ""}</div>
+                          {request.language && request.language !== "en" && p.languages?.includes(request.language) && <div className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-[#6d28d9]"><Languages size={10} /> Speaks {LANGUAGE_LABEL[request.language]}</div>}
                         </div>
                         <button disabled={busy} onClick={() => setConfirm(p)} className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[12px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><PhoneOutgoing size={13} /> Connect</button>
                       </div>
@@ -219,6 +240,54 @@ function CallSection({ call }: { call: NonNullable<SafeRequest["call"]> }) {
   );
 }
 
+
+function FollowUpSection({ request }: { request: SafeRequest }) {
+  const f = request.followUp!;
+  const [open, setOpen] = useState(false);
+  const live = f.status === "calling" || f.status === "answered";
+  const lang = LANGUAGE_LABEL[f.language] ?? f.language;
+  const closed = f.status === "confirmed" || f.status === "partial" || f.status === "reopened";
+  return (
+    <section className={`card p-4 ${live ? "!border-brand/30" : closed ? "!border-green/40" : ""}`}>
+      <div className="flex items-center justify-between">
+        <div className="label flex items-center gap-1.5"><PhoneIncoming size={12} className="text-brand" /> Closing the loop · resident</div>
+        {live && <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand"><span className="h-2 w-2 rounded-full bg-brand blink" /> Jordan is calling back</span>}
+        {f.status === "waiting_sms" && <span className="text-[11px] font-semibold text-muted">Waiting for a text reply</span>}
+      </div>
+      <div className="mt-3 space-y-2 text-[13px]">
+        {f.status === "waiting_sms" && <p className="text-ink-2">"Did it arrive?" text sent{f.language !== "en" ? ` in ${lang}` : ""}. If there's no reply, Jordan calls the resident back automatically.</p>}
+        {f.status === "calling" && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-brand blink" /> No reply by text · ringing the resident{f.language !== "en" ? ` · ${lang}` : ""}…</p>}
+        {f.status === "answered" && <p className="text-ink-2 inline-flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-red blink" /> <span>Resident picked up · Jordan is asking{f.language !== "en" ? ` in ${lang}` : ""} whether the help arrived</span></p>}
+        {f.call && !f.call.endedAt && f.call.transcript.length > 0 && (
+          <ol className="space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+            {f.call.transcript.map((t, i) => (
+              <li key={i} className="flex gap-2"><span className={`w-[62px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Jordan" : "Resident"}</span><span className="text-ink-2">{t.text}</span></li>
+            ))}
+            <li className="flex gap-2 text-muted"><span className="w-[62px] shrink-0" /><span className="blink">…</span></li>
+          </ol>
+        )}
+        {closed && (
+          <div className={`flex items-center gap-1.5 rounded-lg p-3 text-[13px] font-semibold ${f.status === "reopened" ? "bg-red/5 text-red" : "bg-green-soft text-green"}`}>
+            {f.status === "reopened" ? <RotateCcw size={14} /> : <Check size={14} />} {f.status === "confirmed" ? "Resident confirmed the help arrived" : f.status === "partial" ? "Resident: partly arrived" : "Resident: it did not arrive · reopened"}{f.call ? ` · by phone${f.language !== "en" ? ` in ${lang}` : ""}` : " · by text"}
+          </div>
+        )}
+        {f.call?.summary && <p className="text-[13.5px] leading-[1.5] text-ink">{f.call.summary}</p>}
+        {f.call?.endedAt && f.call.transcript.length > 0 && (
+          <div>
+            <button onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 text-[12px] font-medium text-brand hover:underline"><ChevronDown size={13} className={`transition ${open ? "rotate-180" : ""}`} /> {open ? "Hide" : "Show"} call-back · {f.call.transcript.length} turns</button>
+            {open && (
+              <ol className="mt-2 space-y-1.5 rounded-lg bg-surface-2 p-3 text-[12.5px] leading-snug">
+                {f.call.transcript.map((t, i) => (
+                  <li key={i} className="flex gap-2"><span className={`w-[62px] shrink-0 font-semibold ${t.role === "agent" ? "text-brand" : "text-ink"}`}>{t.role === "agent" ? "Jordan" : "Resident"}</span><span className="text-ink-2">{t.text}</span></li>
+                ))}
+              </ol>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 const DISPATCH_STEPS = ["calling", "accepted", "ready", "picked_up"] as const;
 
