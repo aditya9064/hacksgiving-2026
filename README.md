@@ -43,7 +43,7 @@ Run locally: `cd src && npm install && npm run dev`. No keys required; OpenAI, S
 
 ## Research behind it
 
-We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI Chicago, Oakland Ceasefire, Glasgow VRU, the Cardiff Model, Unite Us, findhelp, CAHOOTS, Denver STAR, Ushahidi, Crisis Cleanup, and others), as well as police systems: NYPD CompStat, CAD/RMS, ShotSpotter, and Chicago's discontinued "heat list." The analysis covers what they got right and where they failed.
+We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI Chicago, Oakland Ceasefire, Glasgow VRU, the Cardiff Model, Unite Us, findhelp, CAHOOTS, Denver STAR, Ushahidi, Crisis Cleanup, and others), as well as police systems: NYPD CompStat, CAD/RMS, ShotSpotter, and Chicago's discontinued "heat list." The analysis covers what they got right and where they failed. A ninth study traces how ComForce is actually funded (a City DCWS contract via MKE Promise Keepers) and what that funder is now being asked to prove — which is what the **Grants & Evidence** page answers.
 
 → [docs/research/](docs/research/README.md) · **[Consolidated lessons](docs/research/lessons-learned.md)**
 
@@ -64,7 +64,7 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 ├── README.md                     ← you are here
 ├── docs/
 │   ├── challenge/                ← official brief, ComForce profile, judging criteria
-│   ├── research/                 ← prior-art analysis (8 topics + lessons learned)
+│   ├── research/                 ← prior-art analysis (9 topics + lessons learned)
 │   ├── brainstorm/               ← idea longlist, scoring matrix, recommended concept
 │   ├── product/                  ← product spec & build schedule
 │   ├── assets/                   ← diagrams (SVG) and app screenshots

@@ -17,6 +17,7 @@ Copy `.env.example` to `.env.local` to enable an LLM (Anthropic or OpenAI), Supa
 | `/board` | Coordinators | Relay Board: live request queue (kanban or sortable table), claim-to-own, notes, mark delivered, resident verification timeline |
 | `/partners` | Coordinators | Partner Network: capacity, needs served, load, verified dates |
 | `/impact` | Directors / funders | Impact Studio: KPIs, needs breakdown, pipeline, partner outcomes, one-click funder narrative, CSV export |
+| `/grants` | Directors / funders | Grants & Evidence: resources delivered per DCWS *Countdown* cluster (26 clusters, action-calendar CSV), funder-fit scoring against 8 real Milwaukee funders with a readiness checklist, and Claude-drafted application sections + logic model + platform unit cost, exported to Word. Every figure traces to a request |
 | `/pulse` | Community / city | Neighborhood Pulse: aggregated density map, ranked neighborhoods, emerging signals. Counts only, never people |
 | `/guide` | Responders | Field Guide: ComForce playbooks + "Ask the Guide" Q&A grounded in them |
 | `/m` | Responders (phone) | Phone view: claim and close requests, plus an SMS simulator for the demo |
@@ -102,7 +103,9 @@ With `NEXT_PUBLIC_ELEVENLABS_FOLLOWUP_AGENT_ID` set (the third agent from `tools
 ```
 app/            routes + API handlers
 components/     AppShell (sidebar/topbar), board/, ui/
-lib/ai/         structuring, redaction, narrative, guide Q&A (Claude/OpenAI via llm.ts, or rules)
+lib/ai/         structuring, redaction, narrative, guide Q&A, grant drafting (Claude/OpenAI via llm.ts, or rules)
+lib/clusters.ts DCWS "This Is Our City: The Countdown" 26 clusters (approx. centroids) + per-cluster stats
+lib/grants.ts   funders, readiness requirements, fit scoring, logic model, unit economics, de-identified story
 lib/db/         store + synthetic seed (in-memory or Supabase)
 lib/actions.ts  domain actions shared by web, SMS and phone views
 ```
