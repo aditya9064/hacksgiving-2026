@@ -25,7 +25,7 @@ Slides 4–5 share one rhythm, shown by the pill top-right: **Today → With Rel
 | 7 | The journey · the call | — | Four drawn scenes on one line: the resident's phone calling, Jordan answering, the tracking-code text, the status reply. Plays on arrival |
 | 8 | The journey · the work | — | The card landing on the board, the drafted tasks, Jordan's call to a partner, the run sheet with its map and pickup note ("side door on W Lisbon Ave · ask for Denise") |
 | 9 | The journey · the proof | — | "Mark delivered", the "did the help arrive?" text, Jordan's call-back, and the card turning teal: verified by the resident. The scenes are drawings of the app's screens; the quoted texts and the pickup note are the app's own wording. The line runs off one slide and onto the next, and a stepper at the top right shows which of the three you are on |
-| 10 | Demo | — | Hand-off to live demo. **V** plays `demo-backup.mp4` if it exists |
+| 10 | Demo | 2 | Plays the recording, `presentation/demo-backup.mp4` (1 min 49 s). First press plays it full screen from the start; the next press leaves full screen and moves on. ← while it plays stops it and re-arms the slide. The clock pauses on this slide |
 | 11 | Cost — $1.68 | 2 | Price counts up with the real cost split; then 223 squares fill in, one per year of Relay that a year of findhelp enterprise ($75,000) would pay for |
 | 12 | Closing | — | Arrives through a hand-off: two hands draw in from either side (one coral, one white), clasp, turn teal, and the view moves through the grip into the slide (about 3.5 s; a press skips it, back cancels it). Left half: "Thank you." in the title slide's two typefaces. Right half: "Care is not measured by how many we reach. It is measured by how many we don't lose.", and beneath it the challenge answered in three lines (one record, coordinated action, measurable impact) |
 
@@ -48,7 +48,7 @@ Type: Inter Tight (display) and Instrument Serif Italic (emphasis), both SIL Ope
 | N | Speaker notes overlay (the script for this slide) |
 | P | Open the presenter view in a second window. The two windows stay in step: a press in either one moves both |
 | `?presenter` in the URL | The presenter view on its own, for rehearsing: deck on the left with the **speaker notes** under it (the whole script for that slide, the part to say now in white, then the next slide's script); on the right the same line in large type, the clock, and the time you should have left when you leave each slide |
-| V | Play `../demo-backup.mp4` on slide 10 |
+| V | Play or pause the recording on slide 10 without going full screen |
 | F | Fullscreen |
 | `#7` in the URL | Deep-link to a slide with everything revealed |
 

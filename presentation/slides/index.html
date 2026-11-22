@@ -1072,14 +1072,14 @@
 
   <!-- 11 DEMO VIDEO -->
   <section class="slide" data-beat="125" data-notes="Demo. Resident calls from a seat in the room; Jordan logs it; a coordinator claims and dispatches; the resident confirms. If the live call fails, press V to play the recording.">
-    <div class="k"><span class="n">Demo</span><span class="sep"></span>two minutes, first ring to “yes, it arrived” <span class="tag live">live</span></div>
-    <h2>A resident is about to call ComForce from a seat in this room.</h2>
+    <div class="k"><span class="n">Demo</span><span class="sep"></span>one request, recorded on the running app <span class="tag">1 min 49 s</span></div>
+    <h2>Watch one request <em>for real.</em></h2>
     <div class="vid" id="vid">
-      <video id="demovid" src="../demo-backup.mp4" preload="metadata" playsinline controls controlsList="nodownload"></video>
+      <video id="demovid" src="../demo-backup.mp4" poster="img/demo-poster.jpg" preload="metadata" playsinline controls controlsList="nodownload"></video>
       <div class="ph">
         <div class="play"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></div>
-        <b>Demo video</b>
-        <span>Backup if the live call fails. Drop <code>presentation/demo-backup.mp4</code> next to this folder and press <code>V</code>.</span>
+        <b>Demo recording</b>
+        <span>1 min 49 s, recorded on the running app. In the deck, press <code>→</code> to play it full screen and <code>→</code> again to move on. The file is <code>presentation/demo-backup.mp4</code>.</span>
       </div>
     </div>
   </section>
@@ -1209,7 +1209,7 @@
     '#jwork':   ['The work', `A ComForce worker sees the card, with tasks already drafted. Jordan phones a partner, and the run sheet says exactly where to go and who to ask for.`],
     '#jproof':  ['The proof', `But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it.`],
     '#stack':   ['How it is built', `→ A call becomes a record ComForce owns. → Every screen reads it. → And the resident closes the loop.`],
-    '#demovid': ['Demo', `Now watch it for real: who asked, who delivered, and the resident's own answer. [play the demo; the clock is paused]`],
+    '#demovid': ['Demo', `Now watch it for real: who asked, who delivered, and Jordan calling back to check. [press → to play the recording; the clock is paused. Press → again when it ends]`],
     '#yrs':     ['Cost', `→ Everything you just watched cost one dollar sixty-eight. → A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.`],
     '.thanks':  ['Closing', `[say this over the hands] Care is not measured by how many we reach. It is measured by how many we don't lose. Thank you.`],
   };
@@ -1390,10 +1390,11 @@
     // A press during the hand-off skips straight to the closing slide.
     if (handing) { endHandoff(); if (i !== slides.length-1) show(slides.length-1); return; }
     // The demo slide: press once to play full screen, again to come back out and move on.
-    const demo = slides[i].querySelector('#demovid') && !presenting ? slides[i] : null;
+    // Both windows count these two presses the same way, so they stay in step; only the audience window plays.
+    const demo = slides[i].querySelector('#demovid') ? slides[i] : null;
     if (demo) {
       if (vidFs) demoStop();
-      else if (!demo.dataset.demoPlayed && demovid.readyState) { demo.dataset.demoPlayed = '1'; demoPlayFull(); return; }
+      else if (!demo.dataset.demoPlayed && demovid.readyState) { demo.dataset.demoPlayed = '1'; if (!presenting) demoPlayFull(); pv(); return; }
     }
     const s = slides[i], hidden = frags(s).filter(x => !x.classList.contains('on'));
     if (hidden.length) {
@@ -1411,8 +1412,8 @@
   }
   function prev(){
     if (handing) return endHandoff();
-    // Backing out of the video stays on the slide, ready to play it again.
-    if (vidFs) { demoStop(); delete slides[i].dataset.demoPlayed; return; }
+    // Backing out of the video stays on the slide, ready to play it again (in both windows).
+    if (slides[i].dataset.demoPlayed) { if (vidFs) demoStop(); else demovid.pause(); delete slides[i].dataset.demoPlayed; pv(); return; }
     if (i > 0) show(i-1, true);
   }
 
@@ -1455,7 +1456,7 @@
     document.getElementById('pvthen').innerHTML = nx ? `<b>Then · ${esc(titleOf(nx))}</b>${mark(nx.dataset.notes || '').replace(/→/g, '<i>→</i>')}` : '<b>End</b>Leave this slide up for questions.';
     const total = Math.round(planEnd.at(-1)), over = total > 120;
     document.getElementById('pvplan').innerHTML = `leave this slide with <b>${fmt(Math.round(120 - planEnd[i]))}</b> left<br><span class="${over ? 'bad' : ''}">script: ${fmt(total)} at ${WPM} wpm${over ? ', ' + fmt(total - 120) + ' over' : ''}</span>`;
-    document.getElementById('pvnext').textContent = press < pressTotal(s) ? `${pressTotal(s) - press} more press${pressTotal(s) - press === 1 ? '' : 'es'} on this slide` : i < slides.length-1 ? `next slide: ${titleOf(slides[i+1])}` : 'last slide: leave it up';
+    document.getElementById('pvnext').textContent = s.querySelector('#demovid') && demovid.readyState ? (s.dataset.demoPlayed ? 'the recording is playing (1:49) · press → when it ends' : 'press → to play the recording') : press < pressTotal(s) ? `${pressTotal(s) - press} more press${pressTotal(s) - press === 1 ? '' : 'es'} on this slide` : i < slides.length-1 ? `next slide: ${titleOf(slides[i+1])}` : 'last slide: leave it up';
   }
 
   // Two windows stay in step: every key press here is passed to the other window, which runs the same action.

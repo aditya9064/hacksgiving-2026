@@ -2,7 +2,7 @@
 
 This is the script to say aloud, in full sentences. The same words are in the deck: press **N** on any slide to see that slide's lines, or open the presenter view.
 
-**Length: 302 words. That is 2:37 at a slow pace (115 words a minute) and 2:09 at a normal speaking pace (140), before the slides' own animations. Your limit is 2:00, so as written this runs over.** Without slides 2, 4 and 5 it is 230 words: 2:00 slow, 1:38 normal. See "If you run long" at the end. Not yet timed aloud.
+**Length: 303 words. That is 2:38 at a slow pace (115 words a minute) and 2:09 at a normal speaking pace (140), before the slides' own animations. Your limit is 2:00, so as written this runs over.** Without slides 2, 4 and 5 it is 230 words: 2:00 slow, 1:38 normal. See "If you run long" at the end. Not yet timed aloud.
 
 **→** means press once. Say the words before a **→**, press, then say the words after it. Slides 7, 8 and 9 play by themselves when you arrive, so there is nothing to press on them.
 
@@ -50,7 +50,7 @@ But delivered is not the end. Relay asks the resident if the help came, and if t
 
 **Slide 10 — Demo**
 
-Now watch it for real: who asked, who delivered, and the resident's own answer. *(play the demo; the clock pauses by itself on this slide and starts again when you move on)*
+Now watch it for real: who asked, who delivered, and Jordan calling back to check. *(press **→** to play the recording full screen; the clock pauses by itself. Press **→** again when it ends. The recording stops as Jordan asks whether the help arrived; it does not show the resident's answer, and it has no sound after 0:41.)*
 
 ---
 
@@ -72,7 +72,7 @@ Care is not measured by how many we reach. It is measured by how many we don't l
 
 | They asked | You say | Slide |
 | --- | --- | --- |
-| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it only closes when the resident says help arrived" · "Only their yes closes it" · "who asked, who delivered, and the resident's own answer" | 1, 9, 10 |
+| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it only closes when the resident says help arrived" · "Only their yes closes it" · "who asked, who delivered, and Jordan calling back to check" | 1, 9, 10 |
 | Accessibility: "can frontline workers and community members use it easily?" | "one phone number… in English or Spanish" · "A resident calls from any phone" | 2, 7 |
 | Responsible technology; never identify or predict individuals; synthetic data only | "names, addresses and phone numbers are removed. A person makes every decision. We never score or predict anyone, and all our data is synthetic." | 6 |
 | "Retain access to their own data" | "…and ComForce owns its data." | 11 |
