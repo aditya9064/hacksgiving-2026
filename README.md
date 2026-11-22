@@ -4,7 +4,18 @@
 > A near-free, privacy-first system that helps [ComForce MKE](https://comforcemilwaukee.com/) and its partners turn scattered requests for help into coordinated action and **resident-verified, funder-ready impact**.
 
 **Event:** [Hacksgiving 2026: AI for Good](https://msoe-maic.com/library/?nav=Competitions&article=HacksGiving-ComForce-MKE-2026) · MSOE AI Club × ComForce MKE · Nov 19–22, 2026
-**Status:** 🚀 Working prototype — all seven surfaces built on synthetic data ([run it](src/README.md))
+**Team:** Team V
+**Status:** Working prototype on synthetic data ([run it](src/README.md))
+
+### Start here
+
+| | |
+| --- | --- |
+| Demo recording (1 min 49 s) | [presentation/demo-backup.mp4](presentation/demo-backup.mp4) |
+| Pitch deck | [presentation/slides/index.html](presentation/slides/index.html) (open in Chrome) · [PDF](presentation/Relay-MKE-pitch.pdf) |
+| Pitch script | [presentation/pitch-script.md](presentation/pitch-script.md) |
+| Run the app | [src/README.md](src/README.md) |
+| Playbook (PDF, 41 pages) | [docs/Relay-MKE-Playbook.pdf](docs/Relay-MKE-Playbook.pdf) |
 
 ---
 
@@ -22,9 +33,9 @@ Every one of ComForce's eight divisions runs the same loop: **intake → coordin
 | --- | --- |
 | Information Sharing & Coordination | **Partner Network + Dispatch**: shared directory, live capacity, consent-scoped handoffs — one click and the AI agent **calls and emails the partner**, records their answer live, then hands the volunteer a **GPS run sheet** (pickup → resident) |
 | Community Requests & Referrals | **Smart Intake → Relay Board → Verified Loop**: SMS/web intake **and a phone line answered by a human-sounding AI agent** (English + Spanish; Hmong routed to a Hmong-speaking partner) that logs the request live and reads back a tracking code; claim-to-own; *resident confirms help arrived* — by text, or **Jordan calls them back in their language** if they don't reply |
-| Data Collection & Impact Measurement | **Field Log + Impact Studio**: voice-note activity logs, live dashboard, one-click funder report, full export |
+| Data Collection & Impact Measurement | **Impact Studio + Grants & Evidence**: live dashboard, one-click funder report, evidence by City *Countdown* cluster, full export |
 | Community Awareness & Decision Support | **Neighborhood Pulse**: map of needs and unmet needs, never people |
-| Training & Knowledge Sharing | **Rapid Response Rooms + Field Guide**: per-case responder chat, direct service requests, AI over ComForce playbooks |
+| Training & Knowledge Sharing | **Field Guide**: ComForce playbooks written down once, and "Ask the Guide" answers grounded in them |
 
 📕 **Full playbook (PDF, 41 pages):** [docs/Relay-MKE-Playbook.pdf](docs/Relay-MKE-Playbook.pdf) · 📄 Product spec → [docs/product/spec.md](docs/product/spec.md) · 🗓 Build schedule → [docs/product/build-schedule.md](docs/product/build-schedule.md) · 🧠 Why this concept → [docs/brainstorm/recommended-concept.md](docs/brainstorm/recommended-concept.md)
 
@@ -71,23 +82,24 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 │   ├── decisions/                ← architecture decision records (ADRs)
 │   └── Relay-MKE-Playbook.pdf    ← everything above, as one PDF
 ├── src/                          ← Next.js app (see src/README.md)
-│   ├── app/                      ← 7 surfaces + API routes
+│   ├── app/                      ← staff, resident and partner screens + API routes
 │   ├── components/               ← AppShell, board, ui
 │   └── lib/                      ← ai (structure/redact/guide), db (store/seed), actions
 ├── tools/
 │   ├── build-pdf.sh              ← builds the playbook PDF
 │   └── voice/                    ← Jordan persona prompts (intake + partner dispatch) + ElevenLabs agent setup script
 ├── data/
+│   ├── public/                   ← public Milwaukee data (neighbourhood boundaries)
 │   └── synthetic/                ← synthetic demo data only
-└── presentation/                 ← 2:00 pitch: animated HTML deck, script, demo runbook, PDF
+└── presentation/                 ← pitch: animated HTML deck, script, demo recording, runbook, PDF
 ```
 
 ## Team
 
-| Name | Role |
+**Team V**
+
+| Name | GitHub |
 | --- | --- |
-| _TBD_ | |
-
-## License
-
-To be decided. An OSI-approved open-source license is planned so ComForce MKE and partners can adopt it freely.
+| Aditya Miriyala | [@aditya9064](https://github.com/aditya9064) |
+| Koushik Cherukuri | [@koushikch17](https://github.com/koushikch17) |
+| Khushal Lingamaneni | [@KhushalLingamaneni](https://github.com/KhushalLingamaneni) |
