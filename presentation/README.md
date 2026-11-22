@@ -1,13 +1,14 @@
 # Presentation
 
-4 minutes, hard stop: **2:00 pitch → 2:00 live demo.**
+4 minutes, hard stop: **about 2:10 of pitch around a 1:49 demo recording.**
 
 | File | What it is |
 | --- | --- |
 | [slides/index.html](slides/index.html) | The deck. One HTML file plus `slides/img/` and `slides/fonts/`, 13 slides, 1920×1080, scales to any screen. Works offline. Open in Chrome, press **F**. |
 | [Relay-MKE-pitch.pdf](Relay-MKE-pitch.pdf) | Static export of the deck (13 pages, every slide in its final state). Backup if the laptop dies. |
-| [pitch-script.md](pitch-script.md) | Word-for-word 2:00 script with beat timings matching the deck. |
-| [demo-runbook.md](demo-runbook.md) | The 2:00 demo, second by second: who does what, pre-flight checklist, what to do when something breaks. |
+| [demo-backup.mp4](demo-backup.mp4) | The demo recording (1 min 49 s) that slide 10 plays: one request from the resident's call to Jordan's call-back. |
+| [pitch-script.md](pitch-script.md) | Word-for-word script, with its length against the slot and what to cut if it runs long. |
+| [demo-runbook.md](demo-runbook.md) | For running the demo live instead of the recording: who does what, pre-flight checklist, what to do when something breaks. |
 | `slides/img/` | Real app screenshots used on slides; `slides/img/logos/` holds vendor logos for the stack slide. |
 
 ## Slide map
