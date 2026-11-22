@@ -103,4 +103,4 @@ We studied about 20 programs and platforms (Cure Violence, Advance Peace, READI 
 | Aditya Miriyala | [@aditya9064](https://github.com/aditya9064) |
 | Koushik Cherukuri | [@koushikch17](https://github.com/koushikch17) |
 | Khushal Lingamaneni | [@KhushalLingamaneni](https://github.com/KhushalLingamaneni) |
-| Thanvi | [@thanvi-g](https://github.com/thanvi-g) |
+| Thanvi Gorrepati | [@thanvi-g](https://github.com/thanvi-g) |
