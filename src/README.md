@@ -26,7 +26,7 @@ Copy `.env.example` to `.env.local` to enable an LLM (Anthropic or OpenAI), Supa
 | `/partner-line` | Demo / partner | The pantry's side of a handoff: Jordan's incoming call plays out live on the phone mock-up (ring → pickup → conversation → accepted), the emailed brief in an inbox, and what the call is about |
 | `/route/[id]` | Volunteer (phone) | Run sheet after a partner accepts: live GPS map you → pickup → resident, turn-by-turn, Picked up / Delivered, Google Maps handoff |
 
-**On a phone.** The staff screens lay themselves out for a handheld (a narrow window or a touch device; the `hand:` variant in `app/globals.css`). The side rail becomes a tab bar along the bottom. The board shows one status column at a time and you swipe between them. A request opens as a full-screen sheet with its main action (Claim, Mark delivered) pinned at the bottom and the coordinator tools scrolling with the rest. The other pages stack into one column. Nothing changes on a desktop.
+**On a phone.** The staff screens lay themselves out for a handheld (a narrow window or a touch device; the `hand:` variant in `app/globals.css`). The side rail becomes a tab bar along the bottom. The board shows one status column at a time and you swipe between them. A request opens as a full-screen sheet with its main action (Claim, Mark delivered) pinned at the bottom and the coordinator tools scrolling with the rest. The other pages stack into one column. Nothing changes on a desktop. Added to a phone's Home Screen it runs as a standalone app: `app/manifest.ts` declares the whole site as its scope, so every page stays in that window instead of opening in an in-app browser.
 
 ## API
 
