@@ -154,7 +154,7 @@ export default function GrantsPage() {
     >
       {error && <div className="mb-3 flex items-center justify-between rounded-lg border border-[#f8dcae] bg-orange-soft px-3 py-2 text-[12.5px] text-[#b45309]">{error}<button onClick={() => setError(null)} aria-label="Dismiss"><X size={14} /></button></div>}
 
-      <div role="tablist" aria-label="Grant sections" className="seg">
+      <div role="tablist" aria-label="Grant sections" className="seg hand:!flex hand:overflow-x-auto hand:[scrollbar-width:none] hand:[&>*]:shrink-0 hand:[&>*]:whitespace-nowrap">
         {SECTIONS.map((s) => (
           <button key={s.id} role="tab" aria-selected={section === s.id} onClick={() => open(s.id)} className={`seg-item ${section === s.id ? "active-blue" : ""}`}><s.Icon size={14} aria-hidden /> {s.label}</button>
         ))}
@@ -166,7 +166,7 @@ export default function GrantsPage() {
             <div className="rounded-lg border border-[#bfe0f3] bg-brand-soft px-4 py-3 text-[13px] leading-relaxed text-ink">
               <strong>Why clusters.</strong> In October 2026 the City&apos;s Dept. of Community Wellness &amp; Safety launched <em>This Is Our City: The Countdown</em> — 26 incident clusters holding <strong>{HOMICIDE_SHARE_IN_CLUSTERS}%</strong> of homicide victims. Partners are asked to commit resources to those clusters. DCWS is ComForce&apos;s main funder, and it is being asked by the Common Council to prove its programs work. This tab answers that question for them, in their geography.
             </div>
-            <div className="grid grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-4 gap-3.5 hand:grid-cols-2 hand:gap-2.5">
               <StatCard icon={<Crosshair size={14} />} label="Requests inside clusters" value={`${clusters.pctInClusters}%`} bar={clusters.pctInClusters} tint="blue" />
               <StatCard icon={<MapPin size={14} />} label="Clusters reached" value={`${clusters.clustersReached} / 26`} sub={`${clusters.inClusters} requests · ${clusters.outside} outside any cluster`} />
               <StatCard icon={<CheckCircle2 size={14} />} label="Verified inside clusters" value={clusters.verifiedInClusters} sub={`of ${clusters.deliveredInClusters} delivered`} tint="green" />
@@ -209,7 +209,7 @@ export default function GrantsPage() {
 
             <section className="card p-4">
               <h3 className="text-[13.5px] font-semibold">Same three numbers DCWS reports — plus the one it cannot</h3>
-              <div className="mt-3 grid grid-cols-4 gap-3 text-[13px]">
+              <div className="mt-3 grid grid-cols-4 gap-3 text-[13px] hand:grid-cols-2">
                 <Mirror label="Incidents responded to" ours={String(k.total)} theirs="311 (Critical Response Teams, 2024)" />
                 <Mirror label="Required follow-up" ours={`${k.total ? Math.round(((k.reopened + k.partlyHelped + (report.status.find((s) => s.key === "in_progress")?.value ?? 0)) / k.total) * 100) : 0}%`} theirs="76%" />
                 <Mirror label="Median time to help" ours={k.medianMinutes ? fmtMinutes(k.medianMinutes) : "—"} theirs="1,000+ hours of response (total)" />
@@ -324,7 +324,7 @@ export default function GrantsPage() {
 
               <section className="card overflow-hidden">
                 <header className="border-b border-line px-4 py-3"><h3 className="text-[13.5px] font-semibold">Logic model · {report.period.label}</h3></header>
-                <div className="grid grid-cols-4 divide-x divide-line text-[12.5px]">
+                <div className="grid grid-cols-4 divide-x divide-line text-[12.5px] hand:grid-cols-1 hand:divide-x-0 hand:divide-y">
                   {(["inputs", "activities", "outputs", "outcomes"] as const).map((col) => (
                     <div key={col} className="p-3">
                       <div className="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-muted">{col}</div>

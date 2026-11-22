@@ -51,7 +51,7 @@ export default function PartnersPage() {
       me={me.name}
       actions={<><Btn variant="solid" href="mailto:?subject=Join%20Relay%20MKE%20as%20a%20partner&body=ComForce%20MKE%20invites%20your%20organization%20to%20the%20Relay%20MKE%20partner%20network."><Plus size={15} /> Invite partner</Btn><Btn href="/impact">View outcomes</Btn></>}
     >
-      <div className="grid grid-cols-5 gap-3.5 mb-5">
+      <div className="grid grid-cols-5 gap-3.5 mb-5 hand:grid-cols-2 hand:gap-2.5">
         <StatCard icon={<Users size={14} />} label="Partners" value={partners.length} sub={`${realCount} real · ${partners.length - realCount} fictional demo`} />
         <StatCard icon={<Gauge size={14} />} label="Open Capacity" value={totalCapacity} sub="simulated slots this week" tint="green" />
         <StatCard icon={<Clock size={14} />} label="Active Assignments" value={activeAll} sub="claimed or in progress" tint="blue" />
@@ -60,7 +60,7 @@ export default function PartnersPage() {
       </div>
 
       <div className="mb-4 flex items-center gap-2">
-        <div className="seg">
+        <div className="seg hand:!flex hand:overflow-x-auto hand:[scrollbar-width:none] hand:[&>*]:shrink-0 hand:[&>*]:whitespace-nowrap">
           <button onClick={() => setNeed("all")} className={`seg-item ${need === "all" ? "active-blue" : ""}`}>All Services <span className="count">{partners.length}</span></button>
           {needOptions.slice(0, 7).map((n) => (
             <button key={n} onClick={() => setNeed(n)} className={`seg-item ${need === n ? "active-blue" : ""}`}>{NEED_LABEL[n]} <span className="count">{partners.filter((p) => p.needs.includes(n)).length}</span></button>
@@ -75,7 +75,7 @@ export default function PartnersPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-3 gap-3.5 hand:grid-cols-1">
         {rows.map(({ p, active, verified, handled, load }) => (
           <div key={p.id} className="card p-4 flex flex-col">
             <div className="flex items-start justify-between gap-3">
@@ -109,7 +109,7 @@ export default function PartnersPage() {
             </div>
           </div>
         ))}
-        {!rows.length && <div className="col-span-3 card p-10 text-center text-[13px] text-muted">No partners match.</div>}
+        {!rows.length && <div className="col-span-3 hand:col-span-1 card p-10 text-center text-[13px] text-muted">No partners match.</div>}
       </div>
     </AppShell>
   );

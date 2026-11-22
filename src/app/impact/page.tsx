@@ -146,7 +146,7 @@ export default function ImpactPage() {
       <div role="tabpanel" id={`panel-${section}`} aria-labelledby={`tab-${section}`} className="mt-4">
         {section === "overview" && (
           <div className="space-y-4">
-            <div className="grid grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-4 gap-3.5 hand:grid-cols-2 hand:gap-2.5">
               <StatCard icon={<Inbox size={14} />} label="Total requests" value={k.total} sub={`${scope}, all channels`} />
               <StatCard icon={<CheckCircle2 size={14} />} label="Help delivered" value={k.delivered} sub="delivered or verified" tint="blue" />
               <StatCard icon={<CheckCircle2 size={14} />} label="Resident-verified" value={`${k.verifiedPct}%`} bar={k.verifiedPct} tint="green" />
@@ -299,7 +299,7 @@ function SectionTabs({ active, onChange }: { active: SectionId; onChange: (id: S
     refs.current[next]?.focus();
   };
   return (
-    <div role="tablist" aria-label="Impact sections" className="seg">
+    <div role="tablist" aria-label="Impact sections" className="seg hand:!flex hand:overflow-x-auto hand:[scrollbar-width:none] hand:[&>*]:shrink-0 hand:[&>*]:whitespace-nowrap">
       {SECTIONS.map((s, i) => (
         <button
           key={s.id}

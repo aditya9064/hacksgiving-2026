@@ -5,6 +5,13 @@
    below 100%, "request desktop site"), so width alone must not decide it. Used by /phone. */
 @custom-variant desk (@media (min-width: 768px) and (hover: hover) and (pointer: fine));
 @custom-variant deskwide (@media (min-width: 1024px) and (hover: hover) and (pointer: fine));
+/* Everything that is not a desktop: a narrow window, or anything driven by touch. The staff screens
+   (board, request drawer, ticket) use it to lay themselves out for a phone. */
+@custom-variant hand {
+  @media (max-width: 767.98px) { @slot; }
+  @media (hover: none) { @slot; }
+  @media (pointer: coarse) { @slot; }
+}
 
 :root {
   --bg: #f4f5f7;

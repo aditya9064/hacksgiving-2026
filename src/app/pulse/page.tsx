@@ -81,7 +81,7 @@ export default function PulsePage() {
       me={me.name}
       actions={<><Btn variant="solid" onClick={() => window.print()} title="Print or save this page as a PDF"><Download size={15} /> Weekly brief (PDF)</Btn><Btn href="/impact">Full report</Btn></>}
     >
-      <div className="card mb-3.5 grid grid-cols-5 divide-x divide-line">
+      <div className="card mb-3.5 grid grid-cols-5 divide-x divide-line hand:grid-cols-2 hand:divide-x-0">
         <Figure label="Neighborhoods active" value={rows.length} sub="with at least one request" />
         <Figure label="Open requests" value={rows.reduce((s, r) => s + r.open, 0)} sub="not yet confirmed by the resident" />
         <Figure label="New in 24 hours" value={last24} sub="phone, text and web" />
@@ -89,8 +89,8 @@ export default function PulsePage() {
         <Figure label="Top need citywide" value={topNeed ? NEED_LABEL[topNeed] : "—"} sub="by number of requests" />
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5 mb-3.5">
-        <SectionCard title="Where requests are coming from" className="col-span-2" action={
+      <div className="grid grid-cols-3 gap-3.5 mb-3.5 hand:grid-cols-1">
+        <SectionCard title="Where requests are coming from" className="col-span-2 hand:col-span-1" action={
           <span className="flex items-center gap-4 text-[11.5px] text-muted">
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-brand" /> Requests</span>
             <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-red" /> Includes a critical request</span>
@@ -125,7 +125,7 @@ export default function PulsePage() {
         </SectionCard>
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-3 gap-3.5 hand:grid-cols-1">
         <SectionCard title="This week" action={<span className="text-[11.5px] text-muted">counted from the board</span>}>
           <ul className="divide-y divide-line">
             {notes.map((s) => (
@@ -141,7 +141,7 @@ export default function PulsePage() {
           </ul>
         </SectionCard>
 
-        <SectionCard title={sel ? `${sel.neighborhood}: recent requests` : "Select a neighborhood"} className="col-span-2" action={sel && <span className="num text-[11.5px] text-muted">{sel.open} open of {sel.total}</span>}>
+        <SectionCard title={sel ? `${sel.neighborhood}: recent requests` : "Select a neighborhood"} className="col-span-2 hand:col-span-1" action={sel && <span className="num text-[11.5px] text-muted">{sel.open} open of {sel.total}</span>}>
           <ul className="divide-y divide-line">
             {selReqs.slice(0, 6).map((r) => (
               <li key={r.id} className="grid grid-cols-[56px_1fr_auto_64px] items-baseline gap-x-4 px-4 py-2.5 text-[13px]">

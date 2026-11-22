@@ -28,7 +28,7 @@ function Sidebar() {
   const path = usePathname();
   const item = "flex h-10 w-10 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2";
   return (
-    <aside className="sticky top-0 h-screen w-[62px] shrink-0 flex flex-col items-center bg-surface border-r border-line py-3">
+    <aside className="sticky top-0 h-screen w-[62px] shrink-0 flex flex-col items-center bg-surface border-r border-line py-3 hand:hidden">
       <Link href="/board"><Logo /></Link>
       <nav className="mt-7 flex flex-col items-center gap-2">
         {NAV.map(({ href, label, Icon }) => {
@@ -43,6 +43,23 @@ function Sidebar() {
       </nav>
       <Link href="/r" title="Exit to resident view" className={`${item} mt-auto`}><LogOut size={18} strokeWidth={1.8} /></Link>
     </aside>
+  );
+}
+
+/** On a phone the side rail becomes a tab bar along the bottom, within reach of a thumb. */
+function BottomNav() {
+  const path = usePathname();
+  return (
+    <nav className="print-hide hidden hand:flex fixed inset-x-0 bottom-0 z-30 items-stretch justify-around border-t border-line bg-surface pb-[env(safe-area-inset-bottom)]">
+      {NAV.map(({ href, label, Icon }) => {
+        const active = path.startsWith(href);
+        return (
+          <Link key={href} href={href} className={`flex h-[56px] min-w-0 flex-1 flex-col items-center justify-center gap-1 text-[10.5px] font-medium ${active ? "text-brand" : "text-ink-2"}`}>
+            <Icon size={19} strokeWidth={active ? 2.2 : 1.8} />{label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -90,12 +107,13 @@ function TopBar({ badge, me }: { badge?: number; me?: string }) {
   const [q, setQ] = useState("");
   const initials = (me ?? "You").split(/\s+/).map((p) => p[0]).join("").slice(0, 2).toUpperCase();
   return (
-    <div className="sticky top-0 z-20 flex h-[52px] items-center justify-between border-b border-line bg-surface px-5">
-      <form className="relative w-[240px]" onSubmit={(e) => { e.preventDefault(); router.push(`/board?q=${encodeURIComponent(q.trim())}`); }}>
+    <div className="sticky top-0 z-20 flex h-[52px] items-center justify-between border-b border-line bg-surface px-5 hand:gap-2 hand:px-3">
+      <Link href="/board" className="hidden hand:block shrink-0"><Logo /></Link>
+      <form className="relative w-[240px] hand:w-auto hand:min-w-0 hand:flex-1" onSubmit={(e) => { e.preventDefault(); router.push(`/board?q=${encodeURIComponent(q.trim())}`); }}>
         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
         <input value={q} onChange={(e) => setQ(e.target.value)} className="input !h-[34px] !text-[13px]" placeholder="Search requests, partners..." />
       </form>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 hand:gap-1.5">
         <Link href="/board?status=new" title={badge ? `${badge} unclaimed request${badge === 1 ? "" : "s"}` : "No unclaimed requests"} className="relative p-1.5 text-ink-2 hover:text-ink"><Bell size={17} />{!!badge && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red px-1 text-[9.5px] font-bold text-white">{badge}</span>}</Link>
         <SettingsMenu me={me}><span className="block p-1.5 text-ink-2 hover:text-ink"><Settings size={17} /></span></SettingsMenu>
         <SettingsMenu me={me}><span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-[12px] font-semibold text-white">{initials}</span></SettingsMenu>
@@ -110,17 +128,18 @@ export function AppShell({ children, title, subtitle, actions, badge, me }: { ch
       <Sidebar />
       <div className="flex-1 min-w-0 flex flex-col">
         <TopBar badge={badge} me={me} />
-        <main className="flex-1 px-5 py-5">
-          <div className="flex items-start justify-between gap-6 mb-5">
+        <main className="flex-1 px-5 py-5 hand:min-w-0 hand:overflow-x-auto hand:px-3 hand:pt-3 hand:pb-24">
+          <div className="flex items-start justify-between gap-6 mb-5 hand:mb-3 hand:flex-col hand:gap-2.5">
             <div>
-              <h1 className="text-[23px] font-bold leading-tight text-ink flex items-center gap-2">{title}</h1>
-              {subtitle && <p className="mt-1 text-[14px] text-ink-2">{subtitle}</p>}
+              <h1 className="text-[23px] font-bold leading-tight text-ink flex items-center gap-2 hand:flex-wrap hand:text-[20px]">{title}</h1>
+              {subtitle && <p className="mt-1 text-[14px] text-ink-2 hand:text-[13px]">{subtitle}</p>}
             </div>
-            {actions && <div className="print-hide flex items-center gap-2">{actions}</div>}
+            {actions && <div className="print-hide flex items-center gap-2 hand:flex-wrap">{actions}</div>}
           </div>
           {children}
         </main>
       </div>
+      <BottomNav />
     </div>
   );
 }

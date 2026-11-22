@@ -60,27 +60,28 @@ export default function BoardPage() {
       me={me.name}
       actions={<>
         <Btn href="/r" variant="solid"><Plus size={15} /> New Request</Btn>
-        <span className="seg">
+        <span className="seg hand:!hidden">
           <button onClick={() => setView("board")} className={`seg-item ${view === "board" ? "active-blue" : ""}`}><LayoutGrid size={13} /> Board</button>
           <button onClick={() => setView("table")} className={`seg-item ${view === "table" ? "active-blue" : ""}`}><Table2 size={13} /> Table</button>
         </span>
-        <Btn onClick={async () => { await fetch("/api/reset", { method: "POST" }); reload(); }} title="Reset demo data" ariaLabel="Reset demo data" className="w-[38px] !px-0"><RefreshCcw size={15} /></Btn>
+        <Btn onClick={async () => { await fetch("/api/reset", { method: "POST" }); reload(); }} title="Reset demo data" ariaLabel="Reset demo data" className="w-[38px] !px-0 hand:hidden"><RefreshCcw size={15} /></Btn>
       </>}
     >
-      <div className="seg">
-        <button onClick={() => setNeed("all")} className={`seg-item ${need === "all" ? "active-blue" : ""}`}>All Needs <span className="count">{all.length}</span></button>
-        {topNeeds.map(([n, c]) => <button key={n} onClick={() => setNeed(n)} className={`seg-item ${need === n ? "active-blue" : ""}`}>{NEED_LABEL[n]} <span className="count">{c}</span></button>)}
+      <div className="seg hand:!flex hand:overflow-x-auto hand:[scrollbar-width:none]">
+        <button onClick={() => setNeed("all")} className={`seg-item hand:shrink-0 hand:whitespace-nowrap ${need === "all" ? "active-blue" : ""}`}>All Needs <span className="count">{all.length}</span></button>
+        {topNeeds.map(([n, c]) => <button key={n} onClick={() => setNeed(n)} className={`seg-item hand:shrink-0 hand:whitespace-nowrap ${need === n ? "active-blue" : ""}`}>{NEED_LABEL[n]} <span className="count">{c}</span></button>)}
       </div>
 
-      <div className="mt-3 card flex items-center gap-2.5 p-2.5">
-        <div className="relative flex-1"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} className="input" placeholder="Search requests, neighborhoods, codes..." /></div>
-        <select value={hood} onChange={(e) => setHood(e.target.value)} className="select"><option value="all">All Neighborhoods</option>{NEIGHBORHOODS.map((h) => <option key={h}>{h}</option>)}</select>
-        <select value={urg} onChange={(e) => setUrg(e.target.value)} className="select"><option value="all">All Urgencies</option><option value="critical">Critical</option><option value="high">Urgent</option><option value="normal">Normal</option><option value="low">Low</option></select>
-        <select value={status} onChange={(e) => setStatus(e.target.value)} className="select"><option value="all">All Statuses</option><option value="new">Unclaimed</option><option value="claimed">Claimed</option><option value="in_progress">In progress</option><option value="delivered">Delivered</option><option value="verified">Verified</option></select>
-        <button onClick={() => setAttnOnly((v) => !v)} aria-pressed={attnOnly} className={`inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-[13px] font-medium ${attnOnly ? "border-[#f0a3a3] bg-red-soft text-red" : "border-line bg-surface text-ink-2 hover:bg-surface-2"}`}><AlertTriangle size={14} /> Needs attention only{(overdue + followup) > 0 && <span className="count !bg-red">{overdue + followup}</span>}</button>
+      <div className="mt-3 card flex items-center gap-2.5 p-2.5 hand:flex-wrap hand:gap-2">
+        <div className="relative flex-1 hand:basis-full"><Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} className="input" placeholder="Search requests, neighborhoods, codes..." /></div>
+        <select value={hood} onChange={(e) => setHood(e.target.value)} className="select hand:hidden"><option value="all">All Neighborhoods</option>{NEIGHBORHOODS.map((h) => <option key={h}>{h}</option>)}</select>
+        <select value={urg} onChange={(e) => setUrg(e.target.value)} className="select hand:min-w-0 hand:flex-1"><option value="all">All Urgencies</option><option value="critical">Critical</option><option value="high">Urgent</option><option value="normal">Normal</option><option value="low">Low</option></select>
+        <select value={status} onChange={(e) => setStatus(e.target.value)} className="select hand:hidden"><option value="all">All Statuses</option><option value="new">Unclaimed</option><option value="claimed">Claimed</option><option value="in_progress">In progress</option><option value="delivered">Delivered</option><option value="verified">Verified</option></select>
+        <button onClick={() => setAttnOnly((v) => !v)} aria-pressed={attnOnly} className={`inline-flex h-[38px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-3 text-[13px] font-medium ${attnOnly ? "border-[#f0a3a3] bg-red-soft text-red" : "border-line bg-surface text-ink-2 hover:bg-surface-2"}`}><AlertTriangle size={14} /> <span>Needs attention<span className="hand:hidden"> only</span></span>{(overdue + followup) > 0 && <span className="count !bg-red">{overdue + followup}</span>}</button>
       </div>
 
-      <div className="mt-4 overflow-x-auto pb-2">
+      {/* On a phone each status is one swipe: the columns sit side by side and snap into place. */}
+      <div className="mt-4 overflow-x-auto pb-2 hand:-mx-3 hand:snap-x hand:snap-mandatory hand:scroll-px-3 hand:px-3 hand:[scrollbar-width:none]">
         {data && (view === "board" ? <Board requests={filtered} fresh={fresh} onOpen={setOpenId} now={now} /> : <RequestTable requests={filtered} onOpen={setOpenId} now={now} />)}
       </div>
       <RequestDrawer request={open} partners={data?.partners ?? []} onClose={() => setOpenId(null)} me={me} tailorsTasks={data?.tailorsTasks ?? false} onChanged={reload} />

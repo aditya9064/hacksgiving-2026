@@ -176,9 +176,11 @@ export function RequestDrawer({ request, partners, onClose, me, tailorsTasks = f
                   ))}
                 </ol>
               </section>
+              {/* On a phone the pinned footer keeps only the main action; these tools scroll with the rest. */}
+              {request.status !== "verified" && <div className="hidden hand:block"><CoordinatorTools request={request} me={me} partners={partners} activity={activity} /></div>}
             </div>
 
-            <div className="border-t border-line p-4 space-y-2.5 bg-bg">
+            <div className="border-t border-line p-4 space-y-2.5 bg-bg hand:pb-[max(1rem,env(safe-area-inset-bottom))]">
               {request.status === "new" && (
                 <button disabled={busy} onClick={() => run({ action: "claim", ownerName: me.name, ownerOrg: me.org, partnerId: me.partnerId })} className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-brand py-2.5 text-[13.5px] font-medium text-white hover:bg-brand-2 disabled:opacity-50"><HandHelping size={16} /> Claim as {me.name}</button>
               )}
@@ -207,7 +209,7 @@ export function RequestDrawer({ request, partners, onClose, me, tailorsTasks = f
               {request.status === "verified" && (
                 <div className="flex items-center gap-2 rounded-lg border border-[#bfe7cf] bg-green-soft p-3 text-[13px] font-medium text-green"><ShieldCheck size={16} /> Loop closed. Confirmed by the resident, credited to {request.ownerOrg}.</div>
               )}
-              {request.status !== "verified" && <CoordinatorTools request={request} me={me} partners={partners} activity={activity} />}
+              {request.status !== "verified" && <div className="hand:hidden"><CoordinatorTools request={request} me={me} partners={partners} activity={activity} /></div>}
             </div>
           </motion.aside>
         </>

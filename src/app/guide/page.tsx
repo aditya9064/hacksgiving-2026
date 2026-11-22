@@ -62,13 +62,13 @@ export default function GuidePage() {
       me={me.name}
       actions={<><Btn variant="solid" href="mailto:TeamComForceMKE@gmail.com?subject=New%20Relay%20playbook"><Plus size={15} /> New playbook</Btn><Btn href="mailto:TeamComForceMKE@gmail.com?subject=Playbook%20edit%20suggestion">Suggest an edit</Btn></>}
     >
-      <div className="card mb-3.5 grid grid-cols-3 divide-x divide-line">
+      <div className="card mb-3.5 grid grid-cols-3 divide-x divide-line hand:grid-cols-1 hand:divide-x-0 hand:divide-y">
         <Figure label="Playbooks" value={playbooks.length} sub="procedures written by the team" />
         <Figure label="Need types covered" value={<>{tags.length}<span className="text-[16px] font-medium text-muted"> of {Object.keys(NEED_LABEL).length}</span></>} sub="at least one playbook each" />
         <Figure label="Last edited" value={newest ? day(newest) : "—"} sub="most recent change to any playbook" />
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-3 gap-3.5 hand:grid-cols-1">
         <div className="space-y-3.5">
           <div className="card p-3 space-y-3">
             <div className="relative">

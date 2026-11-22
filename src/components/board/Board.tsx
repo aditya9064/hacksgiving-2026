@@ -92,11 +92,11 @@ export function RequestCard({ r, fresh, onClick, now }: { r: SafeRequest; fresh:
 
 export function Board({ requests, fresh, onOpen, now }: { requests: SafeRequest[]; fresh: Set<string>; onOpen: (id: string) => void; now: number }) {
   return (
-    <div className="grid grid-cols-5 gap-3.5 min-w-[1180px]">
+    <div className="grid grid-cols-5 gap-3.5 min-w-[1180px] hand:flex hand:min-w-0 hand:gap-3">
       {STATUSES.map((s) => {
         const items = requests.filter((r) => r.status === s);
         return (
-          <section key={s} className="min-w-0">
+          <section key={s} className="min-w-0 hand:shrink-0 hand:basis-[86%] hand:snap-start">
             <header className="flex items-center justify-between px-1 pb-2.5">
               <h3 className="inline-flex items-center gap-2 text-[13px] font-semibold text-ink"><span className="h-2 w-2 rounded-full" style={{ background: COL_DOT[s] }} />{STATUS_LABEL[s]}</h3>
               <span className="count">{items.length}</span>
