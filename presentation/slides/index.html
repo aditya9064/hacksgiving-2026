@@ -73,7 +73,7 @@
   #pvclock{font-family:var(--mono);font-size:68px;line-height:1;font-weight:600;letter-spacing:-.03em}
   #pvclock.warn{color:#e6b566} #pvclock.over{color:#f08a6c}
   #pvplan{font-family:var(--mono);font-size:14px;line-height:1.55;color:#8a8e97;text-align:right}
-  #pvplan b{color:#e9e6de;font-weight:600} #pvplan .bad{color:#f08a6c}
+  #pvplan b{color:#e9e6de;font-weight:600} #pvplan .bad,#pvnext.bad{color:#f08a6c}
   #pvslide{margin-top:22px;font-family:var(--mono);font-size:15px;color:#6fc2b7;letter-spacing:.05em;text-transform:uppercase}
   #pvsay{margin-top:14px;flex:1}
   #pvsay p{font-size:31px;line-height:1.3;letter-spacing:-.01em;color:#6c7079;margin-bottom:16px}
@@ -541,6 +541,111 @@
   .vid .chap div b{display:block;font-family:var(--mono);font-size:12px;color:#6fc2b7;margin-bottom:4px;font-weight:500}
   .vid.ready .ph{display:none}
   .vid:fullscreen{width:100vw;height:100vh;margin:0;border-radius:0}
+  /* on screen the demo slide is nothing but the recording: no heading, no footer, no clock (the PDF keeps the framed version) */
+  @media screen{
+    section.demo{padding:0;background:#000}
+    section.demo>.k,section.demo>h2{display:none}
+    section.demo .vid{position:absolute;inset:0;width:auto;height:auto;margin:0;border-radius:0;background:#000}
+    section.demo .vid:not(.ctl){cursor:none}
+    #stage:has(section.demo.active)>:is(#foot,#clock,#prog,#help){visibility:hidden}
+    html:has(section.demo.active) body:not(.presenter){background:#000}
+  }
+  .vid .quiet{display:none;position:absolute;left:50%;top:28px;transform:translateX(-50%);z-index:2;padding:12px 22px;border-radius:999px;background:var(--coral);color:#fff;font-size:20px;font-weight:600;white-space:nowrap}
+  .vid.muted .quiet{display:block}
+
+  /* funder report: the record on the left writes the report in the middle, and the report answers what a funder asks */
+  section:has(>.fd)>h2{margin-top:26px}
+  .fd{position:relative;margin-top:50px;height:700px}
+  .fd small{display:block;font-family:var(--mono);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#8a8e97}
+  .fd .wr{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+  .fd .wr path{fill:none;stroke:#6fc2b7;stroke-width:2;stroke-linecap:round;stroke-dasharray:1}
+  .fd .wr circle{fill:#6fc2b7;opacity:0}
+  .fd .wr .wa{opacity:.7}
+  .fd .wr .wb{opacity:0;stroke-dashoffset:1;transform:none;transition:opacity .2s,stroke-dashoffset .6s ease}
+  .fd .wr .wb.on{opacity:.7;stroke-dashoffset:0}
+  section.active .fd .wr .wa{animation:drawrt .6s ease calc(1.2s + var(--i)*.07s) both}
+  section.active .fd .wr .da{animation:wireflow 1.5s linear calc(1.8s + var(--i)*.21s) infinite}
+  .fd .wr .wb.on+circle{animation:wireflow 1.3s linear calc(.6s + var(--i)*.3s) infinite}
+  .fd .rcd{position:absolute;left:0;top:0;width:420px}
+  .fd .rcd h4{display:flex;align-items:baseline;gap:14px;margin-top:10px;font-size:19px;font-weight:400;line-height:1.25;color:#9a9ea7}
+  .fd .rcd h4 b{font-size:68px;font-weight:700;letter-spacing:-.04em;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+  .fd .sqs{display:grid;grid-template-columns:repeat(15,21px);gap:7px;margin-top:24px}
+  .fd .sqs i{width:21px;height:21px;border-radius:4px;background:#6fc2b7}
+  .fd .sqs .p{background:#e0a84a} .fd .sqs .n{background:#e2674c} .fd .sqs .w{background:#5b606a} .fd .sqs .o{background:none;border:1.5px solid #5b606a}
+  section.active .fd .sqs i{animation:fdsq .3s cubic-bezier(.2,.7,.2,1) calc(.5s + var(--k)*6ms) both}
+  @keyframes fdsq{from{opacity:0;transform:scale(.2)}}
+  .fd .leg{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:26px;font-size:18px;color:#9a9ea7;list-style:none}
+  .fd .leg li{display:flex;align-items:center;gap:10px;white-space:nowrap}
+  .fd .leg li::before{content:"";flex:none;width:14px;height:14px;border-radius:3px;background:var(--c)}
+  .fd .leg li.o::before{background:none;border:1.5px solid #5b606a}
+  .fd .leg b{color:#fff;font-weight:600}
+  .fd .leg li:first-child{grid-column:1/-1;font-size:23px;color:#fff}
+  section.active .fd .leg li{animation:rise .5s ease calc(1.5s + var(--k)*.08s) both}
+  .fd .sh,.fd .paper{position:absolute;left:520px;top:0;width:610px;height:700px;border-radius:8px}
+  .fd .sh{background:#cfcabd;transform:rotate(2deg) translate(9px,5px)}
+  .fd .sh+.sh{background:#e4e0d6;transform:rotate(-2.2deg) translate(-7px,7px)}
+  .fd .paper{padding:34px 40px 28px;background:#fff;color:var(--ink);display:flex;flex-direction:column;box-shadow:0 0 150px rgba(111,194,183,.2),0 50px 90px -40px #000}
+  @keyframes fdpaper{from{opacity:0;translate:0 46px;scale:.95}}
+  section.active .fd .sh{animation:fdpaper .8s cubic-bezier(.2,.7,.2,1) 1.45s both}
+  section.active .fd .paper{animation:fdpaper .8s cubic-bezier(.2,.7,.2,1) 1.3s both}
+  .fd .paper header{display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:18px;border-bottom:1.5px solid var(--ink)}
+  .fd .paper header small{font-size:12px;color:var(--teal)}
+  .fd .paper header h3{font-family:var(--serif);font-style:italic;font-weight:400;font-size:46px;line-height:1;letter-spacing:-.01em;margin-top:6px}
+  .fd .paper header p{font-family:var(--mono);font-size:12px;line-height:1.55;color:var(--mut);text-align:right}
+  .fd .kp{display:grid;grid-template-columns:repeat(4,auto);justify-content:space-between;margin-top:24px}
+  .fd .kp b{display:block;font-size:46px;font-weight:700;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+  .fd .kp span{display:block;margin-top:7px;font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--mut)}
+  .fd .mid{display:grid;grid-template-columns:1fr 200px;gap:24px;align-items:center;margin-top:24px;padding-top:22px;border-top:1px solid var(--line)}
+  .fd .dn{display:flex;align-items:center;gap:18px}
+  .fd .dnr{position:relative;flex:none;width:136px;height:136px}
+  .fd .dnr svg{display:block;width:100%;height:100%;transform:rotate(-90deg)}
+  .fd .dnr circle{fill:none;stroke-width:17;stroke:#e9e5db}
+  .fd .dnr .arc{stroke:var(--teal);stroke-linecap:round;stroke-dasharray:244.2 364.5}
+  .fd .dnr b{position:absolute;inset:0;display:grid;place-items:center;font-size:36px;font-weight:700;letter-spacing:-.04em}
+  .fd .dn p{font-size:20px;font-weight:600;line-height:1.2;letter-spacing:-.01em}
+  .fd .dn p i{display:block;margin-top:6px;font-style:normal;font-weight:400;font-size:15px;color:var(--mut)}
+  .fd .mb small{font-size:11.5px;letter-spacing:.04em;color:var(--mut)}
+  .fd .mb .bs{display:flex;align-items:flex-end;gap:5px;height:92px;margin-top:10px;border-bottom:1.5px solid var(--ink)}
+  .fd .mb .bs i{flex:1;height:calc(var(--v)/39*100%);background:#bcd6d1;border-radius:2px 2px 0 0;transform-origin:bottom}
+  .fd .mb .bs i.pk{background:var(--teal)}
+  .fd .mb .ms{display:flex;gap:5px;margin-top:5px;font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .fd .mb .ms span{flex:1;text-align:center}
+  .fd .nar{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+  .fd .nar small{font-size:11.5px;letter-spacing:.04em;color:var(--mut)}
+  .fd .nar p{margin-top:9px;font-size:16.5px;line-height:1.5;color:var(--ink2)}
+  .fd .nar p span{display:block;white-space:nowrap;clip-path:inset(0 0 0 0)}
+  .fd .nar p b{color:var(--ink);font-weight:600}
+  .fd .nar u{display:block;height:9px;margin-top:11px;border-radius:5px;background:#ebe7dd;text-decoration:none;width:var(--w);transform-origin:left}
+  .fd .paper footer{margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding-top:15px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--mut)}
+  .fd .paper footer span{display:flex;gap:6px}
+  .fd .paper footer span i{font-style:normal;padding:5px 9px;border:1px solid var(--line2);border-radius:5px;color:var(--ink);font-weight:600}
+  section.active .fd .paper header{animation:rise .5s ease 1.6s both}
+  section.active .fd .kp div{animation:rise .5s ease calc(1.8s + var(--k)*.1s) both}
+  section.active .fd .dn{animation:rise .5s ease 2.2s both}
+  section.active .fd .dnr .arc{animation:fdarc 1.1s cubic-bezier(.3,.6,.2,1) 2.3s both}
+  @keyframes fdarc{from{stroke-dasharray:0 364.5}}
+  section.active .fd .mb{animation:rise .5s ease 2.3s both}
+  section.active .fd .mb .bs i{animation:fdbar .55s cubic-bezier(.2,.7,.2,1) calc(2.45s + var(--k)*45ms) both}
+  @keyframes fdbar{from{transform:scaleY(0)}}
+  section.active .fd .nar small{animation:rise .4s ease 2.9s both}
+  section.active .fd .nar p span{animation:fdtype .6s ease-out calc(3s + var(--k)*.28s) both}
+  @keyframes fdtype{from{clip-path:inset(0 100% 0 0)}}
+  section.active .fd .nar u{animation:growx .5s ease calc(3.9s + var(--k)*.12s) both}
+  section.active .fd .paper footer{animation:rise .5s ease 4.1s both}
+  /* the questions wait as outlines; a press fills in the answers */
+  .fd .qa{position:absolute;left:1210px;top:0;width:470px;height:700px;display:grid;grid-template-rows:repeat(3,1fr);gap:20px}
+  .fd .q{display:flex;flex-direction:column;justify-content:center;padding:0 30px;border-radius:18px;border:1.5px dashed #3a3e46;transition:background .5s,border-color .5s}
+  section.active .fd .q{animation:rise .5s ease calc(.7s + var(--k)*.12s) both}
+  .fd .q h5{font-size:21px;font-weight:500;line-height:1.25;letter-spacing:-.01em;color:#a3a7b0;transition:color .5s}
+  .fd .q .a{display:flex;align-items:center;gap:20px;margin-top:14px}
+  .fd .q .a b{flex:none;font-size:72px;font-weight:700;letter-spacing:-.045em;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
+  .fd .q .a b u{text-decoration:none;font-size:30px;font-weight:600;letter-spacing:-.02em;color:#9a9ea7;margin-left:9px}
+  .fd .q .a p{font-size:20px;line-height:1.25;color:#e9e6de}
+  .fd .q .a p i{display:block;margin-top:5px;font-style:normal;font-size:16px;color:#8a8e97}
+  .fd .q:has(.a.on){border:1.5px solid #2f333a;background:#1b1e23}
+  .fd .q.hi:has(.a.on){background:var(--teal);border-color:#3fa397;animation:fdglow 1.5s ease-out .45s 2}
+  .fd .q.hi:has(.a.on) h5,.fd .q.hi .a p i{color:#c5e6e0}
+  @keyframes fdglow{0%{box-shadow:0 0 0 0 rgba(111,194,183,.55)}100%{box-shadow:0 0 0 26px rgba(111,194,183,0)}}
 
   /* 10 benefits */
   .ba{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:36px}
@@ -621,12 +726,14 @@
     .pipe .card{left:918px!important;border-color:var(--teal)!important}
     .stack .steps div{color:var(--ink)!important}
     .vid video{display:none}.vid.ready .ph{display:flex}
+    .fd *{animation:none!important}
+    .fd .wr circle{display:none}
   }
 </style>
 </head>
 <body>
 <div id="stage">
-  <div id="help">→ next · ← back · T timer · N notes · V video · F fullscreen</div>
+  <div id="help">→ next · ← back · T timer · N notes · V pause video · F fullscreen</div>
   <div id="prog"></div>
 
   <!-- 1 TITLE -->
@@ -1071,15 +1178,71 @@
   </section>
 
   <!-- 11 DEMO VIDEO -->
-  <section class="slide" data-beat="125" data-notes="Demo. Resident calls from a seat in the room; Jordan logs it; a coordinator claims and dispatches; the resident confirms. If the live call fails, press V to play the recording.">
+  <section class="slide demo" data-beat="125" data-notes="Demo. The recording plays by itself when this slide opens.">
     <div class="k"><span class="n">Demo</span><span class="sep"></span>one request, recorded on the running app <span class="tag">1 min 49 s</span></div>
     <h2>Watch one request <em>for real.</em></h2>
     <div class="vid" id="vid">
-      <video id="demovid" src="../demo-backup.mp4" poster="img/demo-poster.jpg" preload="metadata" playsinline controls controlsList="nodownload"></video>
+      <video id="demovid" src="../demo-backup.mp4" poster="img/demo-poster.jpg" preload="auto" playsinline controlsList="nodownload"></video>
+      <div class="quiet">Sound is off · click here once</div>
       <div class="ph">
         <div class="play"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></div>
         <b>Demo recording</b>
-        <span>1 min 49 s, recorded on the running app. In the deck, press <code>→</code> to play it full screen and <code>→</code> again to move on. The file is <code>presentation/demo-backup.mp4</code>.</span>
+        <span>1 min 49 s, recorded on the running app. In the deck it fills the screen and starts by itself when this slide opens; <code>→</code> moves on. The file is <code>presentation/demo-backup.mp4</code>.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUNDER REPORT -->
+  <section class="slide dark" data-notes="Funder report. The record writes it; the resident's answer is the outcome.">
+    <h2>The funder report <em>writes itself.</em></h2>
+    <div class="fd" id="fund">
+      <svg class="wr" id="fdwires" viewBox="0 0 1680 700" aria-hidden="true"></svg>
+      <div class="rcd">
+        <small>The record · 2026</small>
+        <h4><b data-up="201" data-d="520" data-ms="1200">201</b>requests, each one a row ComForce&nbsp;owns</h4>
+        <div class="sqs" id="fdsqs" role="img" aria-label="201 squares, one per request: 124 where the resident said yes, 26 partly helped, 18 where the resident said no and the request was reopened, 18 with no answer yet, 15 still open."></div>
+        <ul class="leg">
+          <li style="--c:#6fc2b7;--k:0"><b>124</b> resident said yes</li>
+          <li style="--c:#e0a84a;--k:1"><b>26</b> partly helped</li>
+          <li style="--c:#e2674c;--k:2"><b>18</b> said no, reopened</li>
+          <li style="--c:#5b606a;--k:3"><b>18</b> no answer yet</li>
+          <li class="o" style="--k:4"><b>15</b> still open</li>
+        </ul>
+      </div>
+      <i class="sh"></i><i class="sh"></i>
+      <div class="paper">
+        <header>
+          <div><small>ComForce MKE · funder report</small><h3>Impact, 2026</h3></div>
+          <p>1 Jan – 22 Nov 2026 · synthetic data<br>generated from the record</p>
+        </header>
+        <div class="kp">
+          <div style="--k:0"><b data-up="201" data-d="1800">201</b><span>requests</span></div>
+          <div style="--k:1"><b data-up="186" data-d="1900">186</b><span>delivered</span></div>
+          <div style="--k:2"><b data-up="450" data-d="2000">450</b><span>household members</span></div>
+          <div style="--k:3"><b data-up="29" data-d="2100">29</b><span>neighborhoods</span></div>
+        </div>
+        <div class="mid">
+          <div class="dn">
+            <div class="dnr"><svg viewBox="0 0 136 136"><circle cx="68" cy="68" r="58"/><circle class="arc" cx="68" cy="68" r="58"/></svg><b><span><span data-up="67" data-d="2300">67</span>%</span></b></div>
+            <p>confirmed by the resident<i>124 of 186 deliveries</i></p>
+          </div>
+          <div class="mb">
+            <small>Requests by month</small>
+            <div class="bs"><i style="--v:12;--k:0"></i><i style="--v:14;--k:1"></i><i style="--v:14;--k:2"></i><i class="pk" style="--v:39;--k:3"></i><i style="--v:21;--k:4"></i><i style="--v:14;--k:5"></i><i style="--v:13;--k:6"></i><i style="--v:15;--k:7"></i><i style="--v:12;--k:8"></i><i style="--v:15;--k:9"></i><i style="--v:32;--k:10"></i></div>
+            <div class="ms"><span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span><span>N</span></div>
+          </div>
+        </div>
+        <div class="nar">
+          <small>Summary</small>
+          <p><span style="--k:0">In 2026 ComForce handled <b>201 requests</b> and delivered help in <b>186</b>.</span><span style="--k:1">In <b>124</b>, the resident confirmed in their own words that it arrived.</span><span style="--k:2"><b>18 said it had not.</b> Each was reopened and given back to an owner.</span></p>
+          <u style="--w:92%;--k:0"></u><u style="--w:64%;--k:1"></u>
+        </div>
+        <footer>every figure links to a request code<span><i>PDF</i><i>Word</i><i>Excel</i><i>CSV</i></span></footer>
+      </div>
+      <div class="qa">
+        <div class="q hi" style="--k:0"><h5>Did the help arrive?</h5><div class="a f" data-g="ask"><b><span data-count>67</span>%</b><p>said yes, in their own words<i>124 of 186 deliveries</i></p></div></div>
+        <div class="q" style="--k:1"><h5>Did it reach the City's 26 Countdown clusters?</h5><div class="a f" data-g="ask" data-seq="300"><b><span data-count>21</span><u>of 26</u></b><p>clusters reached<i>71% of all requests</i></p></div></div>
+        <div class="q" style="--k:2"><h5>What does one outcome cost?</h5><div class="a f" data-g="ask" data-seq="600"><b><span data-count>$2.71</span></b><p>per delivery the resident confirmed</p></div></div>
       </div>
     </div>
   </section>
@@ -1101,14 +1264,14 @@
   </section>
 
   <!-- 13 COST -->
-  <section class="slide" data-notes="Everything you just watched cost about a dollar sixty-eight at list prices, hosting included. The whole of 2026 cost three hundred and thirty-six dollars. (Press.) Each square here is one year of Relay. findhelp's enterprise plan is seventy-five thousand dollars: two hundred and twenty-three of those squares. One year of that would run Relay for more than two hundred years.">
+  <section class="slide" data-notes="Everything you just watched cost about a dollar sixty-seven at list prices, hosting included. The whole of 2026 cost three hundred and thirty-six dollars. (Press.) Each square here is one year of Relay. findhelp's enterprise plan is seventy-five thousand dollars: two hundred and twenty-three of those squares. One year of that would run Relay for more than two hundred years.">
     <div class="k"><span class="n">Cost</span><span class="sep"></span>list prices · nothing negotiated <span class="tag">synthetic 2026 data</span></div>
-    <h2>Everything you just watched cost <em>$1.68.</em></h2>
+    <h2>Everything you just watched cost <em>$1.67.</em></h2>
     <div class="cost">
       <div class="f">
-        <div class="price"><span data-count>$1.68</span><small>per request, hosting included · $2.73 per resident-verified outcome · 200 requests in 2026</small></div>
+        <div class="price"><span data-count>$1.67</span><small>per request, hosting included · $2.71 per resident-verified outcome · 201 requests in 2026</small></div>
         <div class="seg"><i style="--w:81.9"></i><i style="--w:13.9"></i><i style="--w:3"></i><i style="--w:1.2"></i></div>
-        <div class="legend"><span style="--c:#17181c">Hosting, $25 a month <b>$1.38</b></span><span style="--c:#5c5f68">Voice calls <b>$0.23</b></span><span style="--c:#0e6b63">Texts <b>$0.05</b></span><span style="--c:#8fb8b1">AI <b>$0.02</b></span></div>
+        <div class="legend"><span style="--c:#17181c">Hosting, $25 a month <b>$1.37</b></span><span style="--c:#5c5f68">Voice calls <b>$0.23</b></span><span style="--c:#0e6b63">Texts <b>$0.05</b></span><span style="--c:#8fb8b1">AI <b>$0.02</b></span></div>
         <div class="fine">The call you just watched used about <b>$0.97</b> in minutes, texts and AI. The rest is its share of hosting.<br>Excludes volunteer time and the goods delivered.</div>
       </div>
       <div class="cmp f">
@@ -1207,10 +1370,11 @@
     '.rules4':  ['Guardrails', `And it is safe. Before any AI sees a message, → names, addresses and phone numbers are removed. → A person makes every decision. We never score or predict anyone, and all our data is synthetic.`],
     '#jcall':   ['The call', `Here is one request, start to finish. A resident calls from any phone. Jordan answers, logs it, and texts them a tracking code.`],
     '#jwork':   ['The work', `A ComForce worker sees the card, with tasks already drafted. Jordan phones a partner, and the run sheet says exactly where to go and who to ask for.`],
-    '#jproof':  ['The proof', `But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it.`],
+    '#jproof':  ['The proof', `But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it. Now watch it for real. [press →: the recording starts by itself, full screen]`],
     '#stack':   ['How it is built', `→ A call becomes a record ComForce owns. → Every screen reads it. → And the resident closes the loop.`],
-    '#demovid': ['Demo', `Now watch it for real: who asked, who delivered, and Jordan calling back to check. [press → to play the recording; the clock is paused. Press → again when it ends]`],
-    '#yrs':     ['Cost', `→ Everything you just watched cost one dollar sixty-eight. → A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.`],
+    '#demovid': ['Demo', `[the recording is playing: 1 min 49 s, and the clock is paused. Press → when it ends]`],
+    '#fund':    ['Funder report', `And that request is now evidence. Relay writes the funder report from the record ComForce owns, failures included. → So when a funder asks, did the help arrive, ComForce answers in the resident's own words.`],
+    '#yrs':     ['Cost', `→ Everything you just watched cost one dollar sixty-seven. → A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.`],
     '.thanks':  ['Closing', `[say this over the hands] Care is not measured by how many we reach. It is measured by how many we don't lose. Thank you.`],
   };
   for (const sel in SCRIPT) { const s = document.querySelector(sel)?.closest('section'); if (s) [s.dataset.name, s.dataset.notes] = SCRIPT[sel]; }
@@ -1302,6 +1466,29 @@
   // cost: each square is $336, one year of Relay. Relay fills the first, findhelp's $5,400 entry plan reaches the 16th, its $75,000 enterprise plan fills all 223
   document.getElementById('yrs').innerHTML = Array.from({length: 223}, (_, k) => `<i class="${k === 0 ? 'r' : k < 16 ? 'e' : ''}" style="--k:${k}"></i>`).join('');
 
+  // funder report: one square per request in 2026, grouped by what the resident answered. Wires carry the record
+  // into the report (on arrival) and the report to the three questions (on the press).
+  (() => {
+    const kinds = [['', 124], ['p', 26], ['n', 18], ['w', 18], ['o', 15]];
+    document.getElementById('fdsqs').innerHTML = kinds.flatMap(([c, n]) => Array(n).fill(c)).map((c, k) => `<i class="${c}" style="--k:${k}"></i>`).join('');
+    const wire = (cls, k, d, attrs = '') => `<path class="${cls}" ${attrs} style="--i:${k}" pathLength="1" d="${d}"/><circle class="${cls === 'wa' ? 'da' : 'db'}" r="4.5" style="--i:${k};offset-path:path('${d}')"/>`;
+    document.getElementById('fdwires').innerHTML =
+      [160, 235, 310, 385, 460].map((y, k) => wire('wa', k, `M440 ${y}C486 ${y} 470 ${230 + k*60} 514 ${230 + k*60}`)).join('') +
+      [110, 350, 590].map((y, k) => wire('wb f', k, `M1136 ${290 + k*60}C1178 ${290 + k*60} 1164 ${y} 1204 ${y}`, `data-g="ask" data-seq="${k*300}"`)).join('');
+  })();
+  // The report's figures count up as each part of the page arrives (data-d is its delay in ms, matching the CSS).
+  let fundRun = 0;
+  function playFund(){
+    const run = ++fundRun, els = [...document.querySelectorAll('#fund [data-up]')], t0 = performance.now();
+    const tick = now => {
+      if (run !== fundRun) return;
+      let busy = false;
+      els.forEach(el => { const ms = +el.dataset.ms, k = Math.min(1, Math.max(0, (now - t0 - +el.dataset.d)/(ms || 1100))); el.textContent = Math.round(+el.dataset.up * (ms ? k : 1 - Math.pow(1 - k, 3))); if (k < 1) busy = true; }); // data-ms: count evenly over that long
+      if (busy) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
   // overview: each solution card shows its problem's picture in its solved state, and wires run problem → solution → the one record.
   // Geometry matches the .flow layout in the CSS: five columns across 1680, problems 0–250, solutions 294–500, record 600–690.
   (() => {
@@ -1322,24 +1509,40 @@
   const demovid = document.getElementById('demovid');
   demovid.addEventListener('loadeddata', () => document.getElementById('vid').classList.add('ready'));
   demovid.addEventListener('error', () => document.getElementById('vid').classList.remove('ready'));
-  // The demo slide costs two presses: the first plays the recording full screen, the second
-  // leaves full screen and moves on — no hunting for the player in front of the room.
+  // The demo slide is nothing but the recording. It starts by itself when the slide opens and fills the slide;
+  // it also takes the whole screen when the browser allows that (the press has to be made in this window).
+  // The next press stops it and moves on.
   const vidBox = document.getElementById('vid');
   let vidFs = false;
   const inVidFs = () => document.fullscreenElement === vidBox;
-  function demoPlayFull(){
+  const setQuiet = q => { demovid.muted = q; vidBox.classList.toggle('muted', q); tell({ quiet: q }); };
+  function demoPlay(fromStart){
+    if (fromStart) demovid.currentTime = 0;
+    demovid.removeAttribute('poster'); // the recording opens on black; do not flash a later frame first
+    if (demovid.muted) setQuiet(false);
+    const go = () => demovid.play().catch(e => {
+      // A window that has had no key or click yet is not allowed to play sound. Play silently rather than not at all, and say so in both windows.
+      if (e.name === 'NotAllowedError') { setQuiet(true); demovid.play().catch(() => {}); }
+    });
+    // Already full screen (the deck was put there with F): stay as we are, the slide is the screen. Asking again would
+    // stack a second full screen, and leaving that one drops the whole deck back into a window.
+    if (document.fullscreenElement || !vidBox.requestFullscreen) return go();
     vidFs = true;
-    demovid.currentTime = 0;
-    const go = () => demovid.play().catch(() => {}); // full screen refused: play in place rather than nothing
-    const p = vidBox.requestFullscreen && vidBox.requestFullscreen();
-    if (p && p.then) p.then(go, go); else go();
+    vidBox.requestFullscreen().then(go, () => { vidFs = false; go(); }); // full screen refused: it still fills the slide
   }
   function demoStop(){
     vidFs = false; demovid.pause();
     if (inVidFs()) document.exitFullscreen().catch(() => {});
   }
-  // Esc, or the player's own button, leaves full screen without going through next().
+  // Esc leaves full screen without going through next(); the recording carries on inside the slide.
   document.addEventListener('fullscreenchange', () => { if (!inVidFs()) vidFs = false; });
+  // The player's controls stay out of the picture until the mouse really moves.
+  let ctlTimer;
+  vidBox.addEventListener('mousemove', e => {
+    if (!e.movementX && !e.movementY) return;
+    demovid.controls = true; vidBox.classList.add('ctl'); clearTimeout(ctlTimer);
+    ctlTimer = setTimeout(() => { demovid.controls = false; vidBox.classList.remove('ctl'); }, 2500);
+  });
   const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
 
   const ease = t => 1 - Math.pow(1 - t, 3);
@@ -1370,9 +1573,15 @@
     s.classList.add('noanim'); // reset (or fully reveal) a slide without replaying its transitions
     frags(s).forEach(f => { f.classList.remove('on'); f.querySelectorAll('[data-done]').forEach(v => delete v.dataset.done); delete f.dataset.done; });
     delete s.dataset.played; delete s.dataset.running;
-    if (!s.querySelector('#demovid')) { if (!demovid.paused) demovid.pause(); if (vidFs) demoStop(); }
-    else delete s.dataset.demoPlayed; // a fresh visit gets its full-screen press back
-    const was = i;
+    const onDemo = !!s.querySelector('#demovid'), was = i;
+    if (!onDemo) { if (!demovid.paused || vidFs || inVidFs()) demoStop(); }
+    else {
+      // Arriving by a press starts the recording: from the top when stepping forward, from where it stopped when stepping back
+      // from the next slide. Both windows mark it the same way, so they stay in step; only the audience window plays.
+      const fwd = !all && n === was + 1, back = all && n === was - 1;
+      if (fwd || back) { s.dataset.demoPlayed = '1'; if (!presenting && demovid.readyState && !(back && demovid.ended)) demoPlay(fwd); }
+      else delete s.dataset.demoPlayed; // opened by link: the first press plays it
+    }
     i = n; count.textContent = String(n+1).padStart(2,'0') + ' / ' + slides.length; notes.textContent = s.dataset.notes || '';
     prog.style.width = ((n)/(slides.length-1)*100) + '%';
     history.replaceState(null, '', '#' + (n+1));
@@ -1380,21 +1589,21 @@
     if (all) revealAll(s);
     s.dataset.press = all ? pressTotal(s) : 0;
     if (s.querySelector('#city')) playCity(); // after revealAll, which clears the timers the replay runs on
+    if (s.querySelector('#fund')) playFund(); else fundRun++;
     void s.offsetWidth; s.classList.remove('noanim');
     // The clock measures talking time: it stops by itself while the demo plays and picks up again on the way out.
-    const onDemo = !!s.querySelector('#demovid');
     if (onDemo && timer) { toggle(); demoHeld = true; } else if (!onDemo && demoHeld) { demoHeld = false; if (!timer && n > was) toggle(); }
     pv();
   }
   function next(){
     // A press during the hand-off skips straight to the closing slide.
     if (handing) { endHandoff(); if (i !== slides.length-1) show(slides.length-1); return; }
-    // The demo slide: press once to play full screen, again to come back out and move on.
-    // Both windows count these two presses the same way, so they stay in step; only the audience window plays.
+    // The demo slide: the recording is already playing, so a press stops it and moves on.
+    // Only when the slide was opened by link does the first press play it.
     const demo = slides[i].querySelector('#demovid') ? slides[i] : null;
     if (demo) {
-      if (vidFs) demoStop();
-      else if (!demo.dataset.demoPlayed && demovid.readyState) { demo.dataset.demoPlayed = '1'; if (!presenting) demoPlayFull(); pv(); return; }
+      if (!demo.dataset.demoPlayed && demovid.readyState) { demo.dataset.demoPlayed = '1'; if (!presenting) demoPlay(true); pv(); return; }
+      demoStop();
     }
     const s = slides[i], hidden = frags(s).filter(x => !x.classList.contains('on'));
     if (hidden.length) {
@@ -1412,8 +1621,6 @@
   }
   function prev(){
     if (handing) return endHandoff();
-    // Backing out of the video stays on the slide, ready to play it again (in both windows).
-    if (slides[i].dataset.demoPlayed) { if (vidFs) demoStop(); else demovid.pause(); delete slides[i].dataset.demoPlayed; pv(); return; }
     if (i > 0) show(i-1, true);
   }
 
@@ -1456,11 +1663,17 @@
     document.getElementById('pvthen').innerHTML = nx ? `<b>Then · ${esc(titleOf(nx))}</b>${mark(nx.dataset.notes || '').replace(/→/g, '<i>→</i>')}` : '<b>End</b>Leave this slide up for questions.';
     const total = Math.round(planEnd.at(-1)), over = total > 120;
     document.getElementById('pvplan').innerHTML = `leave this slide with <b>${fmt(Math.round(120 - planEnd[i]))}</b> left<br><span class="${over ? 'bad' : ''}">script: ${fmt(total)} at ${WPM} wpm${over ? ', ' + fmt(total - 120) + ' over' : ''}</span>`;
-    document.getElementById('pvnext').textContent = s.querySelector('#demovid') && demovid.readyState ? (s.dataset.demoPlayed ? 'the recording is playing (1:49) · press → when it ends' : 'press → to play the recording') : press < pressTotal(s) ? `${pressTotal(s) - press} more press${pressTotal(s) - press === 1 ? '' : 'es'} on this slide` : i < slides.length-1 ? `next slide: ${titleOf(slides[i+1])}` : 'last slide: leave it up';
+    document.getElementById('pvnext').classList.toggle('bad', peerQuiet);
+    document.getElementById('pvnext').textContent = peerQuiet ? 'NO SOUND in the audience window: click on it once' : s.querySelector('#demovid') && demovid.readyState ? (s.dataset.demoPlayed ? 'the recording is playing (1:49) · press → when it ends' : 'press → to play the recording') : press < pressTotal(s) ? `${pressTotal(s) - press} more press${pressTotal(s) - press === 1 ? '' : 'es'} on this slide` : i < slides.length-1 ? `next slide: ${titleOf(slides[i+1])}` : 'last slide: leave it up';
   }
 
   // Two windows stay in step: every key press here is passed to the other window, which runs the same action.
-  let peer = window.opener || null;
+  let peer = window.opener || null, peerQuiet = false, warned = false;
+  // A browser window may only play sound once it has had a key press or a click of its own. When every press comes
+  // from the presenter window, the audience window has had none: the presenter view says so until it gets one.
+  const unlocked = () => !navigator.userActivation || navigator.userActivation.hasBeenActive;
+  const heard = () => { if (!presenting && (demovid.muted || warned)) { warned = false; setQuiet(false); } };
+  addEventListener('keydown', heard, true); addEventListener('pointerdown', heard, true);
   const tell = m => { try { if (peer && !peer.closed) peer.postMessage({ relayDeck: m }, '*'); } catch { /* the other window is gone */ } };
   function act(name, remote){
     if (name === 'next') { if (i===0 && !timer && left===120) toggle(); next(); }
@@ -1473,9 +1686,10 @@
   }
   addEventListener('message', e => {
     const m = e.data && e.data.relayDeck; if (!m) return;
-    if (m.act) act(m.act, true);
-    else if (m.hello) { peer = e.source; tell({ sync: { i, press: +slides[i].dataset.press || 0, left, running: !!timer } }); }
-    else if (m.sync) { show(m.sync.i); for (let n = 0; n < 40 && (+slides[i].dataset.press || 0) < m.sync.press && i === m.sync.i; n++) next(); left = m.sync.left; paint(); if (m.sync.running !== !!timer) toggle(); }
+    if (m.act) { act(m.act, true); if (!presenting && !unlocked() && !warned) { warned = true; tell({ quiet: true }); } }
+    else if (m.hello) { peer = e.source; tell({ sync: { i, press: +slides[i].dataset.press || 0, left, running: !!timer, demo: !!slides[i].dataset.demoPlayed } }); }
+    else if (m.sync) { show(m.sync.i); for (let n = 0; n < 40 && (+slides[i].dataset.press || 0) < m.sync.press && i === m.sync.i; n++) next(); if (slides[i].querySelector('#demovid')) { if (m.sync.demo) slides[i].dataset.demoPlayed = '1'; else delete slides[i].dataset.demoPlayed; } left = m.sync.left; paint(); if (m.sync.running !== !!timer) toggle(); pv(); }
+    else if ('quiet' in m) { peerQuiet = m.quiet; pv(); }
   });
   if (presenting && peer) tell({ hello: 1 });
 

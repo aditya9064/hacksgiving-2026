@@ -2,9 +2,9 @@
 
 This is the script to say aloud, in full sentences. The same words are in the deck: press **N** on any slide to see that slide's lines, or open the presenter view.
 
-**Length: 303 words. That is 2:38 at a slow pace (115 words a minute) and 2:09 at a normal speaking pace (140), before the slides' own animations. Your limit is 2:00, so as written this runs over.** Without slides 2, 4 and 5 it is 230 words: 2:00 slow, 1:38 normal. See "If you run long" at the end. Not yet timed aloud.
+**Length: 327 words. That is 2:51 at a slow pace (115 words a minute) and 2:20 at a normal speaking pace (140), before the slides' own animations. Your limit is 2:00, so as written this runs over.** Without slides 2, 4 and 5 it is 255 words: 2:13 slow, 1:49 normal. See "If you run long" at the end. Not yet timed aloud.
 
-**→** means press once. Say the words before a **→**, press, then say the words after it. Slides 7, 8 and 9 play by themselves when you arrive, so there is nothing to press on them.
+**→** means press once. Say the words before a **→**, press, then say the words after it. Slides 7, 8 and 9 play by themselves when you arrive, so there is nothing to press on them. Slide 10 is the recording: it starts by itself, full screen, the moment you arrive.
 
 **Rehearse in the presenter view.** Open `slides/index.html?presenter`: the deck on the left, this script on the right with the line to say now in white, the clock, and how much time you should have left when you leave each slide. On the day, open the deck full screen on the projector and press **P**: the presenter view opens in a second window on your laptop and the two stay in step. The words live in one place in the deck (`const SCRIPT` in `slides/index.html`); change them there and here together.
 
@@ -46,21 +46,25 @@ A ComForce worker sees the card, with tasks already drafted. Jordan phones a par
 
 **Slide 9 — The proof** *(plays by itself)*
 
-But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it.
+But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it. Now watch it for real. *(press **→**: the recording starts by itself, full screen, so finish the sentence before you press)*
 
-**Slide 10 — Demo**
+**Slide 10 — Demo** *(the recording, 1 min 49 s; nothing to say unless you narrate)*
 
-Now watch it for real: who asked, who delivered, and Jordan calling back to check. *(press **→** to play the recording full screen; the clock pauses by itself. Press **→** again when it ends. The recording stops as Jordan asks whether the help arrived; it does not show the resident's answer, and it has no sound after 0:41.)*
+*(The slide is only the video. It starts on arrival and the clock pauses by itself. Press **→** when it ends. The recording stops as Jordan asks whether the help arrived; it does not show the resident's answer, and it has no sound after 0:41.)*
 
 ---
 
 ## After the demo
 
-**Slide 11 — Cost** *(press once, then speak)*
+**Slide 11 — Funder report** *(builds by itself, then one press)*
 
-**→** Everything you just watched cost one dollar sixty-eight. **→** A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.
+And that request is now evidence. Relay writes the funder report from the record ComForce owns, failures included. **→** So when a funder asks, did the help arrive, ComForce answers in the resident's own words.
 
-**Slide 12 — Closing** *(leave it up)*
+**Slide 12 — Cost** *(press once, then speak)*
+
+**→** Everything you just watched cost one dollar sixty-seven. **→** A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.
+
+**Slide 13 — Closing** *(leave it up)*
 
 **→** *(two hands meet and the view moves through them, about three and a half seconds; say the line over them, do not wait in silence)*
 
@@ -72,11 +76,12 @@ Care is not measured by how many we reach. It is measured by how many we don't l
 
 | They asked | You say | Slide |
 | --- | --- | --- |
-| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it only closes when the resident says help arrived" · "Only their yes closes it" · "who asked, who delivered, and Jordan calling back to check" | 1, 9, 10 |
+| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it only closes when the resident says help arrived" · "Only their yes closes it" · the recording itself | 1, 9, 10 |
+| "Measure outcomes, and communicate their impact" (problem area 3) | "Relay writes the funder report from the record ComForce owns, failures included… ComForce answers in the resident's own words." | 11 |
 | Accessibility: "can frontline workers and community members use it easily?" | "one phone number… in English or Spanish" · "A resident calls from any phone" | 2, 7 |
 | Responsible technology; never identify or predict individuals; synthetic data only | "names, addresses and phone numbers are removed. A person makes every decision. We never score or predict anyone, and all our data is synthetic." | 6 |
-| "Retain access to their own data" | "…and ComForce owns its data." | 11 |
-| Cost, "a heavy consideration" | "one dollar sixty-eight… three hundred and thirty-six dollars… two hundred times more" | 11 |
+| "Retain access to their own data" | "the record ComForce owns" · "…and ComForce owns its data." | 11, 12 |
+| Cost, "a heavy consideration" | "one dollar sixty-seven… three hundred and thirty-six dollars… two hundred times more" | 12 |
 | "Explain how your solution works to non-technical audiences" | No product names and no stack talk. Every line is something a volunteer would say. | all |
 
 ---

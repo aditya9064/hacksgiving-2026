@@ -1,8 +1,8 @@
 # Relay MKE — 2-minute live demo runbook
 
-**The deck's demo slide now plays a recording** (slide 10, press **→**). This runbook is for running the demo live instead; if you do, stay on slide 10 without pressing, and drive the app.
+**The deck's demo slide now plays a recording** (slide 10; it starts by itself, full screen, when the slide opens). This runbook is for running the demo live instead; if you do, stop on slide 9 and switch to the app, because arriving on slide 10 starts the recording.
 
-Starts the moment slide 10 (the demo slide) is on screen; slides 11–12 (cost, closing) are shown after the demo. Two people: **Presenter** (laptop, projected) and **Resident** (teammate, real phone). Target 1:50; hard cap 2:00.
+Starts the moment slide 10 (the demo slide) would be on screen; slides 11–13 (funder report, cost, closing) are shown after the demo. Two people: **Presenter** (laptop, projected) and **Resident** (teammate, real phone). Target 1:50; hard cap 2:00.
 
 ## Screen layout (projected)
 
@@ -46,7 +46,7 @@ Starts the moment slide 10 (the demo slide) is on screen; slides 11–12 (cost, 
 | Closing text doesn't appear | The resident hasn't hung up yet. Jordan never ends the call-back himself; tap **Hang up**. | 0 s |
 | Call-back doesn't ring | Resident taps **"1 · yes it arrived"** in Messages. Card still flips to Verified. | 0 s |
 | Tunnel dies mid-demo | Resident's phone is dead; laptop tab `/phone?number=4145550199` (localhost) becomes the resident. Presenter drives both. | 5 s |
-| Everything dies | Play the recording: deck slide 10, press **→** (1 min 49 s). It is `presentation/demo-backup.mp4`, which also opens in QuickTime if the deck itself is the problem. | — |
+| Everything dies | Play the recording: go to deck slide 10 and it starts by itself (1 min 49 s). It is `presentation/demo-backup.mp4`, which also opens in QuickTime if the deck itself is the problem. | — |
 
 ## Lines to say over the quiet moments
 

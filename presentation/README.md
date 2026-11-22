@@ -4,8 +4,8 @@
 
 | File | What it is |
 | --- | --- |
-| [slides/index.html](slides/index.html) | The deck. One HTML file plus `slides/img/` and `slides/fonts/`, 12 slides, 1920×1080, scales to any screen. Works offline. Open in Chrome, press **F**. |
-| [Relay-MKE-pitch.pdf](Relay-MKE-pitch.pdf) | Static export of the deck (11 pages, every slide in its final state). Backup if the laptop dies. |
+| [slides/index.html](slides/index.html) | The deck. One HTML file plus `slides/img/` and `slides/fonts/`, 13 slides, 1920×1080, scales to any screen. Works offline. Open in Chrome, press **F**. |
+| [Relay-MKE-pitch.pdf](Relay-MKE-pitch.pdf) | Static export of the deck (13 pages, every slide in its final state). Backup if the laptop dies. |
 | [pitch-script.md](pitch-script.md) | Word-for-word 2:00 script with beat timings matching the deck. |
 | [demo-runbook.md](demo-runbook.md) | The 2:00 demo, second by second: who does what, pre-flight checklist, what to do when something breaks. |
 | `slides/img/` | Real app screenshots used on slides; `slides/img/logos/` holds vendor logos for the stack slide. |
@@ -25,11 +25,14 @@ Slides 4–5 share one rhythm, shown by the pill top-right: **Today → With Rel
 | 7 | The journey · the call | — | Four drawn scenes on one line: the resident's phone calling, Jordan answering, the tracking-code text, the status reply. Plays on arrival |
 | 8 | The journey · the work | — | The card landing on the board, the drafted tasks, Jordan's call to a partner, the run sheet with its map and pickup note ("side door on W Lisbon Ave · ask for Denise") |
 | 9 | The journey · the proof | — | "Mark delivered", the "did the help arrive?" text, Jordan's call-back, and the card turning teal: verified by the resident. The scenes are drawings of the app's screens; the quoted texts and the pickup note are the app's own wording. The line runs off one slide and onto the next, and a stepper at the top right shows which of the three you are on |
-| 10 | Demo | 2 | Plays the recording, `presentation/demo-backup.mp4` (1 min 49 s). First press plays it full screen from the start; the next press leaves full screen and moves on. ← while it plays stops it and re-arms the slide. The clock pauses on this slide |
-| 11 | Cost — $1.68 | 2 | Price counts up with the real cost split; then 223 squares fill in, one per year of Relay that a year of findhelp enterprise ($75,000) would pay for |
-| 12 | Closing | — | Arrives through a hand-off: two hands draw in from either side (one coral, one white), clasp, turn teal, and the view moves through the grip into the slide (about 3.5 s; a press skips it, back cancels it). Left half: "Thank you." in the title slide's two typefaces. Right half: "Care is not measured by how many we reach. It is measured by how many we don't lose.", and beneath it the challenge answered in three lines (one record, coordinated action, measurable impact) |
+| 10 | Demo | — | Nothing but the recording, `presentation/demo-backup.mp4` (1 min 49 s): no heading, no footer, no clock. It starts from the top by itself when you arrive and fills the slide; if the deck is in a window it also takes the whole screen (only when the press was made in that window). → stops it and moves on; ← goes back to slide 9; coming back from slide 11 carries on where it stopped. Opened by link (`#10`), the first press plays it. Move the mouse to get the player's controls. The clock pauses on this slide |
+| 11 | Funder report | 1 | On arrival: 201 squares fill in, one per request, coloured by what the resident answered (124 yes, 26 partly, 18 no and reopened, 18 no answer yet, 15 open); wires carry them into a report page that assembles itself (figures count up, the ring draws to 67%, monthly bars grow, the summary writes in). Three questions a funder asks wait as outlines on the right. The press answers them: 67% confirmed by the resident, 21 of the City's 26 Countdown clusters, $2.71 per confirmed outcome |
+| 12 | Cost — $1.67 | 2 | Price counts up with the real cost split; then 223 squares fill in, one per year of Relay that a year of findhelp enterprise ($75,000) would pay for |
+| 13 | Closing | — | Arrives through a hand-off: two hands draw in from either side (one coral, one white), clasp, turn teal, and the view moves through the grip into the slide (about 3.5 s; a press skips it, back cancels it). Left half: "Thank you." in the title slide's two typefaces. Right half: "Care is not measured by how many we reach. It is measured by how many we don't lose.", and beneath it the challenge answered in three lines (one record, coordinated action, measurable impact) |
 
 19 presses reach the demo. Some presses play a short sequence; pressing again mid-sequence skips to its end.
+
+**Sound on the demo slide.** A browser window may only play sound once it has had a key press or a click of its own. If you drive everything from the presenter window and the audience window has had neither (for example after reloading it), the recording plays silently with a red "Sound is off · click here once" pill, and the presenter view says "NO SOUND in the audience window: click on it once". One click or key in the audience window fixes it. Pressing **P** there to open the presenter view counts.
 
 **The Milwaukee map (slide 4).** `slides/img/milwaukee.svg` is the City of Milwaukee's 190 neighbourhood polygons from `data/public/milwaukee-neighborhoods.geojson`, simplified and drawn at 20 px per km. Each circle sits at its cluster's coordinates from `src/lib/clusters.ts`; its size and the call-out numbers were read from the `/grants` table (2026, synthetic data) when the slide was built, so update them if the seed changes.
 
@@ -48,14 +51,14 @@ Type: Inter Tight (display) and Instrument Serif Italic (emphasis), both SIL Ope
 | N | Speaker notes overlay (the script for this slide) |
 | P | Open the presenter view in a second window. The two windows stay in step: a press in either one moves both |
 | `?presenter` in the URL | The presenter view on its own, for rehearsing: deck on the left with the **speaker notes** under it (the whole script for that slide, the part to say now in white, then the next slide's script); on the right the same line in large type, the clock, and the time you should have left when you leave each slide |
-| V | Play or pause the recording on slide 10 without going full screen |
+| V | Pause or resume the recording on slide 10 |
 | F | Fullscreen |
 | `#7` in the URL | Deep-link to a slide with everything revealed |
 
 ## Rebuilding the PDF
 
 ```
-node pdf.mjs   # Playwright: opens slides/index.html?print, prints 12 pages at 1920×1080
+node pdf.mjs   # Playwright: opens slides/index.html?print, prints 13 pages at 1920×1080
 ```
 
 (The script is three lines of `playwright-core`; `?print` reveals every fragment and freezes animations.)
@@ -66,4 +69,4 @@ With the app running on `:3077`, capture `/board` and `/grants` at 1600×1000 an
 
 **The title map (slide 1).** `slides/img/milwaukee-dark.svg` is the slide-4 basemap restyled for a dark slide. The map replays the requests logged in October and November 2026 on a freshly reset board (synthetic archive plus the seeded board), 47 of them, in the order they came in. Each one appears coral; a line runs to the partner that took it in the data and back; the dot turns teal if the resident's own answer was "yes, the help arrived", and stays coral otherwise. The five nobody has taken yet get no line. Afterwards the coral ones take turns to pulse. Each dot sits within about 850 m of its neighbourhood's centroid, because the app stores the area and never an address; the diamonds are the seed's partner organisations, which are fictional. `python3 presentation/titlemap.py` rebuilds the basemap and prints the four constants (`DOTS`, `PARTNERS`, `TOOK`, `MONTH`) to paste into the deck; rerun it if the seed changes. The data covers all of 2026; `FROM_MONTH` in the deck's script sets how much of it is shown (0 shows the whole year, which is busy).
 
-Numbers on the visible slides come from the app on a **freshly reset board**, 2026, synthetic data: 200 requests · $336 platform cost for the year · $1.68 per request · $2.73 per resident-verified outcome (Grants → application tab → Platform cost), and the cluster counts on the map (Grants → cluster table). Each live demo request adds one. The hidden data slide still shows 203 / 186 / 124, captured when three demo requests were on the board. If the seed changes, update the script, the map on slide 4, the cost on slide 10, the scorecard and the hidden data slide.
+Numbers on the visible slides come from the app on a **freshly reset board**, 2026, synthetic data, read on 22 November: 201 requests · 186 delivered · 124 confirmed by the resident (67%) · 450 household members · 29 neighborhoods (Impact → Funder report) · 21 of 26 clusters, 71% of requests inside them (Grants → cluster table) · $336 platform cost for the year · $1.67 per request · $2.71 per resident-verified outcome (Grants → application tab → Platform cost). The synthetic archive runs up to six days before today, so these creep up as days pass (they read 200 / $1.68 / $2.73 a few days earlier), and each live demo request adds one. The hidden data slide still shows 203 / 186 / 124, captured when three demo requests were on the board. If the seed or the date changes, update the script, the map on slide 4, the funder report on slide 11, the cost on slide 12 and the hidden data slide.
