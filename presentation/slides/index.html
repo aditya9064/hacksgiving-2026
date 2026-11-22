@@ -1362,19 +1362,19 @@
   // The spoken script: [name, words] for each slide, found by something only that slide contains. "→" is one press;
   // [square brackets] are directions and are not counted as words. This is the text the presenter view and the N overlay show.
   const SCRIPT = {
-    '.title':   ['Title', `We're Team V, and this is Relay MKE. It gives ComForce one shared record for every request, and it only closes when the resident says help arrived.`],
-    '.tri':     ['About', `→ Relay is one phone number, answered by Jordan, our AI agent, in English or Spanish. One board for every division. And one proof funders can check.`],
-    '.flow':    ['Five problems', `You gave us five problem areas. → We built a screen for each one. → And all five run on one shared record, which was the one thing missing.`],
-    '#map':     ['Problem 4 · the map', `Take awareness. Leaders used to decide from what they happened to hear. → Now the map shows where help arrived, and where it is still missing. → [this is the real screen; say nothing and move on]`],
-    '#know':    ['Problem 5 · training', `Or training. Know-how used to leave with each volunteer. → Now it is written down once, and the guide answers from it. → [the real screen; move on]`],
-    '.rules4':  ['Guardrails', `And it is safe. Before any AI sees a message, → names, addresses and phone numbers are removed. → A person makes every decision. We never score or predict anyone, and all our data is synthetic.`],
-    '#jcall':   ['The call', `Here is one request, start to finish. A resident calls from any phone. Jordan answers, logs it, and texts them a tracking code.`],
-    '#jwork':   ['The work', `A ComForce worker sees the card, with tasks already drafted. Jordan phones a partner, and the run sheet says exactly where to go and who to ask for.`],
-    '#jproof':  ['The proof', `But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it. Now watch it for real. [press →: the recording starts by itself, full screen]`],
+    '.title':   ['Title', `We're Team V, and this is Relay MKE. When a neighbor asks ComForce for help, Relay keeps one shared record of that request. And it is only finished when the resident says the help arrived.`],
+    '.tri':     ['About', `→ Relay is three simple things. One phone number anyone can call, answered by Jordan, our AI assistant. One board where every ComForce division sees the same requests. And one report that shows funders the help was delivered.`],
+    '.flow':    ['Five problems', `You gave us five problem areas, from sharing information to training volunteers. → We built one screen for each. → And all five share one record, so nothing gets lost.`],
+    '#map':     ['Problem 4 · the map', `For example, today leaders decide where to send help from what they happen to hear. → With Relay, a map of Milwaukee shows where help arrived, and where people are still waiting. → [this is the real screen; say nothing and move on]`],
+    '#know':    ['Problem 5 · training', `Or take training. Today, when an experienced volunteer leaves, their know-how leaves too. → With Relay it is written down once, and a new volunteer can just ask a question and get the answer. → [the real screen; move on]`],
+    '.rules4':  ['Guardrails', `And it is safe. Before the AI reads any message, → names, addresses and phone numbers are removed. → A person makes every decision. We never score or predict anyone, and everything you see is made-up test data.`],
+    '#jcall':   ['The call', `Now follow one request. A resident calls ComForce from any phone, no app needed. Jordan answers in English or Spanish, writes down what they need, and texts them a code to check on it.`],
+    '#jwork':   ['The work', `A ComForce worker sees it on the board right away, with the next steps already listed. Jordan phones a partner to arrange the help, and the volunteer gets clear directions: where to go and who to ask for.`],
+    '#jproof':  ['The proof', `But delivered is not the end. Relay texts the resident and asks, did the help arrive? If they don't answer, Jordan calls them back. The request only closes when the resident says yes. Now watch it for real. [press →: the recording starts by itself, full screen]`],
     '#stack':   ['How it is built', `→ A call becomes a record ComForce owns. → Every screen reads it. → And the resident closes the loop.`],
     '#demovid': ['Demo', `[the recording is playing: 1 min 49 s, and the clock is paused. Press → when it ends]`],
-    '#fund':    ['Funder report', `And that request is now evidence. Relay writes the funder report from the record ComForce owns, failures included. → So when a funder asks, did the help arrive, ComForce answers in the resident's own words.`],
-    '#yrs':     ['Cost', `→ Everything you just watched cost one dollar sixty-seven. → A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.`],
+    '#fund':    ['Funder report', `That request is now proof. Relay writes the funder report by itself, from ComForce's own records, including the times help did not arrive. → So when a funder asks, did the help really arrive, ComForce answers with what residents said.`],
+    '#yrs':     ['Cost', `→ Everything you just watched cost one dollar sixty-seven. → A whole year costs three hundred and thirty-six dollars. A commercial system costs over two hundred times more. And ComForce owns all of its data.`],
     '.thanks':  ['Closing', `[say this over the hands] Care is not measured by how many we reach. It is measured by how many we don't lose. Thank you.`],
   };
   for (const sel in SCRIPT) { const s = document.querySelector(sel)?.closest('section'); if (s) [s.dataset.name, s.dataset.notes] = SCRIPT[sel]; }

@@ -2,7 +2,7 @@
 
 This is the script to say aloud, in full sentences. The same words are in the deck: press **N** on any slide to see that slide's lines, or open the presenter view.
 
-**Length: 327 words. That is 2:51 at a slow pace (115 words a minute) and 2:20 at a normal speaking pace (140), before the slides' own animations. Your limit is 2:00, so as written this runs over.** Without slides 2, 4 and 5 it is 255 words: 2:13 slow, 1:49 normal. See "If you run long" at the end. Not yet timed aloud.
+**Length: 402 words, written in plain sentences so someone who has never seen the app can follow. Your whole slot is 4:00 and the recording takes 1:49 of it, which leaves about 2:10 for talking, presses and the closing hand-off. All 13 slides take 2:52 at a normal speaking pace (140 words a minute) and 3:30 at a slow one (115), so as written this runs over.** Without slides 2, 4 and 5 it is 301 words: 2:09 normal, 2:37 slow. See "If you run long" at the end. Not yet timed aloud.
 
 **→** means press once. Say the words before a **→**, press, then say the words after it. Slides 7, 8 and 9 play by themselves when you arrive, so there is nothing to press on them. Slide 10 is the recording: it starts by itself, full screen, the moment you arrive.
 
@@ -14,43 +14,45 @@ This is the script to say aloud, in full sentences. The same words are in the de
 
 **Slide 1 — Title**
 
-We're Team V, and this is Relay MKE. It gives ComForce one shared record for every request, and it only closes when the resident says help arrived.
+We're Team V, and this is Relay MKE. When a neighbor asks ComForce for help, Relay keeps one shared record of that request. And it is only finished when the resident says the help arrived.
 
 **Slide 2 — About** *(press once, then speak)*
 
-**→** Relay is one phone number, answered by Jordan, our AI agent, in English or Spanish. One board for every division. And one proof funders can check.
+**→** Relay is three simple things. One phone number anyone can call, answered by Jordan, our AI assistant. One board where every ComForce division sees the same requests. And one report that shows funders the help was delivered.
 
 **Slide 3 — Five problems**
 
-You gave us five problem areas. **→** We built a screen for each one. **→** And all five run on one shared record, which was the one thing missing.
+You gave us five problem areas, from sharing information to training volunteers. **→** We built one screen for each. **→** And all five share one record, so nothing gets lost.
 
 **Slide 4 — Problem 4 · the map**
 
-Take awareness. Leaders used to decide from what they happened to hear. **→** Now the map shows where help arrived, and where it is still missing. **→** *(this is the real screen; say nothing and move on)*
+For example, today leaders decide where to send help from what they happen to hear. **→** With Relay, a map of Milwaukee shows where help arrived, and where people are still waiting. **→** *(this is the real screen; say nothing and move on)*
 
 **Slide 5 — Problem 5 · training**
 
-Or training. Know-how used to leave with each volunteer. **→** Now it is written down once, and the guide answers from it. **→** *(the real screen; move on)*
+Or take training. Today, when an experienced volunteer leaves, their know-how leaves too. **→** With Relay it is written down once, and a new volunteer can just ask a question and get the answer. **→** *(the real screen; move on)*
 
 **Slide 6 — Guardrails**
 
-And it is safe. Before any AI sees a message, **→** names, addresses and phone numbers are removed. **→** A person makes every decision. We never score or predict anyone, and all our data is synthetic.
+And it is safe. Before the AI reads any message, **→** names, addresses and phone numbers are removed. **→** A person makes every decision. We never score or predict anyone, and everything you see is made-up test data.
 
 **Slide 7 — The call** *(plays by itself)*
 
-Here is one request, start to finish. A resident calls from any phone. Jordan answers, logs it, and texts them a tracking code.
+Now follow one request. A resident calls ComForce from any phone, no app needed. Jordan answers in English or Spanish, writes down what they need, and texts them a code to check on it.
 
 **Slide 8 — The work** *(plays by itself)*
 
-A ComForce worker sees the card, with tasks already drafted. Jordan phones a partner, and the run sheet says exactly where to go and who to ask for.
+A ComForce worker sees it on the board right away, with the next steps already listed. Jordan phones a partner to arrange the help, and the volunteer gets clear directions: where to go and who to ask for.
 
 **Slide 9 — The proof** *(plays by itself)*
 
-But delivered is not the end. Relay asks the resident if the help came, and if they don't reply, Jordan calls back. Only their yes closes it. Now watch it for real. *(press **→**: the recording starts by itself, full screen, so finish the sentence before you press)*
+But delivered is not the end. Relay texts the resident and asks, did the help arrive? If they don't answer, Jordan calls them back. The request only closes when the resident says yes. Now watch it for real. *(press **→**: the recording starts by itself, full screen, so finish the sentence before you press)*
 
 **Slide 10 — Demo** *(the recording, 1 min 49 s; nothing to say unless you narrate)*
 
 *(The slide is only the video. It starts on arrival and the clock pauses by itself. Press **→** when it ends. The recording stops as Jordan asks whether the help arrived; it does not show the resident's answer, and it has no sound after 0:41.)*
+
+*(The recording carries its own captions. If the silence after 0:41 feels long, say one short line as each part appears, and nothing more: "The worker sees it on the board." · "They connect a partner, the pantry." · "The volunteer gets directions." · "And Jordan calls back to check.")*
 
 ---
 
@@ -58,11 +60,11 @@ But delivered is not the end. Relay asks the resident if the help came, and if t
 
 **Slide 11 — Funder report** *(builds by itself, then one press)*
 
-And that request is now evidence. Relay writes the funder report from the record ComForce owns, failures included. **→** So when a funder asks, did the help arrive, ComForce answers in the resident's own words.
+That request is now proof. Relay writes the funder report by itself, from ComForce's own records, including the times help did not arrive. **→** So when a funder asks, did the help really arrive, ComForce answers with what residents said.
 
 **Slide 12 — Cost** *(press once, then speak)*
 
-**→** Everything you just watched cost one dollar sixty-seven. **→** A whole year costs three hundred and thirty-six dollars, and ComForce owns its data. The commercial option costs two hundred times more.
+**→** Everything you just watched cost one dollar sixty-seven. **→** A whole year costs three hundred and thirty-six dollars. A commercial system costs over two hundred times more. And ComForce owns all of its data.
 
 **Slide 13 — Closing** *(leave it up)*
 
@@ -76,13 +78,13 @@ Care is not measured by how many we reach. It is measured by how many we don't l
 
 | They asked | You say | Slide |
 | --- | --- | --- |
-| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it only closes when the resident says help arrived" · "Only their yes closes it" · the recording itself | 1, 9, 10 |
-| "Measure outcomes, and communicate their impact" (problem area 3) | "Relay writes the funder report from the record ComForce owns, failures included… ComForce answers in the resident's own words." | 11 |
-| Accessibility: "can frontline workers and community members use it easily?" | "one phone number… in English or Spanish" · "A resident calls from any phone" | 2, 7 |
-| Responsible technology; never identify or predict individuals; synthetic data only | "names, addresses and phone numbers are removed. A person makes every decision. We never score or predict anyone, and all our data is synthetic." | 6 |
-| "Retain access to their own data" | "the record ComForce owns" · "…and ComForce owns its data." | 11, 12 |
-| Cost, "a heavy consideration" | "one dollar sixty-seven… three hundred and thirty-six dollars… two hundred times more" | 12 |
-| "Explain how your solution works to non-technical audiences" | No product names and no stack talk. Every line is something a volunteer would say. | all |
+| "Track whether people receive the help they need, while also noting who that help was delivered by" | "it is only finished when the resident says the help arrived" · "The request only closes when the resident says yes" · the recording itself | 1, 9, 10 |
+| "Measure outcomes, and communicate their impact" (problem area 3) | "Relay writes the funder report by itself, from ComForce's own records, including the times help did not arrive… ComForce answers with what residents said." | 11 |
+| Accessibility: "can frontline workers and community members use it easily?" | "One phone number anyone can call" · "from any phone, no app needed. Jordan answers in English or Spanish" | 2, 7 |
+| Responsible technology; never identify or predict individuals; synthetic data only | "names, addresses and phone numbers are removed. A person makes every decision. We never score or predict anyone, and everything you see is made-up test data." | 6 |
+| "Retain access to their own data" | "from ComForce's own records" · "And ComForce owns all of its data." | 11, 12 |
+| Cost, "a heavy consideration" | "one dollar sixty-seven… three hundred and thirty-six dollars… over two hundred times more" | 12 |
+| "Explain how your solution works to non-technical audiences" | No product names, no stack talk and no app jargon: "next steps" rather than tasks, "a code to check on it" rather than a tracking code, "made-up test data" rather than synthetic. | all |
 
 ---
 
@@ -90,8 +92,8 @@ Care is not measured by how many we reach. It is measured by how many we don't l
 
 Cut in this order; each is one slide and the deck still makes sense without it:
 
-1. Slide 5, Problem 5 · training — not one of the four criteria. Saves 21 words and two presses.
-2. Slide 4, Problem 4 · the map — the title already shows Milwaukee and slide 3 already shows this problem solved. Saves 25 words and two presses.
-3. Slide 2, About — its three points (one number, one board, one proof) are now the three journey slides. Saves 26 words. Before you cut it, add "in English or Spanish" to slide 7's line ("Jordan answers in English or Spanish, logs it…"), because nothing else says it.
+1. Slide 5, Problem 5 · training — not one of the four criteria. Saves 33 words and two presses.
+2. Slide 4, Problem 4 · the map — the title already shows Milwaukee and slide 3 already shows this problem solved. Saves 31 words and two presses.
+3. Slide 2, About — its three points (one number, one board, one report) are now the three journey slides and the funder slide. Saves 37 words. "In English or Spanish" is already in slide 7's line, so nothing is lost.
 
 To hide a slide, add `data-skip` to its `<section>` tag in `slides/index.html`. To bring back the three hidden problem slides, the tech stack slide or the Benefits slide (it sat between the demo and Cost), delete `data-skip` from them.
